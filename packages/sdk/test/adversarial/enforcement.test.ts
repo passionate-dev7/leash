@@ -456,11 +456,16 @@ describe('the kill switch', () => {
       'REJECTED',
       `${result.revert.name ?? 'unnamed'} | preExecution=${result.revert.rejectedPreExecution} | ${result.revert.raw.split('\n')[0]?.slice(0, 200)}`,
     )
-    // Refused during keychain validation, not as an EVM revert: it never reaches a block
-    // and costs nothing. The node names the error rather than failing opaquely.
-    expect(result.revert.name).toBe('KeyAlreadyRevoked')
-    expect(result.revert.rejectedPreExecution).toBe(true)
-    expect(result.revert.raw).toMatch(/keychain validation failed/i)
+    // Measured on Moderato 2026-09-19 (docs/FINDINGS.md F1): the payment IS refused,
+    // but not the way CRITICAL-PATH.md claimed. It is not caught in keychain
+    // validation — it reaches execution and dies as an unnamed internal error after
+    // ~45s (preExecution=false, name undefined, raw "An internal error was
+    // received."). These assertions encode what the chain actually does. If the
+    // relay starts refusing cleanly, this test fails on purpose: update it and
+    // CRITICAL-PATH.md together, and re-run the demo beat from F1.
+    expect(result.revert.name).toBeUndefined()
+    expect(result.revert.rejectedPreExecution).toBe(false)
+    expect(result.revert.raw).toMatch(/internal error/i)
   })
 
   it('leaves the root key working, which proves the account is not simply broken', async () => {
