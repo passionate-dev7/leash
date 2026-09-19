@@ -1,0 +1,26 @@
+{
+  "name": "@leash/policy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./data/*": "./data/*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run test/unit",
+    "test:watch": "vitest test/unit",
+    "catalog:refresh": "tsx scripts/refresh-catalog.ts"
+  },
+  "dependencies": {
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.1",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.tsbuildinfo
+testnet/keys/
+.env
+.env.*
+testnet/keys.json
+testnet/state.json
+testnet/

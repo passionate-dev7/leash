@@ -1,0 +1,1846 @@
+{
+  "capturedAt": "2026-09-18T16:37:09.113Z",
+  "catalogBytes": 540468,
+  "catalogServiceCount": 142,
+  "chainId": 4217,
+  "resolved": [
+    {
+      "serviceId": "apex-db",
+      "name": "Apex DB",
+      "realm": "api.apex-db.org",
+      "provider": "Apex DB",
+      "integration": "third-party",
+      "categories": [
+        "data",
+        "search"
+      ],
+      "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "100000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/apex",
+        "url": "https://api.apex-db.org/v1/apex"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:55.962Z"
+    },
+    {
+      "serviceId": "rxatlas",
+      "name": "RxAtlas",
+      "realm": "api.rxatlas.dev",
+      "provider": "RxAtlas",
+      "integration": "third-party",
+      "categories": [
+        "data",
+        "search"
+      ],
+      "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "100000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/drugs",
+        "url": "https://api.rxatlas.dev/v1/drugs"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:56.274Z"
+    },
+    {
+      "serviceId": "trialbase-db",
+      "name": "TrialBase DB",
+      "realm": "api.trialbase-db.org",
+      "provider": "TrialBase DB",
+      "integration": "third-party",
+      "categories": [
+        "data",
+        "search"
+      ],
+      "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "100000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/trials",
+        "url": "https://api.trialbase-db.org/v1/trials"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:55.969Z"
+    },
+    {
+      "serviceId": "recallradar",
+      "name": "RecallRadar",
+      "realm": "api.recallradar.dev",
+      "provider": "RecallRadar",
+      "integration": "third-party",
+      "categories": [
+        "data",
+        "search"
+      ],
+      "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "100000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/recalls",
+        "url": "https://api.recallradar.dev/v1/recalls"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:55.969Z"
+    },
+    {
+      "serviceId": "agentfax",
+      "name": "agentfax",
+      "realm": "agentfax.val.run",
+      "provider": "agentfax",
+      "integration": "third-party",
+      "categories": [
+        "social"
+      ],
+      "recipient": "0xed5bd29c47d40a054591b18cc2142cea8ab7c18a",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "200000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v1/fax",
+        "url": "https://agentfax.val.run/v1/fax"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:55.953Z"
+    },
+    {
+      "serviceId": "agentmail",
+      "name": "AgentMail",
+      "realm": "mpp.api.agentmail.to",
+      "provider": "AgentMail",
+      "integration": "first-party",
+      "categories": [
+        "ai",
+        "social"
+      ],
+      "recipient": "0x6e3184C204e596dED89E8A5693B602097F4Ab687",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v0/inboxes",
+        "url": "https://mpp.api.agentmail.to/v0/inboxes"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:56.533Z"
+    },
+    {
+      "serviceId": "allium",
+      "name": "Allium",
+      "realm": "agents.allium.so",
+      "provider": "Allium",
+      "integration": "first-party",
+      "categories": [
+        "blockchain",
+        "data"
+      ],
+      "recipient": "0x528af27fe5854c2499690eab131a8a338b6820ca",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "30000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/v1/developer/tokens/search",
+        "url": "https://agents.allium.so/api/v1/developer/tokens/search"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:56.683Z"
+    },
+    {
+      "serviceId": "anthropic",
+      "name": "Anthropic",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Anthropic",
+      "integration": "third-party",
+      "categories": [
+        "ai"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "10250",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v1/messages",
+        "url": "https://anthropic.mpp.tempo.xyz/v1/messages"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:55.697Z"
+    },
+    {
+      "serviceId": "doma",
+      "name": "Doma",
+      "realm": "mpp.doma.xyz",
+      "provider": "Doma",
+      "integration": "first-party",
+      "categories": [
+        "web",
+        "blockchain"
+      ],
+      "recipient": "0x17ae28d21f80a1082eE3C54AcB03769B09d42DA8",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/register",
+        "url": "https://mpp.doma.xyz/register"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:56.062Z"
+    },
+    {
+      "serviceId": "exa",
+      "name": "Exa",
+      "realm": "api.exa.ai",
+      "provider": "Exa",
+      "integration": "first-party",
+      "categories": [
+        "search",
+        "ai"
+      ],
+      "recipient": "0xB98eF29eb2be19Ae646A8FC0248255B90A332dbC",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "7000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/search",
+        "url": "https://api.exa.ai/search"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.324Z"
+    },
+    {
+      "serviceId": "fal",
+      "name": "fal.ai",
+      "realm": "mpp.tempo.xyz",
+      "provider": "fal.ai",
+      "integration": "third-party",
+      "categories": [
+        "ai",
+        "media"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "25000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/fal-ai/flux/dev",
+        "url": "https://fal.mpp.tempo.xyz/fal-ai/flux/dev"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.106Z"
+    },
+    {
+      "serviceId": "firecrawl",
+      "name": "Firecrawl",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Firecrawl",
+      "integration": "third-party",
+      "categories": [
+        "web",
+        "data"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "2000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v1/scrape",
+        "url": "https://firecrawl.mpp.tempo.xyz/v1/scrape"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.123Z"
+    },
+    {
+      "serviceId": "modal",
+      "name": "Modal",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Modal",
+      "integration": "third-party",
+      "categories": [
+        "compute"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "13842",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/sandbox/create",
+        "url": "https://modal.mpp.tempo.xyz/sandbox/create"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.260Z"
+    },
+    {
+      "serviceId": "openai",
+      "name": "OpenAI",
+      "realm": "mpp.tempo.xyz",
+      "provider": "OpenAI",
+      "integration": "third-party",
+      "categories": [
+        "ai",
+        "media"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "5125",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v1/responses",
+        "url": "https://openai.mpp.tempo.xyz/v1/responses"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.103Z"
+    },
+    {
+      "serviceId": "openrouter",
+      "name": "OpenRouter",
+      "realm": "mpp.tempo.xyz",
+      "provider": "OpenRouter",
+      "integration": "third-party",
+      "categories": [
+        "ai"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "5125",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "url": "https://openrouter.mpp.tempo.xyz/v1/chat/completions"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.176Z"
+    },
+    {
+      "serviceId": "alchemy",
+      "name": "Alchemy",
+      "realm": "alchemy.com",
+      "provider": "Alchemy",
+      "integration": "first-party",
+      "categories": [
+        "blockchain",
+        "data"
+      ],
+      "recipient": "0x7f51327A5A0927815DCcA531aa97Ec7252354091",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "1000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/:network/nft/v3/:endpoint",
+        "url": "https://mpp.alchemy.com/1/nft/v3/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.811Z"
+    },
+    {
+      "serviceId": "rpc",
+      "name": "Tempo RPC",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Tempo",
+      "integration": "first-party",
+      "categories": [
+        "blockchain"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "1000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/",
+        "url": "https://rpc.mpp.tempo.xyz/"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.623Z"
+    },
+    {
+      "serviceId": "storage",
+      "name": "Object Storage",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Tempo",
+      "integration": "first-party",
+      "categories": [
+        "storage"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "100",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/:key",
+        "url": "https://storage.mpp.tempo.xyz/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.621Z"
+    },
+    {
+      "serviceId": "pinata",
+      "name": "Pinata IPFS",
+      "realm": "mpp.pinata.cloud",
+      "provider": "Pinata",
+      "integration": "first-party",
+      "categories": [
+        "storage"
+      ],
+      "recipient": "0x56f59c59444d5e70e242ab4ea131cc54007b74a7",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "1000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/pin/public/:cid",
+        "url": "https://mpp.pinata.cloud/v1/pin/public/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.584Z"
+    },
+    {
+      "serviceId": "stableemail",
+      "name": "StableEmail",
+      "realm": "stableemail.dev",
+      "provider": "Merit Systems",
+      "integration": "first-party",
+      "categories": [
+        "social"
+      ],
+      "recipient": "0xdb5aa553feeb2c3e3d03e8360b36fb0f7e480671",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/subdomain/status",
+        "url": "https://stableemail.dev/api/subdomain/status"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.907Z"
+    },
+    {
+      "serviceId": "stableenrich",
+      "name": "StableEnrich",
+      "realm": "stableenrich.dev",
+      "provider": "Merit Systems",
+      "integration": "first-party",
+      "categories": [
+        "data",
+        "search",
+        "social"
+      ],
+      "recipient": "0x325bdF6F7efAB24a2210c48c1b64cAb2eAe1d430",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "50000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/google-maps/place-details/full",
+        "url": "https://stableenrich.dev/api/google-maps/place-details/full"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.881Z"
+    },
+    {
+      "serviceId": "stablephone",
+      "name": "StablePhone",
+      "realm": "stablephone.dev",
+      "provider": "Merit Systems",
+      "integration": "first-party",
+      "categories": [
+        "ai",
+        "social"
+      ],
+      "recipient": "0xD219dB8179Bb9C1899eF87f39eebA9D1070c6801",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/call/:id",
+        "url": "https://stablephone.dev/api/call/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.902Z"
+    },
+    {
+      "serviceId": "stablesocial",
+      "name": "StableSocial",
+      "realm": "stablesocial.dev",
+      "provider": "Merit Systems",
+      "integration": "first-party",
+      "categories": [
+        "social",
+        "data"
+      ],
+      "recipient": "0xCfA26F13c6C18307033EcE13BBb8F470dA5b4dbE",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/jobs",
+        "url": "https://stablesocial.dev/api/jobs"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:57.900Z"
+    },
+    {
+      "serviceId": "stablestudio",
+      "name": "StableStudio",
+      "realm": "stablestudio.dev",
+      "provider": "Merit Systems",
+      "integration": "first-party",
+      "categories": [
+        "ai",
+        "media"
+      ],
+      "recipient": "0x07F067959297767c887dbfA3C72379c66E82a045",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/jobs/:jobId",
+        "url": "https://stablestudio.dev/api/jobs/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.968Z"
+    },
+    {
+      "serviceId": "stableupload",
+      "name": "StableUpload",
+      "realm": "stableupload.dev",
+      "provider": "Merit Systems",
+      "integration": "first-party",
+      "categories": [
+        "storage"
+      ],
+      "recipient": "0x06dFF3c8380b5D1799874adA903fc3422882FD6f",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "0",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/api/uploads",
+        "url": "https://stableupload.dev/api/uploads"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.905Z"
+    },
+    {
+      "serviceId": "aviationstack",
+      "name": "AviationStack",
+      "realm": "mpp.tempo.xyz",
+      "provider": "AviationStack",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "5000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/aircraft_types",
+        "url": "https://aviationstack.mpp.tempo.xyz/v1/aircraft_types"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.802Z"
+    },
+    {
+      "serviceId": "codestorage",
+      "name": "Code Storage",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Code Storage",
+      "integration": "third-party",
+      "categories": [
+        "storage"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "10000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/repos/:id",
+        "url": "https://codestorage.mpp.tempo.xyz/repos/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.634Z"
+    },
+    {
+      "serviceId": "goflightlabs",
+      "name": "GoFlightLabs",
+      "realm": "mpp.tempo.xyz",
+      "provider": "GoFlightLabs",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "5000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/airports-by-filters",
+        "url": "https://goflightlabs.mpp.tempo.xyz/airports-by-filters"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.658Z"
+    },
+    {
+      "serviceId": "oxylabs",
+      "name": "Oxylabs",
+      "realm": "mpp.tempo.xyz",
+      "provider": "Oxylabs",
+      "integration": "third-party",
+      "categories": [
+        "web",
+        "data"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "7813",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v1/proxy",
+        "url": "https://oxylabs.mpp.tempo.xyz/v1/proxy"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.928Z"
+    },
+    {
+      "serviceId": "spyfu",
+      "name": "SpyFu",
+      "realm": "mpp.tempo.xyz",
+      "provider": "SpyFu",
+      "integration": "third-party",
+      "categories": [
+        "data",
+        "search"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "10000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/apis/domain_stats_api/v2/*",
+        "url": "https://spyfu.mpp.tempo.xyz/apis/domain_stats_api/v2/*"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.667Z"
+    },
+    {
+      "serviceId": "serpapi",
+      "name": "SerpApi",
+      "realm": "mpp.tempo.xyz",
+      "provider": "SerpApi",
+      "integration": "third-party",
+      "categories": [
+        "search",
+        "data"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "15000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/search",
+        "url": "https://serpapi.mpp.tempo.xyz/search"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.658Z"
+    },
+    {
+      "serviceId": "kicksdb",
+      "name": "KicksDB",
+      "realm": "mpp.tempo.xyz",
+      "provider": "KicksDB",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "500",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v3/stockx/products",
+        "url": "https://kicksdb.mpp.tempo.xyz/v3/stockx/products"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.658Z"
+    },
+    {
+      "serviceId": "twocaptcha",
+      "name": "2Captcha",
+      "realm": "mpp.tempo.xyz",
+      "provider": "2Captcha",
+      "integration": "third-party",
+      "categories": [
+        "web"
+      ],
+      "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+      "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+      "decimals": 6,
+      "amount": "3000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/createTask",
+        "url": "https://twocaptcha.mpp.tempo.xyz/createTask"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:36:58.654Z"
+    },
+    {
+      "serviceId": "orth-fantastic-jobs",
+      "name": "Fantastic Jobs",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Fantastic Jobs",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0x673bFe87d96Caa1569583D6cBE69e0ce7AC8640f",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "400000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/ats-organizations",
+        "url": "https://mpp.orthogonal.com/fantastic-jobs/v1/ats-organizations"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:05.847Z"
+    },
+    {
+      "serviceId": "orth-peopledatalabs",
+      "name": "People Data Labs",
+      "realm": "mpp.orthogonal.com",
+      "provider": "People Data Labs",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0x19a09691d0A9c4fB80Cc40694704a15858C6A454",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "700000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v5/person/identify",
+        "url": "https://mpp.orthogonal.com/peopledatalabs/v5/person/identify"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:07.778Z"
+    },
+    {
+      "serviceId": "orth-nyne",
+      "name": "Nyne.ai",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Nyne.ai",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0xd8b2797E90336721A69b5685D5F6A9Ca52b6e8eF",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "578000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/company/funding",
+        "url": "https://mpp.orthogonal.com/nyne/company/funding"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:07.744Z"
+    },
+    {
+      "serviceId": "orth-company-enrich",
+      "name": "Company Enrich",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Company Enrich",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0xa136b6919A7b3C45c2c793B069ce6e3441AEc32a",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "61250",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/companies/workforce",
+        "url": "https://mpp.orthogonal.com/company-enrich/companies/workforce"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:07.553Z"
+    },
+    {
+      "serviceId": "orth-coresignal",
+      "name": "Coresignal",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Coresignal",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0x12E8DE0712aEbe6579A9E16deE2AE9FfCc4E7dC2",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "42000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v2/company_base/collect/:profile_url",
+        "url": "https://mpp.orthogonal.com/coresignal/v2/company_base/collect/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:08.170Z"
+    },
+    {
+      "serviceId": "orth-tako",
+      "name": "Tako via Orthogonal",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Tako",
+      "integration": "third-party",
+      "categories": [
+        "search",
+        "data"
+      ],
+      "recipient": "0x8e4A08ac4A195FA8BFd9d4573D4859A9C9882145",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "23000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/tako_tools_description",
+        "url": "https://mpp.orthogonal.com/tako/v1/tako_tools_description"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:08.208Z"
+    },
+    {
+      "serviceId": "orth-ocean-io",
+      "name": "Ocean.io",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Ocean.io",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0x31220DD5ae5798cd881E913281E1989A7b91eCeD",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "1000000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v3/search/companies",
+        "url": "https://mpp.orthogonal.com/ocean-io/v3/search/companies"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:08.580Z"
+    },
+    {
+      "serviceId": "orth-crustdata",
+      "name": "Crustdata",
+      "realm": "mpp.orthogonal.com",
+      "provider": "Crustdata",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0x68E8bCC127cd079a79A48e9B7Fa3934DE40a2443",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "313000",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/screener/company",
+        "url": "https://mpp.orthogonal.com/crustdata/screener/company"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:09.113Z"
+    },
+    {
+      "serviceId": "orth-agentmail",
+      "name": "AgentMail via Orthogonal",
+      "realm": "mpp.orthogonal.com",
+      "provider": "AgentMail",
+      "integration": "third-party",
+      "categories": [
+        "ai",
+        "social"
+      ],
+      "recipient": "0xaA4a75114b5BdA671844ae10256d2B048dF8fdc3",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "2000000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "POST",
+        "path": "/v0/inboxes",
+        "url": "https://mpp.orthogonal.com/agentmail/v0/inboxes"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:08.668Z"
+    },
+    {
+      "serviceId": "orth-predictleads",
+      "name": "PredictLeads",
+      "realm": "mpp.orthogonal.com",
+      "provider": "PredictLeads",
+      "integration": "third-party",
+      "categories": [
+        "data"
+      ],
+      "recipient": "0xcA37dE138574432B96F92B0Cd9826DaDFd1cf443",
+      "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+      "decimals": 6,
+      "amount": "40000",
+      "unitType": "request",
+      "intent": "charge",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v3/companies/:id_or_domain",
+        "url": "https://mpp.orthogonal.com/predictleads/v3/companies/1"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:08.591Z"
+    },
+    {
+      "serviceId": "tempo-indexer",
+      "name": "Tempo Indexer (hosted)",
+      "realm": "tempo-api",
+      "provider": "Tempo",
+      "integration": "first-party",
+      "categories": [
+        "data",
+        "blockchain"
+      ],
+      "recipient": "0xfF87284b5cE25620d88533E080Da1Ad97BC320f0",
+      "currency": "0x20c0000000000000000000000000000000000000",
+      "decimals": 6,
+      "amount": "100",
+      "unitType": "request",
+      "intent": "session",
+      "escrowContract": "0x4d50500000000000000000000000000000000000",
+      "chainId": 4217,
+      "endpoint": {
+        "method": "GET",
+        "path": "/v1/indexer/query?chainId=4217&sql=SELECT%201",
+        "url": "https://api.tempo.xyz/v1/indexer/query?chainId=4217&sql=SELECT%201"
+      },
+      "source": "live-402",
+      "resolvedAt": "2026-09-18T16:37:08.363Z"
+    }
+  ],
+  "unresolved": [
+    {
+      "serviceId": "browserbase",
+      "name": "Browserbase",
+      "realm": "mpp.browserbase.com",
+      "url": "https://mpp.browserbase.com/browser/session/1/status",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "buildwithlocus",
+      "name": "Build With Locus",
+      "realm": "mpp.buildwithlocus.com",
+      "url": "https://mpp.buildwithlocus.com/v1/auth/whoami",
+      "status": 401,
+      "reason": "endpoint returned HTTP 401 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "codex",
+      "name": "Codex",
+      "realm": "graph.codex.io",
+      "url": "https://graph.codex.io/graphql",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "dripstack",
+      "name": "DripStack",
+      "realm": "dripstack.xyz",
+      "url": "https://dripstack.xyz/api/v1/publications",
+      "status": 200,
+      "reason": "endpoint returned HTTP 200 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "dune",
+      "name": "Dune",
+      "realm": "api.dune.com",
+      "url": "https://api.dune.com/api/v1/execution/1/csv",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "govlaws",
+      "name": "GovLaws",
+      "realm": "govlaws.ai",
+      "url": "https://govlaws.ai/api/mpp/resolve",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "gemini",
+      "name": "Google Gemini",
+      "realm": "mpp.tempo.xyz",
+      "url": "https://gemini.mpp.tempo.xyz/1/operations/*",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "moltycash",
+      "name": "molty.cash",
+      "realm": "api.molty.cash",
+      "url": "https://api.molty.cash/a2a",
+      "status": 402,
+      "reason": "402 carried no offer for chain 4217"
+    },
+    {
+      "serviceId": "nansen",
+      "name": "Nansen",
+      "realm": "api.nansen.ai",
+      "url": "https://api.nansen.ai/api/v1/account",
+      "status": 401,
+      "reason": "endpoint returned HTTP 401 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "parallel",
+      "name": "Parallel",
+      "realm": "parallelmpp.dev",
+      "url": "https://parallelmpp.dev/api/task/1",
+      "status": 500,
+      "reason": "endpoint returned HTTP 500 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "conduit",
+      "name": "Conduit",
+      "realm": "conduit.xyz",
+      "url": "https://mpp.conduit.xyz/1/",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "quicknode",
+      "name": "Quicknode",
+      "realm": "quicknode.com",
+      "url": "https://mpp.quicknode.com/1",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "stabletravel",
+      "name": "StableTravel",
+      "realm": "stabletravel.dev",
+      "url": "https://stabletravel.dev/api/flights/orders",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "flightapi",
+      "name": "FlightAPI",
+      "realm": "mpp.tempo.xyz",
+      "url": "https://flightapi.mpp.tempo.xyz/airline/1*",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "googlemaps",
+      "name": "Google Maps",
+      "realm": "mpp.tempo.xyz",
+      "url": "https://googlemaps.mpp.tempo.xyz/maps/geocode/json",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "postalform",
+      "name": "PostalForm",
+      "realm": "postalform.com",
+      "url": "https://postalform.com/api/machine/mpp/orders/1",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "martin-estate",
+      "name": "Martin Estate Winery",
+      "realm": "agents.martinestate.com",
+      "url": "https://agents.martinestate.com/catalog",
+      "status": 200,
+      "reason": "endpoint returned HTTP 200 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "sayer-and-stone",
+      "name": "Sayer & Stone",
+      "realm": "agents.sayerandstone.com",
+      "url": "https://agents.sayerandstone.com/catalog",
+      "status": 200,
+      "reason": "endpoint returned HTTP 200 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "megapot",
+      "name": "Megapot",
+      "realm": "megapot.mpp.paysponge.com",
+      "url": "https://megapot.mpp.paysponge.com/purchase",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "alphavantage",
+      "name": "Alpha Vantage",
+      "realm": "alphavantage.mpp.paywithlocus.com",
+      "url": "https://alphavantage.mpp.paywithlocus.com/alphavantage/time-series-intraday",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "apollo",
+      "name": "Apollo",
+      "realm": "apollo.mpp.paywithlocus.com",
+      "url": "https://apollo.mpp.paywithlocus.com/apollo/people-enrichment",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "autoexchange",
+      "name": "Auto.exchange",
+      "realm": "api.auto.exchange",
+      "url": "https://api.auto.exchange/agents",
+      "status": 200,
+      "reason": "endpoint returned HTTP 200 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "billboard",
+      "name": "Billboard",
+      "realm": "billboard.mpp.paywithlocus.com",
+      "url": "https://billboard.mpp.paywithlocus.com/billboard/post",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "brave",
+      "name": "Brave Search",
+      "realm": "brave.mpp.paywithlocus.com",
+      "url": "https://brave.mpp.paywithlocus.com/brave/web-search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "builtwith",
+      "name": "BuiltWith",
+      "realm": "builtwith.mpp.paywithlocus.com",
+      "url": "https://builtwith.mpp.paywithlocus.com/builtwith/domain",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "clado",
+      "name": "Clado",
+      "realm": "clado.mpp.paywithlocus.com",
+      "url": "https://clado.mpp.paywithlocus.com/clado/search",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "coingecko",
+      "name": "CoinGecko",
+      "realm": "coingecko.mpp.paywithlocus.com",
+      "url": "https://coingecko.mpp.paywithlocus.com/coingecko/simple-price",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-company-enrichment",
+      "name": "Company Enrichment",
+      "realm": "abstract-company-enrichment.mpp.paywithlocus.com",
+      "url": "https://abstract-company-enrichment.mpp.paywithlocus.com/abstract-company-enrichment/lookup",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "deepgram",
+      "name": "Deepgram",
+      "realm": "deepgram.mpp.paywithlocus.com",
+      "url": "https://deepgram.mpp.paywithlocus.com/deepgram/transcribe",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "deepl",
+      "name": "DeepL",
+      "realm": "deepl.mpp.paywithlocus.com",
+      "url": "https://deepl.mpp.paywithlocus.com/deepl/translate",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "deepseek",
+      "name": "DeepSeek",
+      "realm": "deepseek.mpp.paywithlocus.com",
+      "url": "https://deepseek.mpp.paywithlocus.com/deepseek/chat",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "diffbot",
+      "name": "Diffbot",
+      "realm": "diffbot.mpp.paywithlocus.com",
+      "url": "https://diffbot.mpp.paywithlocus.com/diffbot/article",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "diffbot-kg",
+      "name": "Diffbot KG",
+      "realm": "diffbot-kg.mpp.paywithlocus.com",
+      "url": "https://diffbot-kg.mpp.paywithlocus.com/diffbot-kg/search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "diffbot-nl",
+      "name": "Diffbot NL",
+      "realm": "diffbot-nl.mpp.paywithlocus.com",
+      "url": "https://diffbot-nl.mpp.paywithlocus.com/diffbot-nl/analyze",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "edgar",
+      "name": "EDGAR (SEC)",
+      "realm": "edgar.mpp.paywithlocus.com",
+      "url": "https://edgar.mpp.paywithlocus.com/edgar/company-submissions",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "edgar-search",
+      "name": "EDGAR Full-Text Search",
+      "realm": "edgar-search.mpp.paywithlocus.com",
+      "url": "https://edgar-search.mpp.paywithlocus.com/edgar-search/search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-email-reputation",
+      "name": "Email Reputation",
+      "realm": "abstract-email-reputation.mpp.paywithlocus.com",
+      "url": "https://abstract-email-reputation.mpp.paywithlocus.com/abstract-email-reputation/check",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-exchange-rates",
+      "name": "Exchange Rates",
+      "realm": "abstract-exchange-rates.mpp.paywithlocus.com",
+      "url": "https://abstract-exchange-rates.mpp.paywithlocus.com/abstract-exchange-rates/live",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "grok",
+      "name": "Grok",
+      "realm": "grok.mpp.paywithlocus.com",
+      "url": "https://grok.mpp.paywithlocus.com/grok/chat",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "groq",
+      "name": "Groq",
+      "realm": "groq.mpp.paywithlocus.com",
+      "url": "https://groq.mpp.paywithlocus.com/groq/chat",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-holidays",
+      "name": "Holidays",
+      "realm": "abstract-holidays.mpp.paywithlocus.com",
+      "url": "https://abstract-holidays.mpp.paywithlocus.com/abstract-holidays/lookup",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "hunter",
+      "name": "Hunter",
+      "realm": "hunter.mpp.paywithlocus.com",
+      "url": "https://hunter.mpp.paywithlocus.com/hunter/domain-search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-iban-validation",
+      "name": "IBAN Validation",
+      "realm": "abstract-iban-validation.mpp.paywithlocus.com",
+      "url": "https://abstract-iban-validation.mpp.paywithlocus.com/abstract-iban-validation/validate",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-ip-intelligence",
+      "name": "IP Intelligence",
+      "realm": "abstract-ip-intelligence.mpp.paywithlocus.com",
+      "url": "https://abstract-ip-intelligence.mpp.paywithlocus.com/abstract-ip-intelligence/lookup",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "ipinfo",
+      "name": "IPinfo",
+      "realm": "ipinfo.mpp.paywithlocus.com",
+      "url": "https://ipinfo.mpp.paywithlocus.com/ipinfo/ip-lite",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "judge0",
+      "name": "Judge0",
+      "realm": "judge0.mpp.paywithlocus.com",
+      "url": "https://judge0.mpp.paywithlocus.com/judge0/execute-code",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "mapbox",
+      "name": "Mapbox",
+      "realm": "mapbox.mpp.paywithlocus.com",
+      "url": "https://mapbox.mpp.paywithlocus.com/mapbox/geocode-forward",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "mathpix",
+      "name": "Mathpix",
+      "realm": "mathpix.mpp.paywithlocus.com",
+      "url": "https://mathpix.mpp.paywithlocus.com/mathpix/process-image",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "mistral",
+      "name": "Mistral AI",
+      "realm": "mistral.mpp.paywithlocus.com",
+      "url": "https://mistral.mpp.paywithlocus.com/mistral/chat",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "openweather",
+      "name": "OpenWeather",
+      "realm": "openweather.mpp.paywithlocus.com",
+      "url": "https://openweather.mpp.paywithlocus.com/openweather/current-weather",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "perplexity",
+      "name": "Perplexity",
+      "realm": "perplexity.mpp.paywithlocus.com",
+      "url": "https://perplexity.mpp.paywithlocus.com/perplexity/chat",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-phone-intelligence",
+      "name": "Phone Intelligence",
+      "realm": "abstract-phone-intelligence.mpp.paywithlocus.com",
+      "url": "https://abstract-phone-intelligence.mpp.paywithlocus.com/abstract-phone-intelligence/lookup",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "rentcast",
+      "name": "RentCast",
+      "realm": "rentcast.mpp.paywithlocus.com",
+      "url": "https://rentcast.mpp.paywithlocus.com/rentcast/properties",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "replicate",
+      "name": "Replicate",
+      "realm": "replicate.mpp.paywithlocus.com",
+      "url": "https://replicate.mpp.paywithlocus.com/replicate/run",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "screenshotone",
+      "name": "ScreenshotOne",
+      "realm": "screenshotone.mpp.paywithlocus.com",
+      "url": "https://screenshotone.mpp.paywithlocus.com/screenshotone/take",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "stability-ai",
+      "name": "Stability AI",
+      "realm": "stability-ai.mpp.paywithlocus.com",
+      "url": "https://stability-ai.mpp.paywithlocus.com/stability-ai/generate-ultra",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "suno",
+      "name": "Suno",
+      "realm": "suno.mpp.paywithlocus.com",
+      "url": "https://suno.mpp.paywithlocus.com/suno/generate-music",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "tako",
+      "name": "Tako",
+      "realm": "tako.com",
+      "url": "https://tako.com/api/mpp/v1/reports/status",
+      "status": 401,
+      "reason": "endpoint returned HTTP 401 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "tavily",
+      "name": "Tavily",
+      "realm": "tavily.mpp.paywithlocus.com",
+      "url": "https://tavily.mpp.paywithlocus.com/tavily/search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-timezone",
+      "name": "Timezone",
+      "realm": "abstract-timezone.mpp.paywithlocus.com",
+      "url": "https://abstract-timezone.mpp.paywithlocus.com/abstract-timezone/current-time",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-vat",
+      "name": "VAT",
+      "realm": "abstract-vat.mpp.paywithlocus.com",
+      "url": "https://abstract-vat.mpp.paywithlocus.com/abstract-vat/validate",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "abstract-web-scraping",
+      "name": "Web Scraping",
+      "realm": "abstract-web-scraping.mpp.paywithlocus.com",
+      "url": "https://abstract-web-scraping.mpp.paywithlocus.com/abstract-web-scraping/scrape",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "wolframalpha",
+      "name": "Wolfram|Alpha",
+      "realm": "wolframalpha.mpp.paywithlocus.com",
+      "url": "https://wolframalpha.mpp.paywithlocus.com/wolframalpha/short-answer",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "stripe-climate",
+      "name": "Stripe Climate",
+      "realm": "climate.stripe.dev",
+      "url": "https://climate.stripe.dev/api/contribute",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "papercut",
+      "name": "Papercut",
+      "realm": "papercut.lol",
+      "url": "https://papercut.lol/api/send",
+      "status": 500,
+      "reason": "endpoint returned HTTP 500 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-sixtyfour",
+      "name": "Sixtyfour API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/sixtyfour/find-email",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-fiber",
+      "name": "Fiber AI API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/fiber/v1/linkedin-live-fetch/company/single",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-openmart",
+      "name": "Openmart",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/openmart/api/v1/business_records/list/1",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-edges",
+      "name": "Edges",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/edges/actions/salesnavigator-search-company-employees/run/live",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-captaindata",
+      "name": "CaptainData",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/captaindata/people/enrich",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-baseten",
+      "name": "Baseten Model APIs",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/baseten/v1/chat/completions",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-seltz",
+      "name": "Seltz",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/seltz/v1/search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-scrapegraphai",
+      "name": "ScrapeGraphAI",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/scrapegraphai/api/scrape",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-openfunnel",
+      "name": "OpenFunnel",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/openfunnel/api/v1/audience/create-account-audience",
+      "status": 501,
+      "reason": "endpoint returned HTTP 501 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-contactout",
+      "name": "ContactOut",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/contactout/v1/people/linkedin",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-tavily",
+      "name": "Tavily API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/tavily/crawl",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-serper-scrape",
+      "name": "Serper Scrape",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/serper-scrape/",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-olostep",
+      "name": "Olostep API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/olostep/v1/scrapes",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-riveter",
+      "name": "Riveter API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/riveter/v1/scrape",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-happenstance",
+      "name": "Happenstance",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/happenstance/v1/research",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-apollo",
+      "name": "Apollo API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/apollo/api/v1/organizations/enrich",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-context-dev",
+      "name": "Context.dev",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/context-dev/web/scrape/html",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-precip",
+      "name": "Precip AI - Hyperlocal Weather Data API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/precip/api/v1/last-48",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-fundable",
+      "name": "Fundable",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/fundable/deals/1",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-didit",
+      "name": "Didit API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/didit/v3/email/send",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-influencers-club",
+      "name": "Influencers Club",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/influencers-club/public/v1/creators/enrich/handle/raw/",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-bytemine",
+      "name": "Bytemine",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/bytemine/crawl/start",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-brand-dev",
+      "name": "Brand.dev API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/brand-dev/v1/brand/fonts",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-notte",
+      "name": "Notte",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/notte/sessions/1/page/screenshot",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-linkup",
+      "name": "Linkup API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/linkup/search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-scrapecreators",
+      "name": "Scrape Creators",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/scrapecreators/v1/komi",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-andi",
+      "name": "Andi Search API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/andi/v1/search",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-voygr",
+      "name": "Voygr",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/voygr/v1/business-status",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-tomba",
+      "name": "Tomba API",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/tomba/v1/people/find",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-serper",
+      "name": "Serper",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/serper/autocomplete",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-aviato",
+      "name": "Aviato",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/aviato/company/funding-rounds",
+      "status": 400,
+      "reason": "endpoint returned HTTP 400 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "tempvpn",
+      "name": "TempVPN",
+      "realm": "registry.tempvpn.xyz",
+      "url": "https://registry.tempvpn.xyz/nodes",
+      "status": 200,
+      "reason": "endpoint returned HTTP 200 instead of a 402 challenge"
+    },
+    {
+      "serviceId": "orth-agentphone",
+      "name": "AgentPhone",
+      "realm": "mpp.orthogonal.com",
+      "url": "https://mpp.orthogonal.com/agentphone/v1/agents/1",
+      "status": 404,
+      "reason": "endpoint returned HTTP 404 instead of a 402 challenge"
+    }
+  ]
+}

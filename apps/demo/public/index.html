@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LEASH, live on Tempo Moderato</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0a0b'/%3E%3Cpath d='M3 8h4M9 8h4M8 3v10' stroke='%23ffab2d' stroke-width='1.5'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div class="stickytop">
+    <header class="hud">
+      <div class="hud-left">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <div class="wordmark">LEASH</div>
+          <div class="tagline">a spend limit the chain enforces, not the app</div>
+        </div>
+      </div>
+
+      <div class="hud-gauge" id="gauge" hidden>
+        <div class="gauge-label">agent budget, read from the precompile</div>
+        <div class="gauge-figure">
+          <span id="gaugeValue">—</span><span class="gauge-unit" id="gaugeUnit"></span>
+        </div>
+        <div class="gauge-bar"><i id="gaugeFill"></i></div>
+        <div class="gauge-prov" id="gaugeProv"></div>
+      </div>
+
+      <div class="hud-right">
+        <div class="chain" id="chain">not started</div>
+        <button id="runBtn" class="run">Run it live</button>
+      </div>
+    </header>
+
+      <nav class="steps" id="steps"></nav>
+    </div>
+
+    <main class="tape" id="tape">
+      <section class="intro">
+        <h1>Every competing agent spend control is application code.<br />This one is a consensus rule.</h1>
+        <p>
+          Press run. A fresh agent key is authorized on Tempo's Moderato testnet with a budget
+          priced from live MPP 402 challenges, it pays real MPP payout addresses until the budget
+          is gone, and then the chain refuses it four different ways. Nothing below is simulated:
+          every refusal is a response from a node, every balance is read back from the
+          AccountKeychain precompile, and the kill switch is shown with the ugly timing it
+          actually has.
+        </p>
+        <ul class="intro-list">
+          <li><b>~60 seconds.</b> Roughly 10 transactions, most of them under 2 s.</li>
+          <li><b>Budgets come from <code>getRemainingLimitWithPeriod</code>.</b> Never from the event stream, which is stale by the gas refund.</li>
+          <li><b>MPP settles on mainnet 4217.</b> Payout addresses are resolved live there and enforced here on 42431, in a currency those same challenges quote.</li>
+        </ul>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

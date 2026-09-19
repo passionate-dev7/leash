@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "keys": [
+    {
+      "keyId": "0x15E87571bCE9cfd2d670A756778BD93F1d839099",
+      "label": "DEMO_1789769178298",
+      "agent": "leash-demo-agent",
+      "chainId": 42431,
+      "intendedServiceIds": [
+        "openai",
+        "firecrawl"
+      ],
+      "recipients": [
+        "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+      ],
+      "token": "0x20c0000000000000000000000000000000000000",
+      "decimals": 6,
+      "budget": "12250",
+      "periodSeconds": 86400,
+      "expiry": 1789855578,
+      "priceFloor": "2000",
+      "resolvedAt": "2026-09-18T22:06:18.297Z",
+      "indexCapturedAt": "2026-09-18T16:37:09.113Z",
+      "signedAt": "2026-09-18T22:06:20.617Z",
+      "authorizeTx": "0x5edbeb9aacffa54a58d1aa1841c46c15933b3a79430975371f45a782edb5471e",
+      "sponsored": true,
+      "revokedAt": "2026-09-18T22:06:32.822Z",
+      "revokeTx": "0x8c0175f842f090589d84062a8e5a3752b36e3a767e29418ec8e4546822b17499"
+    },
+    {
+      "keyId": "0xd48C7496CBfdB87Cb4669CaA7223D407295Ea575",
+      "label": "DEMO_1789768967504",
+      "agent": "leash-demo-agent",
+      "chainId": 42431,
+      "intendedServiceIds": [
+        "openai",
+        "firecrawl"
+      ],
+      "recipients": [
+        "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+      ],
+      "token": "0x20c0000000000000000000000000000000000000",
+      "decimals": 6,
+      "budget": "12250",
+      "periodSeconds": 86400,
+      "expiry": 1789855367,
+      "priceFloor": "2000",
+      "resolvedAt": "2026-09-18T22:02:47.502Z",
+      "indexCapturedAt": "2026-09-18T16:37:09.113Z",
+      "signedAt": "2026-09-18T22:02:49.973Z",
+      "authorizeTx": "0xf600e3d31a0f252dc94f3df4c2c0296a650189a5148c761b996f9d2248d861ab",
+      "sponsored": true,
+      "revokedAt": "2026-09-18T22:03:06.366Z",
+      "revokeTx": "0xe0269045e731c241a852f6fb4df5f7c3bb58c1edf8c1373573150c52315b1eb7"
+    },
+    {
+      "keyId": "0x1957a9fEb5b4D504cb2cB3Ef94964c4Cc405067c",
+      "label": "AGENT_RESEARCH_AGENT_01_1789768621789",
+      "agent": "research-agent-01",
+      "chainId": 42431,
+      "intendedServiceIds": [
+        "openai",
+        "firecrawl"
+      ],
+      "recipients": [
+        "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+      ],
+      "token": "0x20c0000000000000000000000000000000000000",
+      "decimals": 6,
+      "budget": "50000",
+      "periodSeconds": 2592000,
+      "expiry": 1790373422,
+      "priceFloor": "2000",
+      "resolvedAt": "2026-09-18T21:57:02.152Z",
+      "indexCapturedAt": "2026-09-18T16:37:09.113Z",
+      "signedAt": "2026-09-18T21:57:04.600Z",
+      "authorizeTx": "0x234ccbe7c75e065e44d8a2f8ace5597e858bb4d59f305d4add3e7b122b7a270e",
+      "sponsored": true
+    }
+  ],
+  "operator": "0x171062b563f575ac87c42D597c331b0D05a72605"
+}

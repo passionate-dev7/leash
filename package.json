@@ -1,0 +1,26 @@
+{
+  "name": "leash",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r exec tsc --noEmit",
+    "catalog:refresh": "pnpm --filter @leash/policy exec tsx scripts/refresh-catalog.ts",
+    "test": "pnpm --filter @leash/policy test",
+    "test:adversarial": "pnpm --filter @leash/sdk test:adversarial",
+    "console": "pnpm --filter @leash/console dev",
+    "server": "pnpm --filter @leash/console server",
+    "demo": "pnpm --filter @leash/demo dev",
+    "demo:headless": "pnpm --filter @leash/demo run:headless"
+  },
+  "devDependencies": {
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}

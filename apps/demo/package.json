@@ -1,0 +1,23 @@
+{
+  "name": "@leash/demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/script.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/server.ts",
+    "run:headless": "tsx src/headless.ts"
+  },
+  "dependencies": {
+    "@leash/console": "workspace:*",
+    "@leash/policy": "workspace:*",
+    "@leash/sdk": "workspace:*",
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.1",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@leash/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test:adversarial": "vitest run --config vitest.adversarial.config.ts"
+  },
+  "dependencies": {
+    "@leash/policy": "workspace:*",
+    "ox": "0.14.45",
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.1",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4",
+    "tsx": "4.23.13"
+  }
+}
