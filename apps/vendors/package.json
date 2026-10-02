@@ -1,0 +1,10 @@
+{
+  "name": "@leash/vendors",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "mppx": "0.12.0", "ox": "0.14.45", "viem": "2.57.1" },
+  "devDependencies": { "@types/node": "26.6.1", "typescript": "5.9.3", "tsx": "4.23.13" }
+}

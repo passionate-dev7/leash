@@ -3,6 +3,7 @@ packages:
   - 'apps/*'
 allowBuilds:
   esbuild: true
+  '@tailwindcss/oxide': true
 minimumReleaseAgeExclude:
   - viem@2.56.8 || 2.57.1
   - mppx@0.12.0

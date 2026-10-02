@@ -12,3 +12,5 @@ testnet/
 # research and plans stay local
 docs/
 .progress
+apps/api/data/
+apps/web/dist/
