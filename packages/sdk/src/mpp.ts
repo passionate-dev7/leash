@@ -152,6 +152,13 @@ export function createLeashFetch(options: LeashFetchOptions) {
     let challenge: { id: string; realm?: string; request: Record<string, unknown> } | undefined
 
     const mppx = Mppx.create({
+      // mppx swallows anything an onChallengeReceived handler throws, so a block list enforced
+      // there never blocks. onChallenge errors propagate and abort before a credential is signed.
+      onChallenge: async (c) => {
+        const recipient = String((c as { request: Record<string, unknown> }).request['recipient'] ?? '').toLowerCase()
+        if (recipient && options.blocked?.().has(recipient)) throw new LeashBlocked(`LeashBlocked: ${recipient} is cut for this team`)
+        return undefined
+      },
       methods: [
         tempoMethod.charge({
           account: agent as never,
@@ -162,11 +169,7 @@ export function createLeashFetch(options: LeashFetchOptions) {
       polyfill: false,
     })
     mppx.onChallengeReceived((p) => {
-      const c = (p as { challenge: typeof challenge }).challenge
-      challenge = c
-      const recipient = String(c?.request['recipient'] ?? '').toLowerCase()
-      if (recipient && options.blocked?.().has(recipient))
-        throw new LeashBlocked(`LeashBlocked: ${recipient} is cut for this team`)
+      challenge = (p as { challenge: typeof challenge }).challenge
       return undefined
     })
     mppx.onCredentialCreated((p) => {
