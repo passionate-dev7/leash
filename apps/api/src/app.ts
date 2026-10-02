@@ -12,6 +12,7 @@ import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, re
 import type { Route } from './http.js'
 import { cachedReplay, MAX_REPLAY_BLOCKS } from './mainnet.js'
 import { outsideFeed } from './outside.js'
+import { sponsorBalance } from './sponsor.js'
 import type { Runner } from './runner.js'
 import { isServiceId, payoutGroups, publicCatalog, servicesPaying } from './services.js'
 import type { AgentRow, Store } from './store.js'
@@ -37,9 +38,9 @@ function intParam(query: URLSearchParams, key: string, fallback: number, min: nu
   return n
 }
 
-export type AppDeps = { store: Store; runner: Runner; vendors: VendorRouter }
+export type AppDeps = { store: Store; runner: Runner; vendors: VendorRouter; sponsor: Address }
 
-export function createApp({ store, runner, vendors }: AppDeps) {
+export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
   const teamOf = (account: Address) => {
     const team = store.team(account)
     if (!team) throw notFound(`no team ${account}. Create it with POST /api/teams`)
@@ -62,7 +63,7 @@ export function createApp({ store, runner, vendors }: AppDeps) {
   const routes: Route[] = [
     route('GET', '/api/health', async () => {
       const block = await retryRead(() => reader.getBlockNumber())
-      return { ok: true, chainId: MODERATO.chainId, block: Number(block) }
+      return { ok: true, chainId: MODERATO.chainId, block: Number(block), sponsor: { address: sponsor, pathusd: String(await sponsorBalance(sponsor)) } }
     }),
 
     route('GET', '/api/catalog', async () => ({ services: publicCatalog(), payoutGroups: payoutGroups() })),

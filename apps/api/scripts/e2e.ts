@@ -25,6 +25,7 @@ const ALL = ['atlas-search', 'atlas-scrape', 'atlas-fx', 'relay-summarize', 'rel
 type Json = Record<string, any>
 const hashes: Record<string, string[]> = { authorize: [], settlements: [], cutoff: [] }
 const refusals: string[] = []
+const feePayers: string[] = []
 const log = (...a: unknown[]) => console.log(...a)
 
 class Failure extends Error {}
@@ -53,6 +54,8 @@ const ousd = (a: Address) => client.readContract({ address: OUSD, abi: balanceOf
 async function main() {
   const health = await api('GET', '/api/health')
   check(health.ok && health.chainId === 42431, 'API is not reading Moderato')
+  const sponsor = String(health.sponsor?.address ?? '').toLowerCase()
+  check(/^0x[0-9a-f]{40}$/.test(sponsor) && BigInt(health.sponsor.pathusd) > 0n, 'health must name a funded vendor fee sponsor')
   log(`api ${API}  chain ${health.chainId}  block ${health.block}`)
   log(`throwaway team root ${root.address}`)
 
@@ -120,13 +123,19 @@ async function main() {
     check(rx.status === 'success', `settlement ${r.settlement.tx} did not succeed on chain`)
     const t = parseEventLogs({ abi: Abis.tip20, logs: rx.logs, eventName: 'TransferWithMemo' }).find((e) => e.args.memo === r.memo)
     check(t && t.args.to.toLowerCase() === r.recipient.toLowerCase() && String(t.args.amount) === r.amount && t.args.from.toLowerCase() === root.address.toLowerCase(), `settlement ${r.settlement.tx} does not carry the recorded payment`)
+    // Sponsorship: the vendor's account pays the gas, so the agent key's AccessKeySpend is the price and nothing else.
+    // A silent fall back to sender-pays shows up as feePayer === from and a second AccessKeySpend for the gas.
+    const feePayer = String((rx as { feePayer?: string }).feePayer ?? '')
+    check(feePayer.toLowerCase() === sponsor && feePayer.toLowerCase() !== rx.from.toLowerCase(), `settlement ${r.settlement.tx} fee payer is ${feePayer || 'unset'}, expected the vendor sponsor ${sponsor} and not the sender ${rx.from}`)
+    check(r.settlement.keySpend.length === 1 && r.settlement.keySpend[0] === r.amount, `settlement ${r.settlement.tx} AccessKeySpend ${JSON.stringify(r.settlement.keySpend)} is not exactly the price ${r.amount}`)
+    feePayers.push(`${r.settlement.tx} fee payer ${feePayer} sender ${rx.from} AccessKeySpend ${r.settlement.keySpend.join('+')} price ${r.amount}`)
     if (r.vendorId === 'atlas') atlasPaid += BigInt(r.amount)
     hashes['settlements']!.push(r.settlement.tx)
   }
   const merchantAfter = await ousd(ATLAS_MASTER)
   check(merchantAfter - merchantBefore >= atlasPaid && atlasPaid > 0n, `Atlas master credited ${merchantAfter - merchantBefore}, expected at least ${atlasPaid}`)
   const spentOusd = startOusd - (await ousd(root.address))
-  check(spentOusd >= settled.reduce((s, r) => s + BigInt(r.amount), 0n), 'team OUSD fell by less than the settled payments')
+  check(spentOusd === settled.reduce((s, r) => s + BigInt(r.amount), 0n), `team OUSD fell by ${spentOusd}, not exactly the settled payments: gas must not touch the budget token`)
   log(`ledger: ${ledger.length} records, ${settled.length} settled and read back on chain; Atlas master credited ${merchantAfter - merchantBefore} units; team spent ${spentOusd} units`)
 
   const before = (await api('GET', `/api/teams/${root.address}/vendors`)).services as Json[]
@@ -183,6 +192,7 @@ async function main() {
 
   log('\nauthorize txs:\n  ' + hashes['authorize']!.join('\n  '))
   log('settlement txs:\n  ' + [...new Set(hashes['settlements']!)].join('\n  '))
+  log('sponsored settlements (fee payer, sender, AccessKeySpend, price):\n  ' + feePayers.join('\n  '))
   log('cutoff tx:\n  ' + hashes['cutoff']!.join('\n  '))
   log('refused calls (no transaction, the chain or the block list said no):\n  ' + refusals.join('\n  '))
   log('\nE2E PASS')

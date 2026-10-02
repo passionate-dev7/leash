@@ -1,3 +1,4 @@
+import type { Account } from 'viem'
 import { Mppx, tempo } from 'mppx/server'
 import { DEFINITIONS, OUSD } from './catalog.js'
 import type { CatalogEntry, ServiceId } from './catalog.js'
@@ -9,6 +10,11 @@ export type VendorRouterOptions = {
   secretKey: string
   /** Appears in every challenge and in the MPP memo's server fingerprint. */
   realm?: string
+  /**
+   * Pays the gas of every settlement. Challenges then carry methodDetails.feePayer = true, the agent
+   * signs without a fee token, and this account co-signs and broadcasts. Omitted, the payer pays its own gas.
+   */
+  feePayer?: Account
 }
 
 export type VendorRouter = (req: Request) => Promise<Response | null>
@@ -121,7 +127,7 @@ const handlers: Record<ServiceId, Handler> = {
  */
 export function createVendorRouter(options: VendorRouterOptions): VendorRouter {
   const mppx = Mppx.create({
-    methods: [tempo.charge({ testnet: true })],
+    methods: [tempo.charge({ testnet: true, ...(options.feePayer ? { feePayer: options.feePayer } : {}) })],
     secretKey: options.secretKey,
     realm: options.realm ?? 'vendors.leash',
   })

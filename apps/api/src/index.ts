@@ -4,11 +4,19 @@ import { createApp } from './app.js'
 import { PORT, vendorSecret } from './config.js'
 import { openDatabase } from './db.js'
 import { createRunner } from './runner.js'
+import { ensureSponsorFunded, sponsorAccount } from './sponsor.js'
 import { createStore } from './store.js'
 
 const db = openDatabase()
 const store = createStore(db)
-const handle = createApp({ store, runner: createRunner(store), vendors: createVendorRouter({ secretKey: vendorSecret() }) })
+const sponsor = sponsorAccount()
+try {
+  const funded = await ensureSponsorFunded(sponsor.address)
+  console.log(`vendor fee sponsor ${sponsor.address}: ${funded.topUp ? 'topped up from the faucet, ' : ''}${funded.balance} PathUSD units`)
+} catch (e) {
+  console.error(`[leash-api] vendor fee sponsor ${sponsor.address} could not be funded, sponsored payments will fail until it is: ${(e as Error).message.split('\n')[0]}`)
+}
+const handle = createApp({ store, runner: createRunner(store), vendors: createVendorRouter({ secretKey: vendorSecret(), feePayer: sponsor }), sponsor: sponsor.address })
 
 const host = process.env['LEASH_API_HOST'] ?? '127.0.0.1'
 const server = createServer((req, res) => void handle(req, res))
