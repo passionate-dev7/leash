@@ -1,0 +1,183 @@
+import type { Address, Hex } from 'viem'
+import type { DeliveryRecord, Outcome } from '@leash/sdk'
+import type { Db } from './db.js'
+
+export type TeamRow = { account: Address; label: string; signer: 'passkey' | 'webcrypto'; created_at: string }
+export type AgentStatus = 'pending' | 'active' | 'revoked'
+export type AgentRow = {
+  key_id: Address
+  account: Address
+  name: string
+  private_key: Hex
+  budget: string
+  period: number
+  token: Address
+  service_ids: string
+  expiry: number
+  authorize_tx: Hex | null
+  status: AgentStatus
+  created_at: string
+}
+export type CutoffStatus = 'prepared' | 'confirmed' | 'failed'
+export type CutoffRow = {
+  id: number
+  account: Address
+  recipient: Address
+  service_ids: string
+  tx: Hex | null
+  status: CutoffStatus
+  gas_used: string | null
+  rescoped: string
+  revoked: string
+  unbounded: string
+  unchanged: string
+  failure: string | null
+  created_at: string
+  confirmed_at: string | null
+}
+
+export type LedgerRecord = DeliveryRecord & {
+  seq: number
+  agentName: string
+  vendorId: string
+  serviceId: string
+}
+
+const now = () => new Date().toISOString()
+const rows = <T>(v: unknown[]): T[] => v as T[]
+
+export function createStore(db: Db) {
+  const q = {
+    upsertTeam: db.prepare(
+      'insert into team(account, label, signer, created_at) values (?, ?, ?, ?) on conflict(account) do update set label = excluded.label, signer = excluded.signer',
+    ),
+    team: db.prepare('select * from team where account = ?'),
+    insertAgent: db.prepare(
+      'insert into agent(key_id, account, name, private_key, budget, period, token, service_ids, expiry, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    ),
+    agent: db.prepare('select * from agent where key_id = ?'),
+    agents: db.prepare('select * from agent where account = ? order by created_at, key_id'),
+    countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and status != 'revoked'"),
+    setAgent: db.prepare('update agent set status = ?, authorize_tx = coalesce(?, authorize_tx) where key_id = ?'),
+    insertRecord: db.prepare(
+      `insert into record(id, account, agent_key_id, agent_name, vendor_id, service_id, url, method, request_hash, realm, recipient, amount, currency, memo, status, refused,
+        settlement_tx, settlement_block, settlement_status, key_spend, outcome, started_at, finished_at)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ),
+    ledger: db.prepare('select * from record where account = ? order by seq desc limit ?'),
+    ledgerAll: db.prepare('select * from record where account = ? order by seq'),
+    insertCutoff: db.prepare(
+      'insert into cutoff(account, recipient, service_ids, status, rescoped, revoked, unbounded, unchanged, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    ),
+    cutoff: db.prepare('select * from cutoff where id = ?'),
+    cutoffs: db.prepare('select * from cutoff where account = ? order by id desc'),
+    finishCutoff: db.prepare('update cutoff set status = ?, tx = ?, gas_used = ?, failure = ?, confirmed_at = ? where id = ?'),
+    addBlock: db.prepare('insert or ignore into block(account, recipient, created_at) values (?, ?, ?)'),
+    removeBlock: db.prepare('delete from block where account = ? and recipient = ?'),
+    blocks: db.prepare('select recipient from block where account = ?'),
+    faucetAt: db.prepare('select at from faucet where address = ?'),
+    setFaucet: db.prepare('insert into faucet(address, at) values (?, ?) on conflict(address) do update set at = excluded.at'),
+    faucetGlobal: db.prepare('select count(*) as n from faucet_global where at > ?'),
+    addFaucetGlobal: db.prepare('insert into faucet_global(at) values (?)'),
+    stats: db.prepare(
+      `select
+         (select count(*) from record where outcome in ('delivered', 'paid_not_delivered')) as paidCalls,
+         (select count(*) from record where outcome = 'delivered') as delivered,
+         (select count(*) from record where outcome = 'paid_not_delivered') as paidNotDelivered,
+         (select count(*) from record where outcome = 'refused') as refused,
+         (select count(*) from team) as teams,
+         (select count(*) from agent where status = 'active') as activeAgents,
+         (select count(*) from cutoff where status = 'confirmed' and tx is not null) as cutoffsConfirmed,
+         (select min(started_at) from record) as firstRecordAt`,
+    ),
+  }
+
+  const toRecord = (r: Record<string, unknown>): LedgerRecord => ({
+    seq: Number(r['seq']),
+    id: r['id'] as string,
+    url: r['url'] as string,
+    method: r['method'] as string,
+    requestHash: r['request_hash'] as Hex,
+    realm: (r['realm'] as string | null) ?? null,
+    keyId: r['agent_key_id'] as Address,
+    account: r['account'] as Address,
+    recipient: (r['recipient'] as Address | null) ?? null,
+    amount: (r['amount'] as string | null) ?? null,
+    currency: (r['currency'] as Address | null) ?? null,
+    memo: (r['memo'] as Hex | null) ?? null,
+    status: r['status'] === null ? null : Number(r['status']),
+    refused: (r['refused'] as string | null) ?? null,
+    settlement: r['settlement_tx']
+      ? {
+          tx: r['settlement_tx'] as Hex,
+          block: Number(r['settlement_block']),
+          status: r['settlement_status'] as 'success' | 'reverted',
+          keySpend: JSON.parse((r['key_spend'] as string | null) ?? '[]') as string[],
+        }
+      : null,
+    outcome: r['outcome'] as Outcome,
+    startedAt: r['started_at'] as string,
+    finishedAt: r['finished_at'] as string,
+    agentName: r['agent_name'] as string,
+    vendorId: r['vendor_id'] as string,
+    serviceId: r['service_id'] as string,
+  })
+
+  return {
+    upsertTeam(account: Address, label: string, signer: TeamRow['signer']) {
+      q.upsertTeam.run(account, label, signer, now())
+    },
+    team: (account: Address) => q.team.get(account) as TeamRow | undefined,
+
+    insertAgent(a: { keyId: Address; account: Address; name: string; privateKey: Hex; budget: string; period: number; token: Address; serviceIds: string[]; expiry: number }) {
+      q.insertAgent.run(a.keyId, a.account, a.name, a.privateKey, a.budget, a.period, a.token, JSON.stringify(a.serviceIds), a.expiry, 'pending', now())
+    },
+    agent: (keyId: Address) => q.agent.get(keyId) as AgentRow | undefined,
+    agents: (account: Address) => rows<AgentRow>(q.agents.all(account)),
+    openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account) as { n: number }).n),
+    setAgentStatus(keyId: Address, status: AgentStatus, authorizeTx: Hex | null = null) {
+      q.setAgent.run(status, authorizeTx, keyId)
+    },
+
+    insertRecord(record: DeliveryRecord, ctx: { agentName: string; vendorId: string; serviceId: string }) {
+      const s = record.settlement
+      q.insertRecord.run(
+        record.id, record.account, record.keyId, ctx.agentName, ctx.vendorId, ctx.serviceId, record.url, record.method, record.requestHash, record.realm,
+        record.recipient, record.amount, record.currency, record.memo, record.status, record.refused,
+        s?.tx ?? null, s?.block ?? null, s?.status ?? null, s ? JSON.stringify(s.keySpend) : null, record.outcome, record.startedAt, record.finishedAt,
+      )
+    },
+    ledger: (account: Address, limit: number) => rows<Record<string, unknown>>(q.ledger.all(account, limit)).map(toRecord),
+    allRecords: (account: Address) => rows<Record<string, unknown>>(q.ledgerAll.all(account)).map(toRecord),
+
+    insertCutoff(c: { account: Address; recipient: Address; serviceIds: string[]; status: CutoffStatus; rescoped: Address[]; revoked: Address[]; unbounded: Address[]; unchanged: Address[] }) {
+      const r = q.insertCutoff.run(c.account, c.recipient, JSON.stringify(c.serviceIds), c.status, JSON.stringify(c.rescoped), JSON.stringify(c.revoked), JSON.stringify(c.unbounded), JSON.stringify(c.unchanged), now())
+      return Number(r.lastInsertRowid)
+    },
+    cutoff: (id: number) => q.cutoff.get(id) as CutoffRow | undefined,
+    cutoffs: (account: Address) => rows<CutoffRow>(q.cutoffs.all(account)),
+    finishCutoff(id: number, status: CutoffStatus, tx: Hex | null, gasUsed: bigint | null, failure: string | null) {
+      q.finishCutoff.run(status, tx, gasUsed === null ? null : String(gasUsed), failure, status === 'confirmed' ? now() : null, id)
+    },
+
+    addBlock: (account: Address, recipient: Address) => void q.addBlock.run(account, recipient.toLowerCase(), now()),
+    removeBlock: (account: Address, recipient: Address) => void q.removeBlock.run(account, recipient.toLowerCase()),
+    blocked: (account: Address): ReadonlySet<string> => new Set(rows<{ recipient: string }>(q.blocks.all(account)).map((r) => r.recipient)),
+
+    /** Claims a faucet slot. Returns false when the address was funded inside `windowMs`. */
+    claimFaucet(address: Address, windowMs: number, globalLimit: number): 'ok' | 'address' | 'global' {
+      const t = Date.now()
+      const last = q.faucetAt.get(address.toLowerCase()) as { at: number } | undefined
+      if (last && t - last.at < windowMs) return 'address'
+      if (Number((q.faucetGlobal.get(t - 3_600_000) as { n: number }).n) >= globalLimit) return 'global'
+      q.setFaucet.run(address.toLowerCase(), t)
+      q.addFaucetGlobal.run(t)
+      return 'ok'
+    },
+    releaseFaucet: (address: Address) => void db.prepare('delete from faucet where address = ?').run(address.toLowerCase()),
+
+    stats: () => q.stats.get() as Record<string, number | string | null>,
+  }
+}
+
+export type Store = ReturnType<typeof createStore>
