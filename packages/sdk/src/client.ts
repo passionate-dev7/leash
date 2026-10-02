@@ -76,6 +76,11 @@ export type CreateLeashClientOptions = {
   rpcUrl?: string
 }
 
+/** The viem chain for a network, with the TIP-20 that pays gas. */
+export function chainFor(network: NetworkConfig, feeToken: Address = network.feeToken) {
+  return (network.name === 'mainnet' ? tempo : tempoModerato).extend({ feeToken })
+}
+
 /**
  * Builds a viem client for one Tempo network.
  *
@@ -89,8 +94,7 @@ export function createLeashClient(options: CreateLeashClientOptions) {
   const feeToken = options.feeToken ?? network.feeToken
   const sponsored = (options.sponsor ?? true) && Boolean(network.sponsorUrl)
 
-  const base = options.network === 'mainnet' ? tempo : tempoModerato
-  const chain = base.extend({ feeToken })
+  const chain = chainFor(network, feeToken)
   /**
    * `retryCount: 0` is deliberate and load-bearing.
    *
