@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url'
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
-  const api = env.VITE_LEASH_API ?? (command === 'serve' ? 'http://localhost:4180' : undefined)
-  if (api === undefined) throw new Error('VITE_LEASH_API is required for a production build (the base URL of the Leash API).')
+  // Dev talks to the local API. A build without VITE_LEASH_API calls the API on the page's own origin.
+  const api = env.VITE_LEASH_API ?? (command === 'serve' ? 'http://localhost:4180' : '')
   return {
     base: './',
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },

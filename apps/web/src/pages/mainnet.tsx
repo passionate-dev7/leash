@@ -75,7 +75,7 @@ export function MainnetPage() {
                       </Cell>
                       <Cell>
                         {p.services.length === 0 ? (
-                          <span className="text-ink-subtle">not yet mapped to a service</span>
+                          <span className="text-ink-subtle">Service not listed</span>
                         ) : (
                           <>
                             <span className="num text-ink-muted">{p.services.length} service{p.services.length === 1 ? '' : 's'}</span>
@@ -88,7 +88,15 @@ export function MainnetPage() {
                       <Cell className="num text-right">{units(p.volume.usdce)}</Cell>
                       <Cell className="num text-right">{units(p.volume.ousd)}</Cell>
                       <Cell className="num text-caption">
-                        {p.servers.length === 0 ? <span className="text-ink-subtle">untagged</span> : p.servers.map((s) => `${short(s.fingerprint, 6, 4)} x${s.charges}`).join('  ')}
+                        {p.servers.length === 0 ? (
+                          <span className="text-ink-subtle">untagged</span>
+                        ) : (
+                          <span className="flex flex-wrap gap-x-4 gap-y-1">
+                            {p.servers.map((s) => (
+                              <span key={s.fingerprint} className="whitespace-nowrap">{short(s.fingerprint, 6, 4)} x{s.charges}</span>
+                            ))}
+                          </span>
+                        )}
                       </Cell>
                     </tr>
                   ))}

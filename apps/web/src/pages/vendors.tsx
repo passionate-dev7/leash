@@ -14,8 +14,6 @@ import { NeedsTeam, PageHead, Cell, Th } from '@/components/page'
 import { OutcomeStatus } from '@/components/records'
 import { cn } from '@/components/ui/cn'
 
-const asRows = (v: VendorRow[] | { vendors: VendorRow[] }) => (Array.isArray(v) ? v : v.vendors)
-
 function FailureBar({ rate, paid }: { rate: number; paid: number }) {
   if (paid === 0) return <span className="text-ink-subtle">no payments</span>
   return (
@@ -164,6 +162,13 @@ function CutSheet({
                 Affected: {[...plan.rescoped, ...plan.revoked].map(nameOf).join(', ')}.
               </p>
             )}
+            {plan.calls.length === 0 && (
+              <div className="mt-3">
+                <Notice tone="info" title="Nothing to sign">
+                  No active agent key can pay this address, so the chain already refuses it for every key. Leash recorded the cut-off with no transaction.
+                </Notice>
+              </div>
+            )}
             {plan.unbounded.length > 0 && (
               <div className="mt-3">
                 <Notice tone="warning" title={`${plan.unbounded.length} key${plan.unbounded.length > 1 ? 's' : ''} this cut cannot reach`}>
@@ -188,14 +193,14 @@ function CutSheet({
             <Notice tone={result.status === 'confirmed' ? 'success' : 'error'} title={`Cut-off ${result.status}`}>
               Transaction <TxLink hash={tx} />
               {result.gasUsed ? <> used <span className="num">{String(result.gasUsed)}</span> gas.</> : '.'}
-              {result.reason ? ` ${result.reason}` : ''}
+              {result.failure ? ` ${result.failure}` : ''}
             </Notice>
             {after && (
               <div className="border border-hairline text-body-sm">
                 <p className="border-b border-hairline px-4 py-2 text-caption font-semibold text-ink-muted">Read back from chain just now</p>
                 <ul className="divide-y divide-hairline">
                   {after.filter((a) => a.status !== 'pending').map((a) => {
-                    const holds = a.scopes.some((s) => s.recipients.some((r) => r.toLowerCase() === row.recipient.toLowerCase()))
+                    const holds = (a.scopes ?? []).some((s) => s.selectorRules.some((rule) => rule.recipients.some((r) => r.toLowerCase() === row.recipient.toLowerCase())))
                     return (
                       <li key={a.keyId} className="flex items-baseline justify-between gap-4 px-4 py-2">
                         <span>{a.name}</span>
@@ -226,7 +231,7 @@ function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; sv
     setError(null)
     setRecord(null)
     try {
-      setRecord(await api.callAgent(keyId as Address, row.serviceId, svc?.inputExample ?? {}))
+      setRecord((await api.callAgent(keyId as Address, row.serviceId, svc?.inputExample ?? {})).record)
       onChanged()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -284,7 +289,7 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
   const [trying, setTrying] = useState<VendorRow | null>(null)
 
   const svcById = useMemo(() => new Map((catalog.data?.services ?? []).map((s) => [s.serviceId, s])), [catalog.data])
-  const rows = vendors.data ? asRows(vendors.data) : []
+  const rows = vendors.data?.services ?? []
   const agents = team.data?.agents ?? []
   const refresh = () => {
     vendors.reload()
@@ -346,7 +351,10 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
                           <Button size="sm" variant="tertiary" onClick={() => setTrying(r)}>Try a payment</Button>
                         </span>
                       ) : (
-                        <Button size="sm" variant="danger" onClick={() => setCut(r)}>Cut</Button>
+                        <span className="flex flex-col items-start gap-1">
+                          {r.cut?.status === 'prepared' && <span className="text-caption text-ink-muted">Prepared, not signed</span>}
+                          <Button size="sm" variant="danger-outline" onClick={() => setCut(r)}>Cut</Button>
+                        </span>
                       )}
                     </Cell>
                   </tr>

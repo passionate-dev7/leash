@@ -7,7 +7,15 @@ export function units(value: string | bigint | null | undefined, max = 6): strin
   const text = formatUnits(BigInt(value), TOKEN_DECIMALS)
   const [whole = '0', frac = ''] = text.split('.')
   const trimmed = frac.slice(0, max).replace(/0+$/, '')
-  return trimmed ? `${whole}.${trimmed}` : whole
+  const grouped = BigInt(whole).toLocaleString('en-US')
+  return trimmed ? `${grouped}.${trimmed}` : grouped
+}
+
+/** Money with at least two decimals: 1.00, 0.50, 0.987790. */
+export function money(value: string | bigint | null | undefined): string {
+  const u = units(value)
+  const [whole = '0', frac = ''] = u.split('.')
+  return `${whole}.${frac.padEnd(2, '0')}`
 }
 
 export const short = (value: string | null | undefined, head = 6, tail = 4) =>

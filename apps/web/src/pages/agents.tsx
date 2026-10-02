@@ -6,7 +6,7 @@ import type { AgentView, Catalog, LedgerRecord } from '@/lib/api'
 import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
-import { short, units } from '@/lib/format'
+import { money, short } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Check, Field, Input } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
@@ -22,6 +22,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [steps, setSteps] = useState<Step[]>([])
   const [busy, setBusy] = useState(false)
+  const [omitted, setOmitted] = useState<string[]>([])
 
   const byId = useMemo(() => new Map(catalog.services.map((s) => [s.serviceId, s])), [catalog])
   const vendors = useMemo(() => {
@@ -47,6 +48,13 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     return out
   }, [picked, byId, catalog])
 
+  /** Editing starts a new agent, so the previous attempt's steps are dropped. */
+  const touch = () => {
+    if (busy) return
+    setSteps([])
+    setOmitted([])
+  }
+
   const budgetValid = /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0
   const valid = name.trim().length >= 2 && budgetValid && picked.size > 0
 
@@ -56,11 +64,13 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
   const submit = async () => {
     setBusy(true)
     setSteps([])
+    setOmitted([])
     let stage = 'Create key on the API'
     try {
       mark(stage, 'run')
       const created = await api.createAgent(account, { name: name.trim(), budget, periodSeconds: 86400, serviceIds: [...picked] })
       mark(stage, 'done', short(created.keyId, 8, 6))
+      if (created.omitted.length > 0) setOmitted(created.omitted.map((o) => o.serviceId))
       stage = 'Sign authorizeKey with the team key'
       mark(stage, 'run')
       const a = created.authorize
@@ -93,13 +103,13 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     <Panel title="Add an agent">
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <Field label="Agent name">{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} placeholder="researcher-1" maxLength={32} />}</Field>
+          <Field label="Agent name">{(id) => <Input id={id} value={name} onChange={(e) => { touch(); setName(e.target.value) }} placeholder="researcher-1" maxLength={32} />}</Field>
           <Field
             label="Daily budget (OUSD)"
             help="The chain enforces this limit per 24 hours on the agent's key."
             error={budget && !budgetValid ? 'Enter a positive amount with up to 6 decimals.' : null}
           >
-            {(id) => <Input id={id} inputMode="decimal" value={budget} onChange={(e) => setBudget(e.target.value)} className="num" />}
+            {(id) => <Input id={id} inputMode="decimal" value={budget} onChange={(e) => { touch(); setBudget(e.target.value) }} className="num" />}
           </Field>
         </div>
         <fieldset>
@@ -112,14 +122,15 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
                   <Check
                     key={s.serviceId}
                     checked={picked.has(s.serviceId)}
-                    onChange={(on) =>
+                    onChange={(on) => {
+                      touch()
                       setPicked((prev) => {
                         const next = new Set(prev)
                         if (on) next.add(s.serviceId)
                         else next.delete(s.serviceId)
                         return next
                       })
-                    }
+                    }}
                   >
                     <span className="flex flex-wrap items-baseline justify-between gap-x-4">
                       <span className="num">{s.serviceId}</span>
@@ -151,6 +162,13 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
         </Button>
         <span className="text-body-sm text-ink-muted">Your team key signs one transaction and pays its gas in PathUSD.</span>
       </div>
+      {omitted.length > 0 && (
+        <div className="mt-6">
+          <Notice tone="info" title="Cut services were left out">
+            <span className="num">{omitted.join(', ')}</span> {omitted.length > 1 ? 'were' : 'was'} cut for this team earlier, so the new key was not granted {omitted.length > 1 ? 'them' : 'it'}.
+          </Notice>
+        </div>
+      )}
       {steps.length > 0 && (
         <ol className="mt-6 grid gap-2" aria-live="polite">
           {steps.map((s) => (
@@ -173,6 +191,7 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [records, setRecords] = useState<LedgerRecord[]>([])
+  const [skipped, setSkipped] = useState<{ serviceId: string; message: string }[]>([])
   const startedAt = useRef(0)
   const live = useRef(false)
 
@@ -198,10 +217,12 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
     setBusy(true)
     setError(null)
     setRecords([])
+    setSkipped([])
     startedAt.current = Date.now() - 2000
     try {
       const result = await api.runAgent(agent.keyId, topic.trim())
       setRecords(result.records)
+      setSkipped(result.errors)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -225,6 +246,17 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
         The runner searches, scrapes the top stories, then summarizes. Each call is a real payment from this agent's key.
       </p>
       {error && <div className="mt-4"><Notice tone="error" title="Run failed">{error}</Notice></div>}
+      {skipped.length > 0 && (
+        <div className="mt-4">
+          <Notice tone="warning" title="Some calls could not be made">
+            {skipped.map((e, i) => (
+              <span key={i} className="block">
+                <span className="num">{e.serviceId}</span>: {e.message}
+              </span>
+            ))}
+          </Notice>
+        </div>
+      )}
       {(busy || records.length > 0) && (
         <div className="mt-4">
           {records.length > 0 ? <RecordTable records={records} showAgent={false} /> : <p className="text-body-sm text-ink-muted">Waiting for the first payment to settle.</p>}
@@ -236,7 +268,7 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
   )
 }
 
-function AgentRow({ agent, account, client, onChange }: { agent: AgentView; account: Address; client: RootClient; onChange: () => void }) {
+function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentView; account: Address; client: RootClient; catalog: Catalog; onChange: () => void }) {
   const [open, setOpen] = useState(false)
   const [revoking, setRevoking] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -257,6 +289,10 @@ function AgentRow({ agent, account, client, onChange }: { agent: AgentView; acco
     }
   }
 
+  // Scope as the chain holds it: every service whose payout address is still in a recipient list.
+  const onChain = new Set((agent.scopes ?? []).flatMap((s) => s.selectorRules.flatMap((r) => r.recipients.map((x) => x.toLowerCase()))))
+  const inScope = agent.scopes === null ? agent.serviceIds : catalog.services.filter((s) => onChain.has(s.recipient.toLowerCase())).map((s) => s.serviceId)
+
   const tone = agent.status === 'active' ? 'ok' : agent.status === 'pending' ? 'warn' : 'idle'
   return (
     <>
@@ -267,11 +303,18 @@ function AgentRow({ agent, account, client, onChange }: { agent: AgentView; acco
         </Cell>
         <Cell>
           <Status tone={tone}>{agent.status}</Status>
+          {agent.readError && <p className="mt-1 max-w-48 text-caption text-error-ink">Chain read failed: {agent.readError}</p>}
         </Cell>
-        <Cell className="num text-right">{units(agent.budget)}</Cell>
-        <Cell className="num text-right">{agent.remaining === null ? '' : units(agent.remaining)}</Cell>
+        <Cell className="num text-right">{money(agent.budgetUnits)}</Cell>
+        <Cell className="num text-right">{agent.remaining === null ? '' : money(agent.remaining)}</Cell>
         <Cell>
-          <span className="num">{agent.serviceIds.join(', ')}</span>
+          {agent.status === 'revoked' ? (
+            <span className="text-ink-subtle">key revoked</span>
+          ) : inScope.length === 0 ? (
+            <span className="text-ink-subtle">no service in scope</span>
+          ) : (
+            <span className="num">{inScope.join(', ')}</span>
+          )}
         </Cell>
         <Cell>
           <TxLink hash={agent.authorizeTx} />
@@ -309,9 +352,19 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
   const catalog = usePoll(() => api.catalog(), 0, [])
   const team = usePoll(() => api.team(account), 6000, [account])
   const [adding, setAdding] = useState(false)
+  const opened = useRef(false)
 
+  const cat = catalog.data
   const agents = team.data?.agents ?? []
   const first = agents.length === 0
+
+  // A team with no agents lands on the form. Once shown it stays until the user closes it, so the authorization steps remain readable.
+  useEffect(() => {
+    if (team.data && !opened.current) {
+      opened.current = true
+      if (team.data.agents.length === 0) setAdding(true)
+    }
+  }, [team.data])
 
   return (
     <>
@@ -326,17 +379,17 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
         Each agent is a Tempo access key with a daily OUSD limit and a list of recipients it may pay. The runner holds the agent key. You hold the team key.
       </PageHead>
       <div className="grid gap-6">
-        {(adding || (first && !team.loading && team.data)) && catalog.data && (
-          <AddAgent account={account} client={client} catalog={catalog.data} onDone={() => { team.reload(); setAdding(false) }} />
+        {adding && catalog.data && (
+          <AddAgent account={account} client={client} catalog={catalog.data} onDone={team.reload} />
         )}
         {catalog.error && <Notice tone="error" title="Could not load the service catalog">{catalog.error}</Notice>}
         {team.error && <Notice tone="error" title="Could not load the team">{team.error}</Notice>}
         {team.data && agents.length === 0 && (
           <Empty title="No agents hold a key yet">
-            Pick the services an agent may pay and a daily budget above. Your team key signs the authorization, and the chain enforces it from then on. If the team has no funds, fund it on the Team tab first.
+            Use Add an agent: pick the services it may pay and a daily budget. Your team key signs the authorization, and the chain enforces it from then on. If the team has no funds, fund it on the Team tab first.
           </Empty>
         )}
-        {agents.length > 0 && (
+        {agents.length > 0 && cat && (
           <div className="overflow-x-auto border border-hairline">
             <table className="w-full min-w-[900px] text-body-sm">
               <thead>
@@ -345,14 +398,14 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
                   <Th>Status</Th>
                   <Th className="text-right">Daily budget (OUSD)</Th>
                   <Th className="text-right">Remaining now</Th>
-                  <Th>Services in scope</Th>
+                  <Th>Services in scope on chain</Th>
                   <Th>Authorize tx</Th>
                   <Th>Actions</Th>
                 </tr>
               </thead>
               <tbody>
                 {agents.map((a) => (
-                  <AgentRow key={a.keyId} agent={a} account={account} client={client} onChange={team.reload} />
+                  <AgentRow key={a.keyId} agent={a} account={account} client={client} catalog={cat} onChange={team.reload} />
                 ))}
               </tbody>
             </table>

@@ -34,7 +34,7 @@ function Shell() {
   const route = useRoute()
   const { active } = useSession()
   return (
-    <div className="min-h-dvh bg-canvas">
+    <div className="flex min-h-dvh flex-col bg-canvas">
       <UtilityBar />
       <header className="sticky top-0 z-40 border-b border-hairline bg-canvas">
         <div className="mx-auto flex h-12 max-w-[1584px] items-stretch px-4 sm:px-8">
@@ -70,7 +70,7 @@ function Shell() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-[1584px] px-4 py-8 sm:px-8 sm:py-12">
+      <main className="mx-auto w-full max-w-[1584px] flex-1 px-4 py-8 sm:px-8 sm:py-12">
         {route === 'team' && <TeamPage />}
         {route === 'agents' && <AgentsPage />}
         {route === 'vendors' && <VendorsPage />}

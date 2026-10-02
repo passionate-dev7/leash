@@ -59,16 +59,21 @@ export type CatalogService = {
 }
 export type Catalog = { services: CatalogService[]; payoutGroups: { recipient: Address; master: Address | null; serviceIds: string[] }[] }
 
-export type Scope = { address: Address; selector: Hex; recipients: Address[] }
+export type Scope = { target: Address; selectorRules: { selector: Hex; recipients: Address[] }[] }
 export type AgentView = {
   keyId: Address
   name: string
   status: 'pending' | 'active' | 'revoked'
+  /** Decimal OUSD per period, as entered ("1.50"). */
   budget: string
+  budgetUnits: string
   period: number
   serviceIds: string[]
+  /** Base units, read from chain; null while pending or when the read failed. */
   remaining: string | null
-  scopes: Scope[]
+  scopes: Scope[] | null
+  readBlock: number | null
+  readError: string | null
   authorizeTx: Hash | null
 }
 export type TeamView = {
@@ -128,7 +133,7 @@ export type CutPlan = {
   unbounded: Address[]
   servicesCut: string[]
 }
-export type CutConfirm = { status: 'confirmed' | 'failed'; gasUsed?: string | null; reason?: string | null; [k: string]: unknown }
+export type CutConfirm = { id: number; status: 'confirmed' | 'failed'; tx: Hash | null; gasUsed: string | null; failure: string | null; servicesCut: string[]; rescoped: Address[]; revoked: Address[]; unbounded: Address[] }
 
 export const api = {
   health: () => request<{ ok: boolean; chainId: number; block: number | string }>('/api/health'),
@@ -139,14 +144,14 @@ export const api = {
     request<unknown>('/api/teams', { body: { account, label, signer } }),
   team: (account: Address) => request<TeamView>(`/api/teams/${account}`),
   createAgent: (account: Address, input: { name: string; budget: string; periodSeconds: number; serviceIds: string[] }) =>
-    request<{ keyId: Address; authorize: AuthorizePayload }>(`/api/teams/${account}/agents`, { body: input }),
+    request<{ keyId: Address; reach: string[]; omitted: { serviceId: string; reason: string }[]; authorize: AuthorizePayload }>(`/api/teams/${account}/agents`, { body: input }),
   confirmAgent: (keyId: Address, tx: Hash) => request<{ status: string }>(`/api/agents/${keyId}/confirm`, { body: { tx } }),
   runAgent: (keyId: Address, topic: string, signal?: AbortSignal) =>
-    request<{ records: LedgerRecord[] }>(`/api/agents/${keyId}/run`, { body: { topic }, signal }),
+    request<{ records: LedgerRecord[]; errors: { serviceId: string; message: string }[] }>(`/api/agents/${keyId}/run`, { body: { topic }, signal }),
   callAgent: (keyId: Address, serviceId: string, input: unknown) =>
-    request<LedgerRecord>(`/api/agents/${keyId}/call`, { body: { serviceId, input } }),
-  ledger: (account: Address, limit = 100) => request<LedgerRecord[] | { records: LedgerRecord[] }>(`/api/teams/${account}/ledger?limit=${limit}`),
-  vendors: (account: Address) => request<VendorRow[] | { vendors: VendorRow[] }>(`/api/teams/${account}/vendors`),
+    request<{ record: LedgerRecord; body: string | null }>(`/api/agents/${keyId}/call`, { body: { serviceId, input } }),
+  ledger: (account: Address, limit = 100) => request<{ records: LedgerRecord[] }>(`/api/teams/${account}/ledger?limit=${limit}`),
+  vendors: (account: Address) => request<{ services: VendorRow[] }>(`/api/teams/${account}/vendors`),
   planCutoff: (account: Address, recipient: Address) => request<CutPlan>(`/api/teams/${account}/cutoffs`, { body: { recipient } }),
   confirmCutoff: (id: number, tx: Hash) => request<CutConfirm>(`/api/cutoffs/${id}/confirm`, { body: { tx } }),
   revokePlan: (keyId: Address) => request<{ calls: { to: Address; data: Hex }[] }>(`/api/agents/${keyId}/revoke-plan`, { body: {} }),
