@@ -133,13 +133,15 @@ export function createVendorRouter(options: VendorRouterOptions): VendorRouter {
     const entry = byRoute.get(url.pathname)
     if (!entry) return fail(404, `no vendor service at ${url.pathname}`)
     if (req.method !== entry.method) return json(405, { error: `${entry.path} accepts ${entry.method}` })
+    // Cloned before any handler reads the body: a handler that validates first would otherwise leave nothing to clone.
+    const chargeable = req.clone()
     const charge = async (): Promise<Paid> => {
       const result = await mppx.charge({
         amount: entry.price,
         currency: OUSD,
         recipient: entry.recipient,
         description: `${entry.vendorName} ${entry.name}`,
-      })(req.clone())
+      })(chargeable)
       return result.status === 402 ? { challenge: result.challenge } : { receipt: (r) => result.withReceipt(r) }
     }
     return handlers[entry.serviceId]({ req, url, charge })

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { assertFetchable, catalog, extractPage, isPublicAddress, keywords, summarize } from '../src/index.js'
+import { assertFetchable, catalog, createVendorRouter, extractPage, isPublicAddress, keywords, summarize } from '../src/index.js'
 
 const ARTICLE =
   'Tempo settles payments in stablecoins. Agents pay for APIs over MPP and each payment settles on Tempo within a block. ' +
@@ -49,4 +49,26 @@ test('catalog: atlas services have distinct virtual recipients under one master,
   assert.equal(new Set(relay.map((e) => e.recipient)).size, 1)
   assert.ok(relay.every((e) => !e.virtual))
   assert.equal(entries[0]?.url, 'http://localhost:4180/v/atlas/search')
+})
+
+const router = createVendorRouter({ secretKey: 'test-secret-test-secret-test-secret' })
+const post = (path: string, body: unknown) => new Request(`http://127.0.0.1${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+
+test('summarize validates before charging: empty text is 422, valid text without payment is a 402 challenge', async () => {
+  const empty = await router(post('/v/relay/summarize', { text: '   ' }))
+  assert.equal(empty?.status, 422)
+  const unpaid = await router(post('/v/relay/summarize', { text: ARTICLE }))
+  assert.equal(unpaid?.status, 402)
+  assert.ok(unpaid?.headers.get('www-authenticate')?.startsWith('Payment'))
+})
+
+test('scrape charges before it validates: an unpaid request is a 402 even with a bad body', async () => {
+  const res = await router(post('/v/atlas/scrape', { nothing: true }))
+  assert.equal(res?.status, 402)
+})
+
+test('router ignores paths outside /v/ and answers 404 and 405 inside it', async () => {
+  assert.equal(await router(new Request('http://127.0.0.1/api/health')), null)
+  assert.equal((await router(new Request('http://127.0.0.1/v/atlas/nothing')))?.status, 404)
+  assert.equal((await router(new Request('http://127.0.0.1/v/atlas/scrape')))?.status, 405)
 })
