@@ -1,4 +1,4 @@
-import { createClient, decodeFunctionData, http, keccak256, parseEventLogs, toHex } from 'viem'
+import { createClient, decodeFunctionData, http, keccak256, parseEventLogs, publicActions, toHex } from 'viem'
 import type { Account, Address, Hash, Hex, PublicClient } from 'viem'
 import { Abis, Transaction } from 'viem/tempo'
 import { Credential } from 'mppx'
@@ -138,7 +138,7 @@ export function createLeashFetch(options: LeashFetchOptions) {
   // retryCount 0: a refused key surfaces as -32603, which viem would otherwise retry until the
   // transaction expires (49 s measured) and then misreport. See createLeashClient.
   const rpc = () => createClient({ chain, transport: http(network.rpcUrl, { retryCount: 0 }) })
-  const pub = createClient({ chain, transport: http(network.rpcUrl) }) as unknown as PublicClient
+  const pub = createClient({ chain, transport: http(network.rpcUrl) }).extend(publicActions) as unknown as PublicClient
   const settleTimeoutMs = options.settleTimeoutMs ?? 20_000
 
   return async function leashFetch(
