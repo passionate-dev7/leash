@@ -14,3 +14,7 @@ docs/
 .progress
 apps/api/data/
 apps/web/dist/
+apps/web/.uicraft-read.json
+
+# internal status board, never shipped to judges
+.progress/
