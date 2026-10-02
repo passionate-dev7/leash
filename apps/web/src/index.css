@@ -1,0 +1,94 @@
+@import "@fontsource/ibm-plex-sans/300.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+@import "tailwindcss";
+
+/* Tokens from DESIGN.md (IBM Carbon). Components read these, never raw hex. */
+@theme {
+  --color-*: initial;
+  --color-primary: #0f62fe;
+  --color-primary-hover: #0050e6;
+  --color-primary-pressed: #002d9c;
+  --color-link-hover: #0043ce;
+  --color-on-primary: #ffffff;
+  --color-ink: #161616;
+  --color-ink-muted: #525252;
+  --color-ink-subtle: #6f6f6f;
+  --color-canvas: #ffffff;
+  --color-surface-1: #f4f4f4;
+  --color-surface-2: #e0e0e0;
+  --color-surface-3: #c6c6c6;
+  --color-hairline: #e0e0e0;
+  --color-hairline-strong: #161616;
+  --color-inverse-canvas: #161616;
+  --color-inverse-surface: #262626;
+  --color-inverse-ink: #ffffff;
+  --color-inverse-ink-muted: #c6c6c6;
+  --color-success: #24a148;
+  --color-success-ink: #0e6027;
+  --color-warning: #f1c21b;
+  --color-warning-ink: #684e00;
+  --color-error: #da1e28;
+  --color-error-ink: #a2191f;
+  --color-error-tint: #fff1f1;
+  --color-success-tint: #defbe6;
+  --color-warning-tint: #fcf4d6;
+  --color-info-tint: #edf5ff;
+
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --text-display-md: 42px;
+  --text-display-md--line-height: 1.2;
+  --text-headline: 32px;
+  --text-headline--line-height: 1.25;
+  --text-card-title: 24px;
+  --text-card-title--line-height: 1.33;
+  --text-subhead: 20px;
+  --text-subhead--line-height: 1.4;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.5;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: 0.16px;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.29;
+  --text-body-sm--letter-spacing: 0.16px;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.33;
+  --text-caption--letter-spacing: 0.32px;
+
+  --breakpoint-sm: 672px;
+  --breakpoint-md: 1056px;
+  --breakpoint-lg: 1312px;
+  --breakpoint-xl: 1584px;
+}
+
+@layer base {
+  html { color-scheme: light; }
+  body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.29;
+    letter-spacing: 0.16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+  ::selection { background: var(--color-primary); color: var(--color-on-primary); }
+  table { border-collapse: collapse; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+}
