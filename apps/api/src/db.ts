@@ -87,6 +87,7 @@ export function openDatabase(file = `${ensureDataDir()}leash.db`): DatabaseSync 
   const db = new DatabaseSync(file)
   db.exec('pragma journal_mode = wal')
   db.exec('pragma foreign_keys = on')
+  db.exec('pragma busy_timeout = 5000')
   db.exec(SCHEMA)
   if (file !== ':memory:') for (const f of [file, `${file}-wal`, `${file}-shm`]) if (existsSync(f)) chmodSync(f, 0o600)
   return db

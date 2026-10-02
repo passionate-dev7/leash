@@ -8,6 +8,7 @@ import { buildRequest, entryOf } from './services.js'
 import type { AgentRow, Store } from './store.js'
 
 const BODY_PREVIEW_CHARS = 4_000
+const SCRAPE_TOP = 6
 
 export type CallResult = {
   record: DeliveryRecord & { agentName: string; vendorId: string; serviceId: string }
@@ -63,7 +64,7 @@ export function createRunner(store: Store) {
   }
 
   /**
-   * One research task: search the topic, scrape the top story pages, summarize and extract
+   * One research task: search the topic, scrape the top six story urls as returned, summarize and extract
    * keywords from what came back. Every call is a real payment and is written to the ledger as it
    * finishes. A service the agent was not given is skipped; a service that was cut is attempted
    * and the chain's refusal is recorded.
@@ -86,7 +87,8 @@ export function createRunner(store: Store) {
     return exclusive(agent, async () => {
       const search = await call('atlas-search', { q: topic })
       const stories = Array.isArray(search?.json) ? (search.json as { url?: unknown }[]) : []
-      const urls = stories.map((s) => s.url).filter((u): u is string => typeof u === 'string' && u.startsWith('https://')).slice(0, 4)
+      // Agents in the wild do not pre-validate: the top stories go to the vendor exactly as search returned them, and the vendor answers for what it charged.
+      const urls = stories.map((s) => s.url).filter((u): u is string => typeof u === 'string' && u.length > 0).slice(0, SCRAPE_TOP)
       for (const url of urls) {
         const page = await call('atlas-scrape', { url })
         const text = (page?.json as { text?: unknown } | null)?.text
