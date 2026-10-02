@@ -11,3 +11,6 @@ export const TOKEN_DECIMALS = 6
 
 export const txUrl = (hash: string) => `${EXPLORER}/tx/${hash}`
 export const addressUrl = (address: string) => `${EXPLORER}/address/${address}`
+
+export const MAINNET_EXPLORER = 'https://explore.tempo.xyz'
+export const mainnetAddressUrl = (address: string) => `${MAINNET_EXPLORER}/address/${address}`

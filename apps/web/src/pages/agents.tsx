@@ -6,7 +6,7 @@ import type { AgentView, Catalog, LedgerRecord } from '@/lib/api'
 import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
-import { ago, short, units } from '@/lib/format'
+import { short, units } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Check, Field, Input } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
@@ -122,11 +122,10 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
                     }
                   >
                     <span className="flex flex-wrap items-baseline justify-between gap-x-4">
-                      <span>
-                        <span className="num">{s.serviceId}</span> <span className="text-ink-muted">{s.description}</span>
-                      </span>
-                      <span className="num text-ink-muted">{s.price} OUSD</span>
+                      <span className="num">{s.serviceId}</span>
+                      <span className="num text-ink-muted">{s.price} OUSD per call</span>
                     </span>
+                    <span className="block text-caption text-ink-muted">{s.description}</span>
                   </Check>
                 ))}
               </div>
@@ -359,7 +358,7 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
             </table>
           </div>
         )}
-        {team.data && <p className="text-caption text-ink-subtle">Remaining is read from the chain at {ago(Date.now())}, refreshed every few seconds.</p>}
+        {agents.length > 0 && <p className="text-caption text-ink-subtle">Remaining is read from the chain on every refresh, every few seconds.</p>}
       </div>
     </>
   )

@@ -86,6 +86,7 @@ export type AuthorizePayload = {
 
 export type Outcome = 'delivered' | 'paid_not_delivered' | 'refused' | 'free' | 'unsettled'
 export type LedgerRecord = {
+  seq: number
   id: string
   keyId: Address
   agentName: string
@@ -98,7 +99,7 @@ export type LedgerRecord = {
   status: number | null
   refused: string | null
   outcome: Outcome
-  tx: Hash | null
+  settlement: { tx: Hash; block: number; status: 'success' | 'reverted' } | null
   startedAt: string
 }
 
@@ -150,5 +151,31 @@ export const api = {
   confirmCutoff: (id: number, tx: Hash) => request<CutConfirm>(`/api/cutoffs/${id}/confirm`, { body: { tx } }),
   revokePlan: (keyId: Address) => request<{ calls: { to: Address; data: Hex }[] }>(`/api/agents/${keyId}/revoke-plan`, { body: {} }),
   revokeConfirm: (keyId: Address, tx: Hash) => request<unknown>(`/api/agents/${keyId}/revoke-confirm`, { body: { tx } }),
-  mainnet: (blocks: number) => request<unknown>(`/api/mainnet/mpp?blocks=${blocks}`),
+  mainnet: (blocks: number) => request<MainnetReplay>(`/api/mainnet/mpp?blocks=${blocks}`),
+}
+
+export type MainnetReplay = {
+  chainId: 4217
+  generatedAt: string
+  head: number
+  fromBlock: number
+  toBlock: number
+  blocks: number
+  fromTime: string
+  toTime: string
+  pages: number
+  payoutsCatalogued: number
+  charges: number
+  payers: number
+  volume: { usdce: string; ousd: string }
+  untaggedCharges: number
+  payouts: {
+    payout: Address
+    services: { serviceId: string; name: string }[]
+    charges: number
+    payers: number
+    volume: { usdce: string; ousd: string }
+    servers: { fingerprint: Hex; charges: number }[]
+  }[]
+  silentPayouts: number
 }

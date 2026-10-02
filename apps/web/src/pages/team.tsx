@@ -95,11 +95,11 @@ function Funding({ address }: { address: `0x${string}` }) {
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
           <p className="text-caption text-ink-muted">OUSD (agent budget and payment token)</p>
-          <p className="num mt-1 text-card-title">{bal.data ? units(bal.data.ousd) : '...'}</p>
+          <p className="mt-1 text-card-title font-light tabular-nums">{bal.data ? units(bal.data.ousd) : '...'}</p>
         </div>
         <div>
           <p className="text-caption text-ink-muted">PathUSD (fee token)</p>
-          <p className="num mt-1 text-card-title">{bal.data ? units(bal.data.pathusd) : '...'}</p>
+          <p className="mt-1 text-card-title font-light tabular-nums">{bal.data ? units(bal.data.pathusd) : '...'}</p>
         </div>
       </div>
       {bal.error && <div className="mt-4"><Notice tone="error" title="Could not read balances">{bal.error}</Notice></div>}
@@ -107,7 +107,7 @@ function Funding({ address }: { address: `0x${string}` }) {
         <Button busy={busy} onClick={fund}>
           {empty ? 'Fund from the Moderato faucet' : 'Request faucet funds again'}
         </Button>
-        {empty && !result && <span className="text-body-sm text-ink-muted">The faucet sends 1,000,000 OUSD and PathUSD. PathUSD pays gas for every signature below.</span>}
+        {empty && !result && <span className="text-body-sm text-ink-muted">The faucet sends 1,000,000 OUSD and PathUSD. PathUSD pays the gas for each signature you make here.</span>}
       </div>
       {error && <div className="mt-4"><Notice tone="error" title="Faucet refused">{error}</Notice></div>}
       {result && (
@@ -129,7 +129,7 @@ function Funding({ address }: { address: `0x${string}` }) {
 }
 
 export function TeamPage() {
-  const { active, signers, select, forget, loadError } = useSession()
+  const { active, signers, select, forget, loadError, registerError } = useSession()
   const [adding, setAdding] = useState(false)
 
   return (
@@ -176,6 +176,7 @@ export function TeamPage() {
                 </ul>
               )}
             </Panel>
+            {registerError && <Notice tone="error" title="The API has not registered this team">{registerError}</Notice>}
             <Funding address={active.address} />
           </>
         )}

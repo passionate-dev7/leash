@@ -34,7 +34,7 @@ export function RecordTable({ records, showAgent = true }: { records: LedgerReco
         </thead>
         <tbody className="divide-y divide-hairline">
           {records.map((r) => (
-            <tr key={`${r.id}-${r.startedAt}`} className="odd:bg-canvas even:bg-surface-1/50">
+            <tr key={r.seq} className="odd:bg-canvas even:bg-surface-1/50">
               <Cell className="whitespace-nowrap text-ink-muted">{ago(r.startedAt)}</Cell>
               {showAgent && <Cell>{r.agentName}</Cell>}
               <Cell>
@@ -46,7 +46,7 @@ export function RecordTable({ records, showAgent = true }: { records: LedgerReco
               <Cell className="num text-right">{r.outcome === 'refused' ? '0' : units(r.amount)}</Cell>
               <Cell className="num">{r.status ?? ''}</Cell>
               <Cell>{r.refused ? <span className="num text-error-ink">{r.refused}</span> : ''}</Cell>
-              <Cell>{r.tx ? <TxLink hash={r.tx} /> : <span className="text-ink-subtle">none</span>}</Cell>
+              <Cell>{r.settlement ? <TxLink hash={r.settlement.tx} /> : <span className="text-ink-subtle">none</span>}</Cell>
             </tr>
           ))}
         </tbody>

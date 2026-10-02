@@ -267,7 +267,7 @@ function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; sv
             <dl className="mt-3 grid grid-cols-[120px_1fr] gap-y-1 text-ink-muted">
               <dt>Amount moved</dt><dd className="num text-ink">{record.outcome === 'refused' ? '0' : units(record.amount)} OUSD</dd>
               <dt>HTTP status</dt><dd className="num text-ink">{record.status ?? 'none'}</dd>
-              <dt>Settlement</dt><dd><TxLink hash={record.tx} /></dd>
+              <dt>Settlement</dt><dd><TxLink hash={record.settlement?.tx} /></dd>
             </dl>
           </div>
         )}
