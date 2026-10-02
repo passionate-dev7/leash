@@ -458,7 +458,7 @@ describe('the kill switch', () => {
     )
     // Measured on Moderato 2026-09-19 (docs/FINDINGS.md F1): the payment IS refused,
     // but not the way CRITICAL-PATH.md claimed. It is not caught in keychain
-    // validation — it reaches execution and dies as an unnamed internal error after
+    // validation, it reaches execution and dies as an unnamed internal error after
     // ~45s (preExecution=false, name undefined, raw "An internal error was
     // received."). These assertions encode what the chain actually does. If the
     // relay starts refusing cleanly, this test fails on purpose: update it and
