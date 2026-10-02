@@ -8,3 +8,7 @@ testnet/keys/
 testnet/keys.json
 testnet/state.json
 testnet/
+
+# research and plans stay local
+docs/
+.progress

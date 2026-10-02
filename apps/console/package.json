@@ -16,7 +16,7 @@
   "dependencies": {
     "@leash/policy": "workspace:*",
     "@leash/sdk": "workspace:*",
-    "viem": "2.56.8"
+    "viem": "2.57.1"
   },
   "devDependencies": {
     "@types/node": "26.6.1",
