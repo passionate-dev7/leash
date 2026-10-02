@@ -29,21 +29,27 @@ if (!transferWithMemo) throw new Error('TransferWithMemo missing from the TIP-20
 
 type Payout = { payout: Address; services: { serviceId: string; name: string }[] }
 
+/**
+ * Payout to services. The live 402 probe of 2026-10-03 (services-1003.4217.json) is authoritative;
+ * the 2026-09-18 capture only fills payouts the newer probe did not reach, because services have
+ * since left the catalog (0xca4e paid 16 on 2026-09-18 and 12 on 2026-10-03).
+ */
 async function loadPayouts(): Promise<Payout[]> {
-  const index = await loadRecipientIndex()
   const byAddress = new Map<string, Payout>()
-  for (const r of index.resolved) {
-    const key = r.recipient.toLowerCase()
-    const p = byAddress.get(key) ?? { payout: r.recipient, services: [] }
-    p.services.push({ serviceId: r.serviceId, name: r.name })
+  const add = (recipient: string, serviceId: string, name: string) => {
+    const key = recipient.toLowerCase()
+    if (key === ZERO) return
+    const p = byAddress.get(key) ?? { payout: recipient as Address, services: [] }
+    if (!p.services.some((s) => s.serviceId === serviceId)) p.services.push({ serviceId, name })
     byAddress.set(key, p)
   }
+  const probe = JSON.parse(readFileSync(new URL('services-1003.4217.json', pathToFileURL(RECIPIENT_INDEX_PATH)), 'utf8')) as { id: string; rcp: string }[]
+  for (const s of probe) add(s.rcp, s.id, s.id)
+  const probed = new Set(byAddress.keys())
+  const index = await loadRecipientIndex()
+  for (const r of index.resolved) if (!probed.has(r.recipient.toLowerCase())) add(r.recipient, r.serviceId, r.name)
   const later = JSON.parse(readFileSync(new URL('recipients-1003.4217.json', pathToFileURL(RECIPIENT_INDEX_PATH)), 'utf8')) as string[]
-  for (const a of later) {
-    const key = a.toLowerCase()
-    if (key === ZERO || byAddress.has(key)) continue
-    byAddress.set(key, { payout: a as Address, services: [] })
-  }
+  for (const a of later) if (!byAddress.has(a.toLowerCase()) && a.toLowerCase() !== ZERO) byAddress.set(a.toLowerCase(), { payout: a as Address, services: [] })
   return [...byAddress.values()]
 }
 
