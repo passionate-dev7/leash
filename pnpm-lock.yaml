@@ -49,53 +49,6 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
-  apps/console:
-    dependencies:
-      '@leash/policy':
-        specifier: workspace:*
-        version: link:../../packages/policy
-      '@leash/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      viem:
-        specifier: 2.57.1
-        version: 2.57.1(typescript@5.9.3)(zod@4.6.5)
-    devDependencies:
-      '@types/node':
-        specifier: 26.6.1
-        version: 26.6.1
-      tsx:
-        specifier: 4.23.13
-        version: 4.23.13
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-
-  apps/demo:
-    dependencies:
-      '@leash/console':
-        specifier: workspace:*
-        version: link:../console
-      '@leash/policy':
-        specifier: workspace:*
-        version: link:../../packages/policy
-      '@leash/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      viem:
-        specifier: 2.57.1
-        version: 2.57.1(typescript@5.9.3)(zod@4.6.5)
-    devDependencies:
-      '@types/node':
-        specifier: 26.6.1
-        version: 26.6.1
-      tsx:
-        specifier: 4.23.13
-        version: 4.23.13
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-
   apps/vendors:
     dependencies:
       mppx:
