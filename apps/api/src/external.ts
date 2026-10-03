@@ -1,6 +1,6 @@
 import { getAddress, isAddress, parseEventLogs, recoverMessageAddress } from 'viem'
 import type { Address, Hex } from 'viem'
-import { Abis } from 'viem/tempo'
+import { Abis, Addresses } from 'viem/tempo'
 import { recordDigest } from '@leash/sdk'
 import type { DeliveryRecord, Outcome } from '@leash/sdk'
 import { bad } from './http.js'
@@ -36,14 +36,26 @@ function hex(o: Record<string, unknown>, key: string, bytes: number | null, null
   if (!ok) throw bad(`record.${key} must be ${bytes === null ? 'hex' : `${bytes} bytes of hex`}${nullable ? ' or null' : ''}`)
   return v as Hex
 }
-function time(o: Record<string, unknown>, key: string): string {
+/** A record may not claim a moment later than this past the desk's clock. */
+export const MAX_FUTURE_MS = 2 * 60_000
+/** A paid record's finishedAt may not precede its settlement block by more than this. */
+export const MAX_BEFORE_SETTLEMENT_MS = 60 * 60_000
+
+/** A paid record cannot have finished long before the payment it reports settled. */
+export function assertNotBeforeSettlement(finishedAt: string, settlementTimeMs: number): void {
+  if (Date.parse(finishedAt) < settlementTimeMs - MAX_BEFORE_SETTLEMENT_MS) throw bad(`record.finishedAt is more than ${MAX_BEFORE_SETTLEMENT_MS / 60_000} minutes before its settlement block`)
+}
+
+function time(o: Record<string, unknown>, key: string, now: number): string {
   const v = text(o, key, 40)!
-  if (Number.isNaN(Date.parse(v))) throw bad(`record.${key} must be an ISO time`)
+  const at = Date.parse(v)
+  if (Number.isNaN(at)) throw bad(`record.${key} must be an ISO time`)
+  if (at > now + MAX_FUTURE_MS) throw bad(`record.${key} is more than ${MAX_FUTURE_MS / 60_000} minutes in the future`)
   return v
 }
 
 /** Checks the record's shape and that it speaks for this key and team. Returns the record as typed fields, settlement left to the chain. */
-export function parseRecord(raw: unknown, agent: { keyId: Address; account: Address }): DeliveryRecord {
+export function parseRecord(raw: unknown, agent: { keyId: Address; account: Address }, now = Date.now()): DeliveryRecord {
   if (!isObject(raw)) throw bad('record must be an object')
   const outcome = raw['outcome']
   if (typeof outcome !== 'string' || !(OUTCOMES as readonly string[]).includes(outcome)) throw bad(`record.outcome must be one of ${OUTCOMES.join(', ')}`)
@@ -76,8 +88,8 @@ export function parseRecord(raw: unknown, agent: { keyId: Address; account: Addr
     refused,
     settlement: settlement as DeliveryRecord['settlement'],
     outcome: outcome as Outcome,
-    startedAt: time(raw, 'startedAt'),
-    finishedAt: time(raw, 'finishedAt'),
+    startedAt: time(raw, 'startedAt', now),
+    finishedAt: time(raw, 'finishedAt', now),
   }
   if ((PAID as readonly string[]).includes(record.outcome)) {
     if (!record.recipient || !record.amount || !record.currency || !record.memo) throw bad('a paid record must carry recipient, amount, currency and memo')
@@ -120,7 +132,9 @@ export function settlementProof(logs: readonly Log[], claim: { account: Address;
   if (!paid) return { ok: false, reason: `the settlement with that memo did not pay ${claim.recipient}` }
   if (lower(paid.args.from) !== lower(claim.account)) return { ok: false, reason: `the settlement paid from ${paid.args.from}, not the team account ${claim.account}` }
   if (String(paid.args.amount) !== claim.amount) return { ok: false, reason: `the settlement moved ${paid.args.amount} units, the record says ${claim.amount}` }
-  const spends = (parseEventLogs({ abi: Abis.accountKeychain, logs: logs as never, eventName: 'AccessKeySpend' }) as unknown as { args: { account: Address; publicKey: Address; token: Address; amount: bigint } }[])
+  // Any contract can emit an event with this signature: only the keychain precompile's own spend log is proof.
+  const keychainLogs = logs.filter((l) => lower(l.address) === lower(Addresses.accountKeychain))
+  const spends = (parseEventLogs({ abi: Abis.accountKeychain, logs: keychainLogs as never, eventName: 'AccessKeySpend' }) as unknown as { args: { account: Address; publicKey: Address; token: Address; amount: bigint } }[])
     .filter((e) => lower(e.args.publicKey) === lower(claim.keyId) && lower(e.args.account) === lower(claim.account) && lower(e.args.token) === lower(claim.currency))
     .map((e) => String(e.args.amount))
   if (!spends.includes(claim.amount)) return { ok: false, reason: `key ${claim.keyId} has no AccessKeySpend of ${claim.amount} in the settlement (it spent ${spends.join(', ') || 'nothing'})` }

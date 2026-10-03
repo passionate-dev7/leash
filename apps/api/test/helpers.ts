@@ -51,7 +51,11 @@ export function record(over: { serviceId: string; outcome: DeliveryRecord['outco
 
 export function seed(store: TestStore, rows: Parameters<typeof record>[0][], vendorId = 'atlas') {
   store.upsertTeam(ACCOUNT, 'test team', 'webcrypto')
-  for (const r of rows) store.insertRecord(record(r), { agentName: 'a', vendorId: r.serviceId.startsWith('relay') ? 'relay' : vendorId, serviceId: r.serviceId })
+  for (const r of rows) {
+    const rec = record(r)
+    // The desk's own clock for the record is the moment the test places it at.
+    store.insertRecord(rec, { agentName: 'a', vendorId: r.serviceId.startsWith('relay') ? 'relay' : vendorId, serviceId: r.serviceId }, 'runner', { receivedAt: rec.startedAt })
+  }
 }
 
 export type Json = Record<string, any>

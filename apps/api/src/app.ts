@@ -8,9 +8,10 @@ import { SELECTOR } from '@leash/policy'
 import type { ServiceId, VendorRouter } from '@leash/vendors'
 import type { NetworkName } from '@leash/sdk'
 import { requireTeamSignature } from './auth.js'
-import { ALLOWED_ORIGINS, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
+import { ALLOWED_ORIGINS, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO, TRUST_PROXY } from './config.js'
 import { balances, budgetBalance, chains, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
-import { parseRecord, signerOf } from './external.js'
+import { assertNotBeforeSettlement, parseRecord, signerOf } from './external.js'
+import { createRateLimiter } from './limit.js'
 import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, readBody, route, sendJson, str, txHash } from './http.js'
 import type { HandlerContext, Route } from './http.js'
 import { cachedReplay, MAX_REPLAY_BLOCKS, mainnetServices, probedServices } from './mainnet.js'
@@ -26,6 +27,16 @@ const FAUCET_WINDOW_MS = 10 * 60_000
 const FAUCET_GLOBAL_PER_HOUR = 60
 const MAX_OPEN_AGENTS = 25
 const DECIMALS = 6
+/** Record intake: a burst of 60 per agent key then one a second, and twice that per client address. */
+const RECORDS_PER_KEY = { capacity: 60, perSecond: 1 }
+const RECORDS_PER_IP = { capacity: 120, perSecond: 2 }
+
+/** The client address a request is limited by. */
+function clientOf(req: IncomingMessage): string {
+  const forwarded = req.headers['x-forwarded-for']
+  if (TRUST_PROXY && typeof forwarded === 'string') return forwarded.split(',').at(-1)!.trim()
+  return req.socket.remoteAddress ?? 'unknown'
+}
 
 /** A service outside the catalog is named by where it was called: host and path. */
 function externalServiceId(url: string): string {
@@ -78,6 +89,9 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     if (agent.external === 1) throw conflict('external_agent', `agent ${agent.key_id} runs outside Leash: it pays from its own process, and the desk cannot run or call for it`)
     return agent
   }
+
+  const keyLimit = createRateLimiter(RECORDS_PER_KEY)
+  const ipLimit = createRateLimiter(RECORDS_PER_IP)
 
   const routes: Route[] = [
     route('GET', '/api/health', async () => {
@@ -287,6 +301,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     }),
 
     route('POST', '/api/agents/:keyId/records', async ({ params, req }) => {
+      if (!ipLimit.take(clientOf(req))) throw new HttpError(429, 'rate_limited', 'too many records from this address: slow down')
       const agent = agentOf(params['keyId']!)
       if (agent.external !== 1) throw conflict('not_external', `agent ${agent.key_id} runs inside Leash: the runner writes its records`)
       if (agent.status !== 'active') throw conflict('agent_not_active', `agent ${agent.key_id} is ${agent.status}`)
@@ -296,6 +311,8 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       const signer = await signerOf(b['record'] as typeof record, b['signature'])
       if (signer === null || lower(signer) !== lower(agent.key_id))
         throw new HttpError(401, 'bad_signature', `the signature does not recover to the agent key ${agent.key_id}${signer ? ` (it recovers to ${signer})` : ''}`)
+      // Taken after the signature, so a stranger posting to a key's url cannot spend that key's allowance.
+      if (!keyLimit.take(agent.key_id)) throw new HttpError(429, 'rate_limited', `too many records from key ${agent.key_id}: at most ${RECORDS_PER_KEY.capacity} at once, then ${RECORDS_PER_KEY.perSecond} a second`)
       const duplicate = () => {
         const tx = record.settlement?.tx
         if (tx && store.hasSettlement(tx)) throw conflict('duplicate_record', `settlement ${tx} is already in the ledger`)
@@ -305,12 +322,16 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
 
       const paid = record.outcome === 'delivered' || record.outcome === 'paid_not_delivered'
       let settlement: typeof record.settlement = null
+      let settledAt: string | null = null
       if (paid) {
         const tx = txHash(record.settlement!.tx, 'record.settlement.tx')
         const check = await verifySettlement(chainOfAgent(agent), { tx, account: agent.account, keyId: agent.key_id, recipient: record.recipient!, amount: record.amount!, memo: record.memo!, currency: record.currency! })
         if (!check.ok) throw new HttpError(422, 'settlement_not_confirmed', check.reason)
         // What the chain read back, never what the agent said.
         settlement = { tx, block: check.block, status: 'success', keySpend: check.keySpend }
+        // A payment counts at its block's time. The agent's own times only have to be plausible next to it.
+        assertNotBeforeSettlement(record.finishedAt, check.time)
+        settledAt = new Date(check.time).toISOString()
       }
       // The catalog holds the Moderato vendors the desk runs; a mainnet team's records name where they were paid.
       const known = teamOf(agent.account).network === 'moderato' ? serviceOfUrl(record.url) : undefined
@@ -322,6 +343,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
         { ...record, settlement },
         { agentName: agent.name, vendorId: known?.vendorId ?? 'external', serviceId: known?.serviceId ?? externalServiceId(record.url) },
         'external',
+        { settledAt },
       )
       return { accepted: true, seq, outcome: record.outcome, source: 'external', settlementTx: settlement?.tx ?? null }
     }),

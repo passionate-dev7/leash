@@ -177,7 +177,8 @@ export async function verifyRevoke(chain: Chain, args: { tx: Hash; account: Addr
   return read.ok ? { ok: true } : { ok: false, reason: `getKey does not read ${args.keyId} as revoked` }
 }
 
-export type SettlementCheck = { ok: true; block: number; keySpend: string[] } | { ok: false; reason: string }
+/** `time` is the settlement block's timestamp in milliseconds, read from chain. */
+export type SettlementCheck = { ok: true; block: number; time: number; keySpend: string[] } | { ok: false; reason: string }
 
 /** A reported payment counts only when its settlement reads back from the team's chain as the payment the record describes. */
 export async function verifySettlement(chain: Chain, args: { tx: Hash; account: Address; keyId: Address; recipient: Address; amount: string; memo: Hex; currency: Address }): Promise<SettlementCheck> {
@@ -193,7 +194,11 @@ export async function verifySettlement(chain: Chain, args: { tx: Hash; account: 
   if (rx.status !== 'success') return { ok: false, reason: `transaction ${args.tx} did not succeed (status ${rx.status})` }
   if (lower(rx.from) !== lower(args.account)) return { ok: false, reason: `transaction was sent by ${rx.from}, not the team account ${args.account}` }
   const proof = settlementProof(rx.logs, args)
-  return proof.ok ? { ok: true, block: Number(rx.blockNumber), keySpend: proof.keySpend } : proof
+  if (!proof.ok) return proof
+  const block = await retryRead(() => chain.reader.getBlock({ blockNumber: rx.blockNumber })).catch((e: Error) => {
+    throw new HttpError(503, 'receipt_unavailable', `block ${rx.blockNumber} of ${args.tx} could not be read: ${e.message.split('\n')[0]}`)
+  })
+  return { ok: true, block: Number(rx.blockNumber), time: Number(block.timestamp) * 1000, keySpend: proof.keySpend }
 }
 
 export type { Hex }

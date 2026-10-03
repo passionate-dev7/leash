@@ -1,5 +1,6 @@
 import type { Hex } from 'viem'
 import type { CatalogEntry } from '@leash/vendors'
+import { recordTime } from './store.js'
 import type { CutoffRow, LedgerRecord } from './store.js'
 
 export const EVIDENCE_WINDOW_MS = 24 * 3_600_000
@@ -31,7 +32,8 @@ const isPaid = (r: LedgerRecord) => r.settlement?.status === 'success' && (r.out
 /** What the records inside the trailing 24 hours say about one vendor. */
 export function evidenceOf(records: readonly LedgerRecord[], now = Date.now()): Evidence {
   const since = now - EVIDENCE_WINDOW_MS
-  const paid = records.filter((r) => isPaid(r) && Date.parse(r.startedAt) >= since)
+  // The window runs on the desk's clock and the chain's, never on the timestamps an agent wrote into its record.
+  const paid = records.filter((r) => isPaid(r) && recordTime(r) >= since)
   const failed = paid.filter((r) => r.outcome === 'paid_not_delivered').sort((a, b) => b.seq - a.seq)
   return {
     window: '24h',

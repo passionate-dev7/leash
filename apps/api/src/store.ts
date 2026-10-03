@@ -49,7 +49,14 @@ export type LedgerRecord = DeliveryRecord & {
   vendorId: string
   serviceId: string
   source: RecordSource
+  /** When the desk took the record. The agent's own timestamps are claims; this one is the desk's clock. */
+  receivedAt: string
+  /** The timestamp of the settlement's block, read from chain, for a paid record. */
+  settledAt: string | null
 }
+
+/** The time a record counts at in the 24 hour window: the settlement block for a payment, else when the desk took it. Never the agent's claim. */
+export const recordTime = (r: Pick<LedgerRecord, 'receivedAt' | 'settledAt'>): number => Date.parse(r.settledAt ?? r.receivedAt)
 
 /** How long a pending agent waits for its authorization before it stops counting and is dropped. */
 export const PENDING_TTL_MS = 60 * 60_000
@@ -70,7 +77,8 @@ export function createStore(db: Db, cipher: Cipher) {
     agents: db.prepare('select * from agent where account = ? order by created_at, key_id'),
     plainAgents: db.prepare("select key_id, private_key from agent where external = 0 and private_key not like 'enc1:%'"),
     setKey: db.prepare('update agent set private_key = ? where key_id = ?'),
-    mostRecords: db.prepare("select r.account from record r join team t on t.account = r.account where ? = 1 or t.network = 'moderato' group by r.account order by count(*) desc, min(r.seq) limit 1"),
+    // Only records backed by a settlement the desk read from chain rank a team: a refused or unsettled record is the agent's word.
+    mostRecords: db.prepare("select r.account from record r join team t on t.account = r.account where r.settlement_tx is not null and (? = 1 or t.network = 'moderato') group by r.account order by count(*) desc, min(r.seq) limit 1"),
     // A pending agent holds a slot only while its authorization can still arrive.
     countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and (status = 'active' or (status = 'pending' and created_at >= ?))"),
     purgePending: db.prepare("delete from agent where account = ? and status = 'pending' and created_at < ?"),
@@ -79,8 +87,8 @@ export function createStore(db: Db, cipher: Cipher) {
     setAgent: db.prepare('update agent set status = ?, authorize_tx = coalesce(?, authorize_tx) where key_id = ?'),
     insertRecord: db.prepare(
       `insert into record(id, account, agent_key_id, agent_name, vendor_id, service_id, url, method, request_hash, realm, recipient, amount, currency, memo, status, refused,
-        settlement_tx, settlement_block, settlement_status, key_spend, outcome, started_at, finished_at, source)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        settlement_tx, settlement_block, settlement_status, key_spend, outcome, started_at, finished_at, source, received_at, settled_at)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ),
     recordBySettlement: db.prepare('select seq from record where settlement_tx = ?'),
     recordByKeyAndId: db.prepare('select seq from record where agent_key_id = ? and id = ?'),
@@ -140,6 +148,8 @@ export function createStore(db: Db, cipher: Cipher) {
     vendorId: r['vendor_id'] as string,
     serviceId: r['service_id'] as string,
     source: r['source'] as RecordSource,
+    receivedAt: (r['received_at'] as string | null) ?? (r['started_at'] as string),
+    settledAt: (r['settled_at'] as string | null) ?? null,
   })
 
   return {
@@ -186,12 +196,18 @@ export function createStore(db: Db, cipher: Cipher) {
     },
 
     /** Returns the ledger sequence number of the new row. */
-    insertRecord(record: DeliveryRecord, ctx: { agentName: string; vendorId: string; serviceId: string }, source: RecordSource = 'runner'): number {
+    insertRecord(
+      record: DeliveryRecord,
+      ctx: { agentName: string; vendorId: string; serviceId: string },
+      source: RecordSource = 'runner',
+      times: { receivedAt?: string; settledAt?: string | null } = {},
+    ): number {
       const s = record.settlement
       const r = q.insertRecord.run(
         record.id, record.account, record.keyId, ctx.agentName, ctx.vendorId, ctx.serviceId, record.url, record.method, record.requestHash, record.realm,
         record.recipient, record.amount, record.currency, record.memo, record.status, record.refused,
         s?.tx ?? null, s?.block ?? null, s?.status ?? null, s ? JSON.stringify(s.keySpend) : null, record.outcome, record.startedAt, record.finishedAt, source,
+        times.receivedAt ?? now(), times.settledAt ?? null,
       )
       return Number(r.lastInsertRowid)
     },

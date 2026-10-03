@@ -106,6 +106,9 @@ export function openDatabase(file = `${ensureDataDir()}leash.db`): DatabaseSync 
   if (!teamColumns.includes('network')) db.exec("alter table team add column network text not null default 'moderato' check (network in ('moderato', 'mainnet'))")
   const recordColumns = (db.prepare('pragma table_info(record)').all() as { name: string }[]).map((c) => c.name)
   if (!recordColumns.includes('source')) db.exec("alter table record add column source text not null default 'runner' check (source in ('runner', 'external'))")
+  // Databases created before the desk kept its own receive time and the settlement block time.
+  if (!recordColumns.includes('received_at')) db.exec('alter table record add column received_at text')
+  if (!recordColumns.includes('settled_at')) db.exec('alter table record add column settled_at text')
   db.exec('create index if not exists record_settlement on record(settlement_tx)')
   db.exec('create index if not exists record_key_id on record(agent_key_id, id)')
   if (file !== ':memory:') for (const f of [file, `${file}-wal`, `${file}-shm`]) if (existsSync(f)) chmodSync(f, 0o600)

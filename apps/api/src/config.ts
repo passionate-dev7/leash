@@ -27,6 +27,9 @@ export const FEATURED_TEAM: Address | undefined = (() => {
   return getAddress(raw)
 })()
 
+/** Behind one reverse proxy, the client address is the last x-forwarded-for entry. Unset, it is the socket's peer. */
+export const TRUST_PROXY = process.env['LEASH_TRUST_PROXY'] === '1'
+
 /** Where agents reach the vendors: this same process. */
 export const LOCAL_BASE = `http://127.0.0.1:${PORT}`
 /** The origin and path prefix the catalog advertises to browsers. */
