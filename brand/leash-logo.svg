@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- page canvas of the app -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
+  <!-- the agent key: square bow with a hole, shaft, two teeth -->
+  <g fill="#161616">
+    <rect x="132" y="252" width="168" height="168"/>
+    <rect x="300" y="318" width="132" height="36"/>
+    <rect x="384" y="354" width="24" height="40"/>
+    <rect x="344" y="354" width="24" height="28"/>
+  </g>
+  <rect x="180" y="300" width="72" height="72" fill="#ffffff"/>
+  <!-- scope lines from the key to three vendors -->
+  <g stroke="#0f62fe" stroke-width="24" fill="none">
+    <path d="M432 336 H560 V160 H748"/>
+    <path d="M432 336 H588"/>
+    <path d="M692 336 H760"/>
+    <path d="M560 336 V512 H748"/>
+  </g>
+  <!-- the cut: the middle line stops, a gap, two cut ticks -->
+  <g stroke="#da1e28" stroke-width="16">
+    <line x1="596" y1="300" x2="612" y2="372"/>
+    <line x1="668" y1="300" x2="684" y2="372"/>
+  </g>
+  <!-- vendors: two paid (blue), one cut (red outline) -->
+  <rect x="748" y="112" width="96" height="96" fill="#0f62fe"/>
+  <rect x="760" y="300" width="72" height="72" fill="none" stroke="#da1e28" stroke-width="24"/>
+  <rect x="748" y="464" width="96" height="96" fill="#0f62fe"/>
+  <!-- wordmark -->
+  <text x="512" y="820" text-anchor="middle" font-family="IBM Plex Sans" font-weight="600" font-size="200" letter-spacing="-4" fill="#161616">Leash</text>
+</svg>
