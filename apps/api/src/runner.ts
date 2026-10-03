@@ -1,4 +1,4 @@
-import type { Address, Hex } from 'viem'
+import type { Address } from 'viem'
 import { Account } from 'viem/tempo'
 import { createLeashFetch } from '@leash/sdk'
 import type { DeliveryRecord } from '@leash/sdk'
@@ -38,7 +38,7 @@ export function createRunner(store: Store) {
       throw new HttpError(403, 'not_in_scope', `agent ${agent.name} was not given ${serviceId}`)
     const { url, init } = buildRequest(entry, input)
     const account = agent.account
-    const keyAccount = Account.fromSecp256k1(agent.private_key as Hex, { access: account })
+    const keyAccount = Account.fromSecp256k1(store.agentKey(agent), { access: account })
     const ctx = { agentName: agent.name, vendorId: entry.vendorId, serviceId: entry.serviceId }
     let saved: CallResult['record'] | undefined
     const leashFetch = createLeashFetch({

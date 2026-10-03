@@ -65,7 +65,9 @@ create table if not exists cutoff (
   unchanged text not null,
   failure text,
   created_at text not null,
-  confirmed_at text
+  confirmed_at text,
+  reason text not null default 'manual' check (reason in ('failures', 'manual')),
+  evidence text
 );
 create index if not exists cutoff_account on cutoff(account);
 create table if not exists block (
@@ -88,7 +90,13 @@ export function openDatabase(file = `${ensureDataDir()}leash.db`): DatabaseSync 
   db.exec('pragma journal_mode = wal')
   db.exec('pragma foreign_keys = on')
   db.exec('pragma busy_timeout = 5000')
+  // Rows that are rewritten (key encryption) must not survive in freed pages.
+  db.exec('pragma secure_delete = on')
   db.exec(SCHEMA)
+  // Databases created before cutoffs carried a reason and an evidence snapshot.
+  const columns = (db.prepare('pragma table_info(cutoff)').all() as { name: string }[]).map((c) => c.name)
+  if (!columns.includes('reason')) db.exec("alter table cutoff add column reason text not null default 'manual' check (reason in ('failures', 'manual'))")
+  if (!columns.includes('evidence')) db.exec('alter table cutoff add column evidence text')
   if (file !== ':memory:') for (const f of [file, `${file}-wal`, `${file}-shm`]) if (existsSync(f)) chmodSync(f, 0o600)
   return db
 }

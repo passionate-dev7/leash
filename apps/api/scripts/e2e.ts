@@ -110,6 +110,11 @@ async function main() {
   check(delivered.length >= 1 && run.records[0].serviceId === 'atlas-search' && run.records[0].outcome === 'delivered', 'the search call must be delivered')
   const failing = await api('POST', `/api/agents/${agents[0]!.keyId}/call`, { serviceId: 'atlas-scrape', input: { url: 'https://nonexistent.invalid/page' } })
   check(failing.record.outcome === 'paid_not_delivered' && failing.record.status === 502 && failing.record.settlement?.status === 'success', 'a scrape of a dead host must be paid and not delivered (502)')
+  // Two more dead-host scrapes: the vendor charges, then answers 502. Enough measured failures to recommend a cut.
+  for (let i = 0; i < 2; i++) {
+    const again = await api('POST', `/api/agents/${agents[0]!.keyId}/call`, { serviceId: 'atlas-scrape', input: { url: 'https://nonexistent.invalid/page' } })
+    check(again.record.outcome === 'paid_not_delivered' && again.record.settlement?.status === 'success', 'a repeat scrape of a dead host must be paid and not delivered')
+  }
   const healthy = await api('POST', `/api/agents/${agents[1]!.keyId}/call`, { serviceId: 'atlas-scrape', input: { url: 'https://example.com' } })
   check(healthy.record.outcome === 'delivered' && JSON.parse(healthy.body).title.length > 0, 'scrape of example.com must deliver a title')
 
@@ -143,8 +148,22 @@ async function main() {
   check(scrapeBefore.paidNotDelivered >= 1 && scrapeBefore.delivered >= 1 && scrapeBefore.cut === null, 'vendors view must show scrape paid, delivered and paid-but-failed, not cut')
   check(before.find((s) => s.serviceId === 'relay-summarize')!.siblings.join() === 'relay-keywords', 'relay services must list each other as siblings')
 
+  // evidence: the settlement tx of every paid-but-failed record, newest first, and a recommendation the thresholds explain
+  const failedNow = ledger.filter((r) => r.serviceId === 'atlas-scrape' && r.outcome === 'paid_not_delivered').map((r) => r.settlement.tx as string)
+  check(failedNow.length >= 3, `expected at least 3 scrape failures in the ledger, found ${failedNow.length}`)
+  const ev = scrapeBefore.evidence
+  check(ev.window === '24h' && ev.paidNotDelivered === scrapeBefore.paidNotDelivered && ev.paid === scrapeBefore.paid, 'evidence must match the roll-up inside the window')
+  check(JSON.stringify(ev.txs) === JSON.stringify(failedNow.slice(0, 10)), 'evidence txs must be the failed settlements, newest first')
+  check(scrapeBefore.recommendCut === true && ev.paidNotDelivered >= 2 && ev.failureRate >= 0.25, `scrape must be recommended for a cut: ${JSON.stringify({ paidNotDelivered: ev.paidNotDelivered, rate: ev.failureRate })}`)
+  const relayEv = before.find((s) => s.serviceId === 'relay-summarize')!
+  check(relayEv.recommendCut === false && relayEv.evidence.paidNotDelivered === 0 && relayEv.evidence.txs.length === 0, 'a service with no failures is not recommended')
+  const gated = await api('POST', `/api/teams/${root.address}/cutoffs`, { recipient: svc('relay-summarize').recipient, reason: 'failures' }, 409)
+  check(gated.error === 'no measured failures', `cutting a clean vendor for failures must be refused, got ${JSON.stringify(gated)}`)
+  await api('POST', `/api/teams/${root.address}/cutoffs`, { recipient: scrapeRecipient, reason: 'because' }, 422)
+
   // 4. cut the scrape service: one transaction for both keys
-  const cut = await api('POST', `/api/teams/${root.address}/cutoffs`, { recipient: scrapeRecipient })
+  const cut = await api('POST', `/api/teams/${root.address}/cutoffs`, { recipient: scrapeRecipient, reason: 'failures' })
+  check(cut.reason === 'failures' && cut.evidence.paidNotDelivered === ev.paidNotDelivered && cut.evidence.txs.length === ev.txs.length, 'the cut must carry the evidence it was decided on')
   check(cut.calls.length === 2 && cut.rescoped.length === 2 && cut.revoked.length === 0 && cut.unbounded.length === 0, `cut plan: ${JSON.stringify({ calls: cut.calls.length, rescoped: cut.rescoped.length, revoked: cut.revoked.length })}`)
   check(cut.servicesCut.join() === 'atlas-scrape', 'cutting the scrape recipient must cut scrape and nothing else')
   const blockedCall = await api('POST', `/api/agents/${agents[0]!.keyId}/call`, { serviceId: 'atlas-scrape', input: { url: 'https://example.com' } })
@@ -186,7 +205,19 @@ async function main() {
   const after = (await api('GET', `/api/teams/${root.address}/vendors`)).services as Json[]
   const scrapeAfter = after.find((s) => s.serviceId === 'atlas-scrape')!
   check(scrapeAfter.cut?.status === 'confirmed' && scrapeAfter.cut.tx === cutTx && scrapeAfter.blocked === false, 'vendors view must show the confirmed cut and no local block')
+  check(scrapeAfter.cut.reason === 'failures' && confirmedCut.reason === 'failures' && confirmedCut.evidence.paidNotDelivered === ev.paidNotDelivered, 'reason and evidence must persist through confirm')
   check(scrapeAfter.refused === 3 && after.find((s) => s.serviceId === 'atlas-search')!.cut === null, 'refusals counted on scrape only')
+  const featured = await api('GET', '/api/featured')
+  check(/^0x[0-9a-fA-F]{40}$/.test(featured.account), 'featured must name an account')
+  const mainnet = await api('GET', '/api/mainnet/evidence')
+  const payouts = mainnet.payouts as Json[]
+  const top = payouts[0]!
+  check(payouts.length > 0, 'mainnet evidence must hold payout rows')
+  check(payouts.every((p, i) => i === 0 || payouts[i - 1]!.vet402.paidNotDelivered > p.vet402.paidNotDelivered || (payouts[i - 1]!.vet402.paidNotDelivered === p.vet402.paidNotDelivered && payouts[i - 1]!.replay.charges >= p.replay.charges)), 'mainnet evidence must sort by vet402 failures, then charges')
+  check(payouts.every((p) => p.cutTakes === p.services.length && p.vet402.txs.length === Math.min(5, p.vet402.paidNotDelivered) && p.vet402.delivered + p.vet402.paidNotDelivered === p.vet402.paid && (p.replay.charges > 0 || p.vet402.paid > 0)), 'mainnet evidence rows must be internally consistent')
+  const big = payouts.find((p) => p.payout.toLowerCase() === '0xca4e835f803cb0b7c428222b3a3b98518d4779fe')
+  check(big && big.services.length === 12 && big.vet402.paid > 0, `0xca4e must pay 12 probed services and have vet402 rows, got ${big?.services.length}/${big?.vet402.paid}`)
+  log(`mainnet evidence: ${payouts.length} payouts, top ${top.payout} (${top.vet402.paidNotDelivered} paid not delivered, ${top.replay.charges} charges, ${top.cutTakes} services); featured ${featured.account}`)
   const stats = await api('GET', '/api/stats')
   check(stats.cutoffsConfirmed >= 1 && stats.refused >= 3 && stats.paidCalls >= 8, 'stats must reflect the run')
 

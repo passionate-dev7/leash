@@ -3,12 +3,15 @@ import { createVendorRouter } from '@leash/vendors'
 import { createApp } from './app.js'
 import { PORT, vendorSecret } from './config.js'
 import { openDatabase } from './db.js'
+import { createCipher, loadMasterKey, MASTER_KEY_PATH } from './keystore.js'
 import { createRunner } from './runner.js'
 import { ensureSponsorFunded, sponsorAccount } from './sponsor.js'
 import { createStore } from './store.js'
 
 const db = openDatabase()
-const store = createStore(db)
+const store = createStore(db, createCipher(loadMasterKey()))
+const sealed = store.sealPlaintextKeys()
+if (sealed > 0) console.log(`sealed ${sealed} agent keys with the master key at ${MASTER_KEY_PATH}`)
 const sponsor = sponsorAccount()
 try {
   const funded = await ensureSponsorFunded(sponsor.address)

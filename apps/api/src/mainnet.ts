@@ -34,6 +34,18 @@ type Payout = { payout: Address; services: { serviceId: string; name: string }[]
  * the 2026-09-18 capture only fills payouts the newer probe did not reach, because services have
  * since left the catalog (0xca4e paid 16 on 2026-09-18 and 12 on 2026-10-03).
  */
+/** Payout address (lowercase) to the service ids the 2026-10-03 live 402 probe found behind it. */
+export function probedServices(): Map<string, string[]> {
+  const probe = JSON.parse(readFileSync(new URL('services-1003.4217.json', pathToFileURL(RECIPIENT_INDEX_PATH)), 'utf8')) as { id: string; rcp: string }[]
+  const out = new Map<string, string[]>()
+  for (const s of probe) {
+    const ids = out.get(s.rcp.toLowerCase()) ?? []
+    if (!ids.includes(s.id)) ids.push(s.id)
+    out.set(s.rcp.toLowerCase(), ids)
+  }
+  return out
+}
+
 async function loadPayouts(): Promise<Payout[]> {
   const byAddress = new Map<string, Payout>()
   const add = (recipient: string, serviceId: string, name: string) => {

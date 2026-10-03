@@ -1,6 +1,7 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+import { getAddress, isAddress } from 'viem'
 import type { Address } from 'viem'
 import { NETWORKS } from '@leash/sdk'
 import type { NetworkConfig } from '@leash/sdk'
@@ -17,6 +18,14 @@ export const ALLOWED_ORIGINS: ReadonlySet<string> = new Set([
     .map((s) => s.trim().replace(/\/+$/, ''))
     .filter(Boolean),
 ])
+
+/** The team the public landing shows. Unset: the team with the most ledger records. */
+export const FEATURED_TEAM: Address | undefined = (() => {
+  const raw = process.env['LEASH_FEATURED_TEAM']?.trim()
+  if (!raw) return undefined
+  if (!isAddress(raw, { strict: false })) throw new Error('LEASH_FEATURED_TEAM must be an address')
+  return getAddress(raw)
+})()
 
 /** Where agents reach the vendors: this same process. */
 export const LOCAL_BASE = `http://127.0.0.1:${PORT}`

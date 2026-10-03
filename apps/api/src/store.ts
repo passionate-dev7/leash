@@ -1,6 +1,7 @@
 import type { Address, Hex } from 'viem'
 import type { DeliveryRecord, Outcome } from '@leash/sdk'
 import type { Db } from './db.js'
+import type { Cipher } from './keystore.js'
 
 export type TeamRow = { account: Address; label: string; signer: 'passkey' | 'webcrypto'; created_at: string }
 export type AgentStatus = 'pending' | 'active' | 'revoked'
@@ -18,6 +19,7 @@ export type AgentRow = {
   status: AgentStatus
   created_at: string
 }
+export type CutReason = 'failures' | 'manual'
 export type CutoffStatus = 'prepared' | 'confirmed' | 'failed'
 export type CutoffRow = {
   id: number
@@ -34,6 +36,8 @@ export type CutoffRow = {
   failure: string | null
   created_at: string
   confirmed_at: string | null
+  reason: CutReason
+  evidence: string | null
 }
 
 export type LedgerRecord = DeliveryRecord & {
@@ -46,7 +50,7 @@ export type LedgerRecord = DeliveryRecord & {
 const now = () => new Date().toISOString()
 const rows = <T>(v: unknown[]): T[] => v as T[]
 
-export function createStore(db: Db) {
+export function createStore(db: Db, cipher: Cipher) {
   const q = {
     upsertTeam: db.prepare(
       'insert into team(account, label, signer, created_at) values (?, ?, ?, ?) on conflict(account) do update set label = excluded.label, signer = excluded.signer',
@@ -57,6 +61,9 @@ export function createStore(db: Db) {
     ),
     agent: db.prepare('select * from agent where key_id = ?'),
     agents: db.prepare('select * from agent where account = ? order by created_at, key_id'),
+    plainAgents: db.prepare("select key_id, private_key from agent where private_key not like 'enc1:%'"),
+    setKey: db.prepare('update agent set private_key = ? where key_id = ?'),
+    mostRecords: db.prepare('select account from record group by account order by count(*) desc, min(seq) limit 1'),
     countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and status != 'revoked'"),
     setAgent: db.prepare('update agent set status = ?, authorize_tx = coalesce(?, authorize_tx) where key_id = ?'),
     insertRecord: db.prepare(
@@ -67,7 +74,7 @@ export function createStore(db: Db) {
     ledger: db.prepare('select * from record where account = ? order by seq desc limit ?'),
     ledgerAll: db.prepare('select * from record where account = ? order by seq'),
     insertCutoff: db.prepare(
-      'insert into cutoff(account, recipient, service_ids, status, rescoped, revoked, unbounded, unchanged, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'insert into cutoff(account, recipient, service_ids, status, rescoped, revoked, unbounded, unchanged, created_at, reason, evidence) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     ),
     cutoff: db.prepare('select * from cutoff where id = ?'),
     cutoffs: db.prepare('select * from cutoff where account = ? order by id desc'),
@@ -130,9 +137,24 @@ export function createStore(db: Db) {
     team: (account: Address) => q.team.get(account) as TeamRow | undefined,
 
     insertAgent(a: { keyId: Address; account: Address; name: string; privateKey: Hex; budget: string; period: number; token: Address; serviceIds: string[]; expiry: number }) {
-      q.insertAgent.run(a.keyId, a.account, a.name, a.privateKey, a.budget, a.period, a.token, JSON.stringify(a.serviceIds), a.expiry, 'pending', now())
+      q.insertAgent.run(a.keyId, a.account, a.name, cipher.seal(a.privateKey, a.keyId), a.budget, a.period, a.token, JSON.stringify(a.serviceIds), a.expiry, 'pending', now())
     },
     agent: (keyId: Address) => q.agent.get(keyId) as AgentRow | undefined,
+    /** The agent's signing key, opened. Throws when the stored value fails authentication. */
+    agentKey: (agent: AgentRow): Hex => cipher.open(agent.private_key, agent.key_id) as Hex,
+    /** Seals every key still stored in the clear. Returns how many it rewrote. */
+    sealPlaintextKeys(): number {
+      const open = rows<{ key_id: string; private_key: string }>(q.plainAgents.all())
+      for (const r of open) q.setKey.run(cipher.seal(r.private_key, r.key_id), r.key_id)
+      // An update leaves the old cell in the page; rebuilding the file and truncating the log drops the clear text.
+      if (open.length > 0) {
+        db.exec('vacuum')
+        db.exec('pragma wal_checkpoint(truncate)')
+      }
+      return open.length
+    },
+    /** The team with the most ledger records, or undefined on an empty ledger. */
+    busiestTeam: () => (q.mostRecords.get() as { account: Address } | undefined)?.account,
     agents: (account: Address) => rows<AgentRow>(q.agents.all(account)),
     openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account) as { n: number }).n),
     setAgentStatus(keyId: Address, status: AgentStatus, authorizeTx: Hex | null = null) {
@@ -150,8 +172,21 @@ export function createStore(db: Db) {
     ledger: (account: Address, limit: number) => rows<Record<string, unknown>>(q.ledger.all(account, limit)).map(toRecord),
     allRecords: (account: Address) => rows<Record<string, unknown>>(q.ledgerAll.all(account)).map(toRecord),
 
-    insertCutoff(c: { account: Address; recipient: Address; serviceIds: string[]; status: CutoffStatus; rescoped: Address[]; revoked: Address[]; unbounded: Address[]; unchanged: Address[] }) {
-      const r = q.insertCutoff.run(c.account, c.recipient, JSON.stringify(c.serviceIds), c.status, JSON.stringify(c.rescoped), JSON.stringify(c.revoked), JSON.stringify(c.unbounded), JSON.stringify(c.unchanged), now())
+    insertCutoff(c: {
+      account: Address
+      recipient: Address
+      serviceIds: string[]
+      status: CutoffStatus
+      rescoped: Address[]
+      revoked: Address[]
+      unbounded: Address[]
+      unchanged: Address[]
+      reason: CutReason
+      evidence: unknown
+    }) {
+      const r = q.insertCutoff.run(
+        c.account, c.recipient, JSON.stringify(c.serviceIds), c.status, JSON.stringify(c.rescoped), JSON.stringify(c.revoked), JSON.stringify(c.unbounded), JSON.stringify(c.unchanged), now(), c.reason, JSON.stringify(c.evidence),
+      )
       return Number(r.lastInsertRowid)
     },
     cutoff: (id: number) => q.cutoff.get(id) as CutoffRow | undefined,

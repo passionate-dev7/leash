@@ -5,14 +5,15 @@ import { generatePrivateKey, privateKeyToAddress } from 'viem/accounts'
 import { Abis, Addresses } from 'viem/tempo'
 import { getAllowedCalls, getRemainingLimit, planCutoff } from '@leash/sdk'
 import { SELECTOR } from '@leash/policy'
-import type { VendorRouter } from '@leash/vendors'
-import { ALLOWED_ORIGINS, BUDGET_TOKEN, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
+import type { ServiceId, VendorRouter } from '@leash/vendors'
+import { ALLOWED_ORIGINS, BUDGET_TOKEN, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
 import { balances, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke } from './chain.js'
 import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, readBody, route, sendJson, str, txHash } from './http.js'
 import type { Route } from './http.js'
-import { cachedReplay, MAX_REPLAY_BLOCKS } from './mainnet.js'
+import { cachedReplay, MAX_REPLAY_BLOCKS, probedServices } from './mainnet.js'
 import { outsideFeed } from './outside.js'
 import { sponsorBalance } from './sponsor.js'
+import { evidenceOf, vendorRows } from './vendors.js'
 import type { Runner } from './runner.js'
 import { isServiceId, payoutGroups, publicCatalog, servicesPaying } from './services.js'
 import type { AgentRow, Store } from './store.js'
@@ -226,40 +227,22 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
     route('GET', '/api/teams/:account/vendors', async ({ params }) => {
       const account = address(params['account'], 'account')
       teamOf(account)
-      const records = store.allRecords(account)
-      const cutoffs = store.cutoffs(account)
-      const blocked = store.blocked(account)
-      const catalog = publicCatalog()
-      const services = catalog.map((s) => {
-        const mine = records.filter((r) => r.serviceId === s.serviceId)
-        const settled = mine.filter((r) => r.settlement?.status === 'success' && (r.outcome === 'delivered' || r.outcome === 'paid_not_delivered'))
-        const delivered = settled.filter((r) => r.outcome === 'delivered').length
-        const paidNotDelivered = settled.length - delivered
-        const cut = cutoffs.find((c) => lower(c.recipient) === lower(s.recipient) && (c.status === 'prepared' || (c.status === 'confirmed' && c.tx)))
-        return {
-          serviceId: s.serviceId,
-          vendorId: s.vendorId,
-          recipient: s.recipient,
-          virtual: s.virtual,
-          paid: settled.length,
-          delivered,
-          paidNotDelivered,
-          refused: mine.filter((r) => r.outcome === 'refused').length,
-          spent: String(settled.reduce((sum, r) => sum + BigInt(r.amount ?? '0'), 0n)),
-          failureRate: settled.length === 0 ? 0 : paidNotDelivered / settled.length,
-          siblings: catalog.filter((o) => o.serviceId !== s.serviceId && lower(o.recipient) === lower(s.recipient)).map((o) => o.serviceId),
-          cut: cut ? { status: cut.status, tx: cut.tx } : null,
-          blocked: blocked.has(lower(s.recipient)),
-        }
-      })
-      return { services }
+      return { services: vendorRows({ catalog: publicCatalog(), records: store.allRecords(account), cutoffs: store.cutoffs(account), blocked: store.blocked(account) }) }
     }),
 
     route('POST', '/api/teams/:account/cutoffs', async ({ params, req }) => {
       const account = address(params['account'], 'account')
       teamOf(account)
-      const recipient = address((await body(req))['recipient'], 'recipient')
+      const b = await body(req)
+      const recipient = address(b['recipient'], 'recipient')
+      const reason = b['reason'] === undefined ? 'manual' : b['reason']
+      if (reason !== 'failures' && reason !== 'manual') throw bad("reason must be 'failures' or 'manual'")
       const servicesCut = servicesPaying(recipient)
+      // The evidence is read from the ledger now and stored with the cut: what the operator saw when they decided.
+      const mine = store.allRecords(account).filter((r) => servicesCut.includes(r.serviceId as ServiceId))
+      const evidence = { ...evidenceOf(mine), recipient, services: servicesCut.map((id) => ({ serviceId: id, ...evidenceOf(mine.filter((r) => r.serviceId === id)) })) }
+      if (reason === 'failures' && evidence.paidNotDelivered === 0)
+        throw conflict('no measured failures', `no paid-but-not-delivered record for ${recipient} in the last 24 hours (${evidence.paid} paid). Cut it with reason 'manual' if you still want it out of scope`)
       const active = store.agents(account).filter((a) => a.status === 'active')
       const keys = await Promise.all(
         active.map(async (a) => {
@@ -281,9 +264,11 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
         revoked: plan.revoked,
         unbounded: plan.unbounded,
         unchanged: plan.unchanged,
+        reason,
+        evidence,
       })
       if (plan.calls.length > 0) store.addBlock(account, recipient)
-      return { id, calls: plan.calls, rescoped: plan.rescoped, revoked: plan.revoked, unchanged: plan.unchanged, unbounded: plan.unbounded, servicesCut }
+      return { id, calls: plan.calls, rescoped: plan.rescoped, revoked: plan.revoked, unchanged: plan.unchanged, unbounded: plan.unbounded, servicesCut, reason, evidence }
     }),
 
     route('POST', '/api/cutoffs/:id/confirm', async ({ params, req }) => {
@@ -328,6 +313,36 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
 
     route('GET', '/api/stats', async () => store.stats()),
 
+    route('GET', '/api/featured', async () => {
+      const account = FEATURED_TEAM ?? store.busiestTeam()
+      if (!account) throw notFound('no team has a ledger yet and LEASH_FEATURED_TEAM is not set')
+      return { account }
+    }),
+
+    route('GET', '/api/mainnet/evidence', async ({ query }) => {
+      const [replay, outside] = await Promise.all([cachedReplay(intParam(query, 'blocks', 20_000, 1, MAX_REPLAY_BLOCKS)), outsideFeed()])
+      const probed = probedServices()
+      const window = { blocks: replay.blocks, fromBlock: replay.fromBlock, toBlock: replay.toBlock, fromTime: replay.fromTime, toTime: replay.toTime }
+      const payouts = new Map<string, Address>()
+      for (const p of replay.payouts) payouts.set(lower(p.payout), p.payout)
+      for (const p of outside.payouts) payouts.set(lower(p.recipient), p.recipient)
+      const rows = [...payouts].map(([key, payout]) => {
+        const services = probed.get(key) ?? []
+        const rep = replay.payouts.find((p) => lower(p.payout) === key)
+        const seen = outside.records.filter((r) => lower(r.recipient) === key)
+        const failed = seen.filter((r) => !r.delivered).sort((a, b) => b.verified.block - a.verified.block)
+        return {
+          payout,
+          services,
+          replay: { charges: rep?.charges ?? 0, payers: rep?.payers ?? 0, window },
+          vet402: { paid: seen.length, delivered: seen.length - failed.length, paidNotDelivered: failed.length, txs: failed.slice(0, 5).map((r) => r.tx) },
+          cutTakes: services.length,
+        }
+      })
+      rows.sort((a, b) => b.vet402.paidNotDelivered - a.vet402.paidNotDelivered || b.replay.charges - a.replay.charges)
+      return { payouts: rows, window, outsideCachedAt: outside.cachedAt, outsideStale: outside.stale }
+    }),
+
     route('GET', '/api/teams/:account/balances', async ({ params }) => {
       const account = address(params['account'], 'account')
       const b = await balances(account)
@@ -350,6 +365,8 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       unchanged: JSON.parse(c.unchanged) as string[],
       failure: c.failure,
       confirmedAt: c.confirmed_at,
+      reason: c.reason,
+      evidence: c.evidence === null ? null : (JSON.parse(c.evidence) as unknown),
     }
   }
 
