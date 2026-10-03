@@ -18,7 +18,10 @@ export type AgentRow = {
   authorize_tx: Hex | null
   status: AgentStatus
   created_at: string
+  /** 1 when the agent runs outside the desk: the desk never held its key. */
+  external: number
 }
+export type RecordSource = 'runner' | 'external'
 export type CutReason = 'failures' | 'manual'
 export type CutoffStatus = 'prepared' | 'confirmed' | 'failed'
 export type CutoffRow = {
@@ -45,6 +48,7 @@ export type LedgerRecord = DeliveryRecord & {
   agentName: string
   vendorId: string
   serviceId: string
+  source: RecordSource
 }
 
 const now = () => new Date().toISOString()
@@ -57,20 +61,22 @@ export function createStore(db: Db, cipher: Cipher) {
     ),
     team: db.prepare('select * from team where account = ?'),
     insertAgent: db.prepare(
-      'insert into agent(key_id, account, name, private_key, budget, period, token, service_ids, expiry, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'insert into agent(key_id, account, name, private_key, budget, period, token, service_ids, expiry, status, created_at, external) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     ),
     agent: db.prepare('select * from agent where key_id = ?'),
     agents: db.prepare('select * from agent where account = ? order by created_at, key_id'),
-    plainAgents: db.prepare("select key_id, private_key from agent where private_key not like 'enc1:%'"),
+    plainAgents: db.prepare("select key_id, private_key from agent where external = 0 and private_key not like 'enc1:%'"),
     setKey: db.prepare('update agent set private_key = ? where key_id = ?'),
     mostRecords: db.prepare('select account from record group by account order by count(*) desc, min(seq) limit 1'),
     countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and status != 'revoked'"),
     setAgent: db.prepare('update agent set status = ?, authorize_tx = coalesce(?, authorize_tx) where key_id = ?'),
     insertRecord: db.prepare(
       `insert into record(id, account, agent_key_id, agent_name, vendor_id, service_id, url, method, request_hash, realm, recipient, amount, currency, memo, status, refused,
-        settlement_tx, settlement_block, settlement_status, key_spend, outcome, started_at, finished_at)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        settlement_tx, settlement_block, settlement_status, key_spend, outcome, started_at, finished_at, source)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ),
+    recordBySettlement: db.prepare('select seq from record where settlement_tx = ?'),
+    recordByKeyAndId: db.prepare('select seq from record where agent_key_id = ? and id = ?'),
     ledger: db.prepare('select * from record where account = ? order by seq desc limit ?'),
     ledgerAll: db.prepare('select * from record where account = ? order by seq'),
     insertCutoff: db.prepare(
@@ -128,6 +134,7 @@ export function createStore(db: Db, cipher: Cipher) {
     agentName: r['agent_name'] as string,
     vendorId: r['vendor_id'] as string,
     serviceId: r['service_id'] as string,
+    source: r['source'] as RecordSource,
   })
 
   return {
@@ -136,12 +143,16 @@ export function createStore(db: Db, cipher: Cipher) {
     },
     team: (account: Address) => q.team.get(account) as TeamRow | undefined,
 
-    insertAgent(a: { keyId: Address; account: Address; name: string; privateKey: Hex; budget: string; period: number; token: Address; serviceIds: string[]; expiry: number }) {
-      q.insertAgent.run(a.keyId, a.account, a.name, cipher.seal(a.privateKey, a.keyId), a.budget, a.period, a.token, JSON.stringify(a.serviceIds), a.expiry, 'pending', now())
+    /** `privateKey` is null for an agent that runs outside the desk: the desk never holds that key. */
+    insertAgent(a: { keyId: Address; account: Address; name: string; privateKey: Hex | null; budget: string; period: number; token: Address; serviceIds: string[]; expiry: number }) {
+      q.insertAgent.run(a.keyId, a.account, a.name, a.privateKey === null ? '' : cipher.seal(a.privateKey, a.keyId), a.budget, a.period, a.token, JSON.stringify(a.serviceIds), a.expiry, 'pending', now(), a.privateKey === null ? 1 : 0)
     },
     agent: (keyId: Address) => q.agent.get(keyId) as AgentRow | undefined,
     /** The agent's signing key, opened. Throws when the stored value fails authentication. */
-    agentKey: (agent: AgentRow): Hex => cipher.open(agent.private_key, agent.key_id) as Hex,
+    agentKey(agent: AgentRow): Hex {
+      if (agent.external === 1) throw new Error(`agent ${agent.key_id} runs outside the desk: the desk holds no key for it`)
+      return cipher.open(agent.private_key, agent.key_id) as Hex
+    },
     /** Seals every key still stored in the clear. Returns how many it rewrote. */
     sealPlaintextKeys(): number {
       const open = rows<{ key_id: string; private_key: string }>(q.plainAgents.all())
@@ -161,14 +172,18 @@ export function createStore(db: Db, cipher: Cipher) {
       q.setAgent.run(status, authorizeTx, keyId)
     },
 
-    insertRecord(record: DeliveryRecord, ctx: { agentName: string; vendorId: string; serviceId: string }) {
+    /** Returns the ledger sequence number of the new row. */
+    insertRecord(record: DeliveryRecord, ctx: { agentName: string; vendorId: string; serviceId: string }, source: RecordSource = 'runner'): number {
       const s = record.settlement
-      q.insertRecord.run(
+      const r = q.insertRecord.run(
         record.id, record.account, record.keyId, ctx.agentName, ctx.vendorId, ctx.serviceId, record.url, record.method, record.requestHash, record.realm,
         record.recipient, record.amount, record.currency, record.memo, record.status, record.refused,
-        s?.tx ?? null, s?.block ?? null, s?.status ?? null, s ? JSON.stringify(s.keySpend) : null, record.outcome, record.startedAt, record.finishedAt,
+        s?.tx ?? null, s?.block ?? null, s?.status ?? null, s ? JSON.stringify(s.keySpend) : null, record.outcome, record.startedAt, record.finishedAt, source,
       )
+      return Number(r.lastInsertRowid)
     },
+    hasSettlement: (tx: string) => q.recordBySettlement.get(tx.toLowerCase()) !== undefined,
+    hasRecord: (keyId: Address, id: string) => q.recordByKeyAndId.get(keyId, id) !== undefined,
     ledger: (account: Address, limit: number) => rows<Record<string, unknown>>(q.ledger.all(account, limit)).map(toRecord),
     allRecords: (account: Address) => rows<Record<string, unknown>>(q.ledgerAll.all(account)).map(toRecord),
 

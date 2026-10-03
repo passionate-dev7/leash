@@ -5,6 +5,7 @@ import { createLeashClient, getAllowedCalls, getKey, getRemainingLimit, getToken
 import type { AllowedCalls, LeashClient } from '@leash/sdk'
 import { SELECTOR } from '@leash/policy'
 import { BUDGET_TOKEN, PATH_USD } from './config.js'
+import { settlementProof } from './external.js'
 import { HttpError } from './http.js'
 
 /** Read client for Moderato. Never signs, never retries a write. */
@@ -146,6 +147,23 @@ export async function verifyRevoke(args: { tx: Hash; account: Address; keyId: Ad
   if (!revoked) return { ok: false, reason: `no KeyRevoked event for key ${args.keyId} in ${args.tx}` }
   const read = await until(() => getKey(reader, args.account, args.keyId), (k) => !k.exists, 10_000)
   return read.ok ? { ok: true } : { ok: false, reason: `getKey does not read ${args.keyId} as revoked` }
+}
+
+export type SettlementCheck = { ok: true; block: number; keySpend: string[] } | { ok: false; reason: string }
+
+/** A reported payment counts only when its settlement reads back from Moderato as the payment the record describes. */
+export async function verifySettlement(args: { tx: Hash; account: Address; keyId: Address; recipient: Address; amount: string; memo: Hex; currency: Address }): Promise<SettlementCheck> {
+  let rx
+  try {
+    rx = await receiptOf(args.tx, 8_000)
+  } catch (e) {
+    if (e instanceof HttpError) return { ok: false, reason: `${args.tx} has no receipt on Moderato` }
+    throw e
+  }
+  if (rx.status !== 'success') return { ok: false, reason: `transaction ${args.tx} did not succeed (status ${rx.status})` }
+  if (lower(rx.from) !== lower(args.account)) return { ok: false, reason: `transaction was sent by ${rx.from}, not the team account ${args.account}` }
+  const proof = settlementProof(rx.logs, args)
+  return proof.ok ? { ok: true, block: Number(rx.blockNumber), keySpend: proof.keySpend } : proof
 }
 
 export type { Hex }

@@ -7,7 +7,8 @@ import { getAllowedCalls, getRemainingLimit, planCutoff } from '@leash/sdk'
 import { SELECTOR } from '@leash/policy'
 import type { ServiceId, VendorRouter } from '@leash/vendors'
 import { ALLOWED_ORIGINS, BUDGET_TOKEN, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
-import { balances, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke } from './chain.js'
+import { balances, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
+import { parseRecord, signerOf } from './external.js'
 import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, readBody, route, sendJson, str, txHash } from './http.js'
 import type { Route } from './http.js'
 import { cachedReplay, MAX_REPLAY_BLOCKS, probedServices } from './mainnet.js'
@@ -15,13 +16,19 @@ import { outsideFeed } from './outside.js'
 import { sponsorBalance } from './sponsor.js'
 import { evidenceOf, vendorRows } from './vendors.js'
 import type { Runner } from './runner.js'
-import { isServiceId, payoutGroups, publicCatalog, servicesPaying } from './services.js'
+import { isServiceId, payoutGroups, publicCatalog, servicesPaying, serviceOfUrl } from './services.js'
 import type { AgentRow, Store } from './store.js'
 
 const FAUCET_WINDOW_MS = 10 * 60_000
 const FAUCET_GLOBAL_PER_HOUR = 60
 const MAX_OPEN_AGENTS = 25
 const DECIMALS = 6
+
+/** A service outside the catalog is named by where it was called: host and path. */
+function externalServiceId(url: string): string {
+  const u = new URL(url)
+  return `${u.host}${u.pathname}`.slice(0, 120)
+}
 
 const body = async (req: IncomingMessage) => parseJsonObject(await readBody(req))
 
@@ -53,6 +60,12 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
     return agent
   }
   const serviceIdsOf = (agent: AgentRow) => JSON.parse(agent.service_ids) as string[]
+  /** The desk pays only for agents whose key it holds. An external agent pays with its own process. */
+  const runnerAgent = (keyId: string): AgentRow => {
+    const agent = agentOf(keyId)
+    if (agent.external === 1) throw conflict('external_agent', `agent ${agent.key_id} runs outside Leash: it pays from its own process, and the desk cannot run or call for it`)
+    return agent
+  }
 
   /** Recipients this team has cut on chain. New keys are never granted them. */
   const cutRecipients = (account: Address): Set<string> => {
@@ -123,6 +136,7 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
             keyId,
             name: a.name,
             status: a.status,
+            external: a.external === 1,
             budget: a.budget,
             budgetUnits: String(parseUnits(a.budget, DECIMALS)),
             period: a.period,
@@ -174,8 +188,12 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       // Every service whose payout is among the recipients is reachable, not only the ones asked for.
       const reach = catalog.filter((s) => recipients.some((r) => lower(r) === lower(s.recipient))).map((s) => s.serviceId)
 
-      const privateKey = generatePrivateKey()
-      const keyId = privateKeyToAddress(privateKey)
+      const external = b['external'] === undefined ? false : b['external']
+      if (typeof external !== 'boolean') throw bad('external must be true or false')
+      // An external agent already holds its key: the desk takes only the key id and never a private key.
+      const privateKey = external ? null : generatePrivateKey()
+      const keyId = privateKey === null ? address(b['keyId'], 'keyId') : privateKeyToAddress(privateKey)
+      if (external && store.agent(keyId)) throw conflict('key_exists', `key ${keyId} is already registered`)
       const expiry = Math.floor(Date.now() / 1000) + KEY_LIFETIME_SECONDS
       store.insertAgent({ keyId, account, name, privateKey, budget, period: periodSeconds, token: BUDGET_TOKEN, serviceIds: granted.map((s) => s.serviceId), expiry })
       return {
@@ -204,18 +222,63 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
     }),
 
     route('POST', '/api/agents/:keyId/run', async ({ params, req }) => {
-      const agent = agentOf(params['keyId']!)
+      const agent = runnerAgent(params['keyId']!)
       const topic = str(await body(req), 'topic', { max: 120 })
       return runner.research(agent, topic)
     }),
 
     route('POST', '/api/agents/:keyId/call', async ({ params, req }) => {
-      const agent = agentOf(params['keyId']!)
+      const agent = runnerAgent(params['keyId']!)
       const b = await body(req)
       const serviceId = b['serviceId']
       if (!isServiceId(serviceId)) throw bad('serviceId is not a known service')
       const { record, body: text } = await runner.paidCall(agent, serviceId, b['input'])
       return { record, body: text }
+    }),
+
+    route('POST', '/api/agents/:keyId/records', async ({ params, req }) => {
+      const agent = agentOf(params['keyId']!)
+      if (agent.external !== 1) throw conflict('not_external', `agent ${agent.key_id} runs inside Leash: the runner writes its records`)
+      if (agent.status !== 'active') throw conflict('agent_not_active', `agent ${agent.key_id} is ${agent.status}`)
+      const b = await body(req)
+      const record = parseRecord(b['record'], { keyId: agent.key_id, account: agent.account })
+      // The signature covers the record exactly as the agent sent it, so it is checked against the parsed JSON, not a re-shaped copy.
+      const signer = await signerOf(b['record'] as typeof record, b['signature'])
+      if (signer === null || lower(signer) !== lower(agent.key_id))
+        throw new HttpError(401, 'bad_signature', `the signature does not recover to the agent key ${agent.key_id}${signer ? ` (it recovers to ${signer})` : ''}`)
+      const duplicate = () => {
+        const tx = record.settlement?.tx
+        if (tx && store.hasSettlement(tx)) throw conflict('duplicate_record', `settlement ${tx} is already in the ledger`)
+        if (store.hasRecord(agent.key_id, record.id)) throw conflict('duplicate_record', `record ${record.id} is already in the ledger`)
+      }
+      duplicate()
+
+      const paid = record.outcome === 'delivered' || record.outcome === 'paid_not_delivered'
+      let settlement: typeof record.settlement = null
+      if (paid) {
+        const tx = txHash(record.settlement!.tx, 'record.settlement.tx')
+        const check = await verifySettlement({ tx, account: agent.account, keyId: agent.key_id, recipient: record.recipient!, amount: record.amount!, memo: record.memo!, currency: record.currency! })
+        if (!check.ok) throw new HttpError(422, 'settlement_not_confirmed', check.reason)
+        // What the chain read back, never what the agent said.
+        settlement = { tx, block: check.block, status: 'success', keySpend: check.keySpend }
+      }
+      const known = serviceOfUrl(record.url)
+      if (known && record.recipient && lower(record.recipient) !== lower(known.recipient))
+        throw bad(`record.recipient ${record.recipient} is not the payout of ${known.serviceId} (${known.recipient})`)
+      // Nothing awaits between this check and the insert, so two reports of one settlement cannot both land.
+      duplicate()
+      const seq = store.insertRecord(
+        { ...record, settlement },
+        { agentName: agent.name, vendorId: known?.vendorId ?? 'external', serviceId: known?.serviceId ?? externalServiceId(record.url) },
+        'external',
+      )
+      return { accepted: true, seq, outcome: record.outcome, source: 'external', settlementTx: settlement?.tx ?? null }
+    }),
+
+    route('GET', '/api/teams/:account/blocked', async ({ params }) => {
+      const account = address(params['account'], 'account')
+      teamOf(account)
+      return { recipients: [...new Set([...store.blocked(account), ...cutRecipients(account)])] }
     }),
 
     route('GET', '/api/teams/:account/ledger', async ({ params, query }) => {

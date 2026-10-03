@@ -21,7 +21,8 @@ create table if not exists agent (
   expiry integer not null,
   authorize_tx text,
   status text not null check (status in ('pending', 'active', 'revoked')),
-  created_at text not null
+  created_at text not null,
+  external integer not null default 0
 );
 create index if not exists agent_account on agent(account);
 create table if not exists record (
@@ -48,7 +49,8 @@ create table if not exists record (
   key_spend text,
   outcome text not null,
   started_at text not null,
-  finished_at text not null
+  finished_at text not null,
+  source text not null default 'runner' check (source in ('runner', 'external'))
 );
 create index if not exists record_account on record(account, seq);
 create table if not exists cutoff (
@@ -97,6 +99,13 @@ export function openDatabase(file = `${ensureDataDir()}leash.db`): DatabaseSync 
   const columns = (db.prepare('pragma table_info(cutoff)').all() as { name: string }[]).map((c) => c.name)
   if (!columns.includes('reason')) db.exec("alter table cutoff add column reason text not null default 'manual' check (reason in ('failures', 'manual'))")
   if (!columns.includes('evidence')) db.exec('alter table cutoff add column evidence text')
+  // Databases created before agents could run outside the desk.
+  const agentColumns = (db.prepare('pragma table_info(agent)').all() as { name: string }[]).map((c) => c.name)
+  if (!agentColumns.includes('external')) db.exec('alter table agent add column external integer not null default 0')
+  const recordColumns = (db.prepare('pragma table_info(record)').all() as { name: string }[]).map((c) => c.name)
+  if (!recordColumns.includes('source')) db.exec("alter table record add column source text not null default 'runner' check (source in ('runner', 'external'))")
+  db.exec('create index if not exists record_settlement on record(settlement_tx)')
+  db.exec('create index if not exists record_key_id on record(agent_key_id, id)')
   if (file !== ':memory:') for (const f of [file, `${file}-wal`, `${file}-shm`]) if (existsSync(f)) chmodSync(f, 0o600)
   return db
 }

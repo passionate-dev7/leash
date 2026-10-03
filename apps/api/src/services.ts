@@ -16,6 +16,17 @@ export const entryOf = (serviceId: string): CatalogEntry => {
   return e
 }
 
+/** The catalog service a paid url belongs to: the url's path ends in the service path, with or without the Funnel `/leash` prefix. */
+export function serviceOfUrl(url: string): CatalogEntry | undefined {
+  let path: string
+  try {
+    path = new URL(url).pathname.replace(/^\/leash(?=\/)/, '')
+  } catch {
+    return undefined
+  }
+  return publicCatalog().find((s) => s.path === path)
+}
+
 export function isServiceId(v: unknown): v is ServiceId {
   return typeof v === 'string' && (SERVICE_IDS as readonly string[]).includes(v)
 }

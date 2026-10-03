@@ -32,6 +32,7 @@ export function createRunner(store: Store) {
   }
 
   async function paidCall(agent: AgentRow, serviceId: string, input: unknown): Promise<CallResult> {
+    if (agent.external === 1) throw conflict('external_agent', `agent ${agent.key_id} runs outside Leash`)
     if (agent.status !== 'active') throw conflict('agent_not_active', `agent ${agent.key_id} is ${agent.status}`)
     const entry = entryOf(serviceId)
     if (!(JSON.parse(agent.service_ids) as string[]).includes(serviceId))
