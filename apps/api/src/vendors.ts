@@ -74,7 +74,8 @@ export function vendorRows(args: {
       cut: cut ? { status: cut.status, tx: cut.tx, reason: cut.reason } : null,
       blocked: blocked.has(lower(s.recipient)),
       evidence,
-      recommendCut: recommendCut(evidence),
+      // A service already cut, or being cut, has nothing left to recommend.
+      recommendCut: !cut && recommendCut(evidence),
     }
   })
 }

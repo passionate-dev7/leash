@@ -77,3 +77,19 @@ test('a failure older than 24 hours does not recommend a cut, a recent one does'
   assert.equal(f.recommendCut, true)
   assert.equal(f.evidence.txs.length, 3)
 })
+
+test('a confirmed cut stops recommending a cut for that service', () => {
+  const store = memoryStore()
+  seed(store, Array.from({ length: 3 }, () => ({ serviceId: 'atlas-scrape', outcome: 'paid_not_delivered' as const })))
+  const before = scrape(rows(store))
+  assert.equal(before.recommendCut, true)
+  const cutoffs = [{
+    id: 1, account: '0x1111111111111111111111111111111111111111', recipient: before.recipient, service_ids: '["atlas-scrape"]',
+    tx: `0x${'ab'.repeat(32)}`, status: 'confirmed', gas_used: '131844', rescoped: '[]', revoked: '[]', unbounded: '[]', unchanged: '[]',
+    failure: null, created_at: new Date().toISOString(), confirmed_at: new Date().toISOString(), reason: 'failures', evidence: null,
+  }] as unknown as Parameters<typeof vendorRows>[0]['cutoffs']
+  const after = vendorRows({ catalog: publicCatalog(), records: store.allRecords('0x1111111111111111111111111111111111111111'), cutoffs, blocked: new Set() })
+  const s = after.find((x) => x.serviceId === 'atlas-scrape')!
+  assert.equal(s.cut?.status, 'confirmed')
+  assert.equal(s.recommendCut, false)
+})
