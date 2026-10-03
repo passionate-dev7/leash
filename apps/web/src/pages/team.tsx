@@ -7,12 +7,14 @@ import { units } from '@/lib/format'
 import { go } from '@/lib/router'
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/form'
-import { Notice, Panel, TxLink } from '@/components/ui/status'
+import { Empty, Notice, Panel, TxLink } from '@/components/ui/status'
+import { FleetStrip } from '@/components/fleet'
+import { useTeamData } from '@/lib/fleet'
 import { PageHead } from '@/components/page'
 import { addressUrl } from '@/lib/config'
 import type { Hash } from 'viem'
 
-function CreateTeam({ first }: { first: boolean }) {
+function CreateTeam({ first, onCreated }: { first: boolean; onCreated: () => void }) {
   const { create } = useSession()
   const [label, setLabel] = useState('')
   const [busy, setBusy] = useState<'passkey' | 'webcrypto' | null>(null)
@@ -23,6 +25,7 @@ function CreateTeam({ first }: { first: boolean }) {
     setError(null)
     try {
       await create(kind, label.trim())
+      onCreated()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -88,27 +91,22 @@ function Funding({ address }: { address: `0x${string}` }) {
   const empty = bal.data && bal.data.ousd === 0n
 
   return (
-    <Panel
-      title="Balances on chain"
-      aside={bal.data && <span className="text-caption text-ink-subtle">read at block <span className="num">{bal.data.block.toString()}</span></span>}
-    >
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div>
-          <p className="text-caption text-ink-muted">OUSD (agent budget and payment token)</p>
-          <p className="mt-1 text-card-title font-light tabular-nums">{bal.data ? units(bal.data.ousd) : '...'}</p>
-        </div>
-        <div>
-          <p className="text-caption text-ink-muted">PathUSD (fee token)</p>
-          <p className="mt-1 text-card-title font-light tabular-nums">{bal.data ? units(bal.data.pathusd) : '...'}</p>
-        </div>
-      </div>
-      {bal.error && <div className="mt-4"><Notice tone="error" title="Could not read balances">{bal.error}</Notice></div>}
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <Button busy={busy} onClick={fund}>
+    <section aria-label="Balances on chain">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border border-hairline bg-surface-1 px-4 py-3">
+        <h2 className="text-body-sm font-semibold max-md:w-full">Balances</h2>
+        <p className="text-body-sm text-ink-muted">
+          OUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.ousd) : '...'}</span>
+        </p>
+        <p className="text-body-sm text-ink-muted">
+          PathUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.pathusd) : '...'}</span>
+        </p>
+        {bal.data && <span className="text-caption text-ink-subtle">read at block <span className="num">{bal.data.block.toString()}</span></span>}
+        <Button className="md:ml-auto" size="sm" variant={empty ? 'primary' : 'ghost'} busy={busy} onClick={fund}>
           {empty ? 'Fund from the Moderato faucet' : 'Request faucet funds again'}
         </Button>
-        {empty && !result && <span className="text-body-sm text-ink-muted">The faucet sends 1,000,000 OUSD and PathUSD. PathUSD pays the gas for each signature you make here.</span>}
       </div>
+      {empty && !result && <p className="mt-2 text-caption text-ink-muted">The faucet sends 1,000,000 OUSD and PathUSD. OUSD is what agents pay with. PathUSD pays the gas for each signature you make here.</p>}
+      {bal.error && <div className="mt-4"><Notice tone="error" title="Could not read balances">{bal.error}</Notice></div>}
       {error && <div className="mt-4"><Notice tone="error" title="Faucet refused">{error}</Notice></div>}
       {result && (
         <div className="mt-4">
@@ -124,23 +122,34 @@ function Funding({ address }: { address: `0x${string}` }) {
           </Notice>
         </div>
       )}
-    </Panel>
+    </section>
   )
 }
 
 export function TeamPage() {
   const { active, signers, select, forget, loadError, registerError } = useSession()
   const [adding, setAdding] = useState(false)
+  const fleet = useTeamData(active?.address ?? null)
 
   return (
     <>
-      <PageHead title="Team account">
+      <PageHead title={active ? active.label : 'Team account'}>
         The team account is the root that owns every agent key. It signs key authorizations and vendor cut-offs from this browser. Agents get limits and recipient scopes, never the root.
       </PageHead>
       <div className="grid gap-6">
-        {!active || adding ? <CreateTeam first={!active} /> : null}
+        {!active || adding ? <CreateTeam first={!active} onCreated={() => setAdding(false)} /> : null}
         {active && (
           <>
+            {registerError && <Notice tone="error" title="The API has not registered this team">{registerError}</Notice>}
+            <FleetStrip
+              data={fleet}
+              empty={
+                <Empty title="No agents hold a key yet" action={<Button onClick={() => go('agents')}>Add an agent</Button>}>
+                  Fund the team below, then add an agent: pick the services it may pay and a daily budget. Its spend, failures and refusals appear here.
+                </Empty>
+              }
+            />
+            <Funding address={active.address} />
             <Panel
               title={active.label}
               aside={
@@ -176,8 +185,6 @@ export function TeamPage() {
                 </ul>
               )}
             </Panel>
-            {registerError && <Notice tone="error" title="The API has not registered this team">{registerError}</Notice>}
-            <Funding address={active.address} />
           </>
         )}
       </div>
