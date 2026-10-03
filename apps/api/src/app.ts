@@ -55,11 +55,14 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
   const teamOf = (account: Address) => {
     const team = store.team(account)
     if (!team) throw notFound(`no team ${account}. Create it with POST /api/teams`)
+    // LEASH_MAINNET is the kill switch: a mainnet team answers nothing while it is unset, reads and writes alike.
+    if (team.network === 'mainnet' && !mainnet) throw new HttpError(503, 'mainnet_disabled', 'this desk does not run mainnet teams')
     return team
   }
   const agentOf = (keyId: string): AgentRow => {
     const agent = store.agent(address(keyId, 'keyId'))
     if (!agent) throw notFound(`no agent ${keyId}`)
+    teamOf(agent.account)
     return agent
   }
   const serviceIdsOf = (agent: AgentRow) => JSON.parse(agent.service_ids) as string[]
@@ -438,7 +441,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     route('GET', '/api/stats', async () => store.stats()),
 
     route('GET', '/api/featured', async () => {
-      const account = FEATURED_TEAM ?? store.busiestTeam()
+      const account = FEATURED_TEAM ?? store.busiestTeam(mainnet)
       if (!account) throw notFound('no team has a ledger yet and LEASH_FEATURED_TEAM is not set')
       return { account }
     }),
@@ -469,7 +472,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
 
     route('GET', '/api/teams/:account/balances', async ({ params }) => {
       const account = address(params['account'], 'account')
-      const team = store.team(account)
+      const team = store.team(account) && teamOf(account)
       if (team?.network === 'mainnet') {
         const b = await budgetBalance(chains.mainnet, account)
         return { account, network: 'mainnet', token: chains.mainnet.token, units: String(b.balance), block: Number(b.block) }

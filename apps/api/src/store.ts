@@ -70,7 +70,7 @@ export function createStore(db: Db, cipher: Cipher) {
     agents: db.prepare('select * from agent where account = ? order by created_at, key_id'),
     plainAgents: db.prepare("select key_id, private_key from agent where external = 0 and private_key not like 'enc1:%'"),
     setKey: db.prepare('update agent set private_key = ? where key_id = ?'),
-    mostRecords: db.prepare('select account from record group by account order by count(*) desc, min(seq) limit 1'),
+    mostRecords: db.prepare("select r.account from record r join team t on t.account = r.account where ? = 1 or t.network = 'moderato' group by r.account order by count(*) desc, min(r.seq) limit 1"),
     // A pending agent holds a slot only while its authorization can still arrive.
     countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and (status = 'active' or (status = 'pending' and created_at >= ?))"),
     purgePending: db.prepare("delete from agent where account = ? and status = 'pending' and created_at < ?"),
@@ -170,8 +170,8 @@ export function createStore(db: Db, cipher: Cipher) {
       }
       return open.length
     },
-    /** The team with the most ledger records, or undefined on an empty ledger. */
-    busiestTeam: () => (q.mostRecords.get() as { account: Address } | undefined)?.account,
+    /** The team with the most ledger records, or undefined on an empty ledger. Mainnet teams count only when the desk runs them. */
+    busiestTeam: (includeMainnet = true) => (q.mostRecords.get(includeMainnet ? 1 : 0) as { account: Address } | undefined)?.account,
     agents: (account: Address) => rows<AgentRow>(q.agents.all(account)),
     openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account, new Date(Date.now() - PENDING_TTL_MS).toISOString()) as { n: number }).n),
     /** Drops the team's pending agents whose authorization window passed. Returns how many it removed. */
