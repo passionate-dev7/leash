@@ -122,7 +122,13 @@ export type VendorRow = {
   siblings: string[]
   cut: { status: 'prepared' | 'confirmed' | 'failed'; tx: Hash | null } | null
   blocked: boolean
+  /** Failures measured in the last 24 hours; txs are the settlement hashes of paid_not_delivered records, newest first. */
+  evidence: { window: '24h'; paid: number; paidNotDelivered: number; failureRate: number; txs: Hash[] }
+  /** True when at least 2 paid calls went undelivered and the 24h failure rate is 25% or more. */
+  recommendCut: boolean
 }
+
+export type CutReason = 'failures' | 'manual'
 
 export type CutPlan = {
   id: number
@@ -152,12 +158,27 @@ export const api = {
     request<{ record: LedgerRecord; body: string | null }>(`/api/agents/${keyId}/call`, { body: { serviceId, input } }),
   ledger: (account: Address, limit = 100) => request<{ records: LedgerRecord[] }>(`/api/teams/${account}/ledger?limit=${limit}`),
   vendors: (account: Address) => request<{ services: VendorRow[] }>(`/api/teams/${account}/vendors`),
-  planCutoff: (account: Address, recipient: Address) => request<CutPlan>(`/api/teams/${account}/cutoffs`, { body: { recipient } }),
+  planCutoff: (account: Address, recipient: Address, reason: CutReason) =>
+    request<CutPlan>(`/api/teams/${account}/cutoffs`, { body: { recipient, reason } }),
+  featured: () => request<{ account: Address }>('/api/featured'),
+  mainnetEvidence: (blocks: number) => request<MainnetEvidence>(`/api/mainnet/evidence?blocks=${blocks}`),
   confirmCutoff: (id: number, tx: Hash) => request<CutConfirm>(`/api/cutoffs/${id}/confirm`, { body: { tx } }),
   revokePlan: (keyId: Address) => request<{ calls: { to: Address; data: Hex }[] }>(`/api/agents/${keyId}/revoke-plan`, { body: {} }),
   revokeConfirm: (keyId: Address, tx: Hash) => request<unknown>(`/api/agents/${keyId}/revoke-confirm`, { body: { tx } }),
   mainnet: (blocks: number) => request<MainnetReplay>(`/api/mainnet/mpp?blocks=${blocks}`),
 }
+
+export type ReplayWindow = { blocks: number; fromBlock: number; toBlock: number; fromTime: string; toTime: string }
+export type MainnetEvidenceRow = {
+  payout: Address
+  /** Service ids behind this payout address. */
+  services: string[]
+  replay: { charges: number; payers: number; window: ReplayWindow }
+  vet402: { paid: number; delivered: number; paidNotDelivered: number; txs: Hash[] }
+  /** How many services one cut of this payout address takes with it. */
+  cutTakes: number
+}
+export type MainnetEvidence = { payouts: MainnetEvidenceRow[]; window: ReplayWindow; outsideCachedAt: string; outsideStale: boolean }
 
 export type MainnetReplay = {
   chainId: 4217
