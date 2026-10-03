@@ -124,7 +124,7 @@ export type VendorRow = {
   blocked: boolean
   /** Failures measured in the last 24 hours; txs are the settlement hashes of paid_not_delivered records, newest first. */
   evidence: { window: '24h'; paid: number; paidNotDelivered: number; failureRate: number; txs: Hash[] }
-  /** True when at least 2 paid calls went undelivered and the 24h failure rate is 25% or more. */
+  /** The API's verdict that the 24h failures measured for this service justify a cut. */
   recommendCut: boolean
 }
 
