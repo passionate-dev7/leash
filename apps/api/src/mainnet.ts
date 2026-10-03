@@ -212,18 +212,29 @@ export async function replay(blocks: number): Promise<MainnetReplay> {
   }
 }
 
-const cache = new Map<number, { at: number; value: Promise<MainnetReplay> }>()
+/** A requested window rounds up to a whole number of pages, so any integer from 1 to MAX_BLOCKS reads one of at most MAX_BLOCKS / PAGE_BLOCKS windows. */
+export const replayWindow = (blocks: number): number => Math.min(MAX_BLOCKS, Math.ceil(blocks / PAGE_BLOCKS) * PAGE_BLOCKS)
 
-/** Cached for ten minutes per window size. A failed read is not cached. */
-export function cachedReplay(blocks: number): Promise<MainnetReplay> {
-  const hit = cache.get(blocks)
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value
-  const value = replay(blocks)
-  cache.set(blocks, { at: Date.now(), value })
-  value.catch(() => {
-    if (cache.get(blocks)?.value === value) cache.delete(blocks)
-  })
-  return value
+/**
+ * A cache in front of a replay: one read per window per ten minutes, however many callers ask and
+ * whatever size they name. The key set is the page-rounded windows, so the map holds at most ten
+ * entries. A failed read is not cached.
+ */
+export function createReplayCache(run: (blocks: number) => Promise<MainnetReplay>, now: () => number = Date.now) {
+  const cache = new Map<number, { at: number; value: Promise<MainnetReplay> }>()
+  return (blocks: number): Promise<MainnetReplay> => {
+    const window = replayWindow(blocks)
+    const hit = cache.get(window)
+    if (hit && now() - hit.at < CACHE_MS) return hit.value
+    const value = run(window)
+    cache.set(window, { at: now(), value })
+    value.catch(() => {
+      if (cache.get(window)?.value === value) cache.delete(window)
+    })
+    return value
+  }
 }
+
+export const cachedReplay = createReplayCache(replay)
 
 export const MAX_REPLAY_BLOCKS = MAX_BLOCKS

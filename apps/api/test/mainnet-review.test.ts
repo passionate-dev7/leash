@@ -11,7 +11,8 @@ import { NETWORKS, signRecord } from '@leash/sdk'
 import { createVendorRouter } from '@leash/vendors'
 import { createApp } from '../src/app.js'
 import { assertNotBeforeSettlement, parseRecord, settlementProof } from '../src/external.js'
-import { mainnetServices } from '../src/mainnet.js'
+import { createReplayCache, mainnetServices, replayWindow } from '../src/mainnet.js'
+import type { MainnetReplay } from '../src/mainnet.js'
 import { createRunner } from '../src/runner.js'
 import { createRateLimiter } from '../src/limit.js'
 import { evidenceOf } from '../src/vendors.js'
@@ -187,12 +188,14 @@ test('M2: unverified record intake is rate limited per key and per address, and 
     }
     const one = activeAgent(st, MAINNET_TEAM)
     const statuses: number[] = []
+    const began = Date.now()
     for (let i = 0; i < 200; i++) statuses.push(await post(one, MAINNET_TEAM))
     const accepted = statuses.filter((s) => s === 200).length
     console.log(`M2 observed: 200 signed refused records from one key: ${accepted} accepted, first 429 at request ${statuses.indexOf(429) + 1}`)
     assert.ok(statuses.includes(429), 'the flood was never limited')
     assert.ok(statuses.indexOf(429) < 199, 'the limit must hit before the 200th record')
-    assert.ok(accepted >= 50 && accepted <= 70, `a burst of about 60 is accepted, got ${accepted}`)
+    const allowance = 60 + Math.ceil((Date.now() - began) / 1000)
+    assert.ok(accepted >= 50 && accepted <= allowance, `a burst of 60 plus one a second is accepted: ${accepted} against ${allowance}`)
     assert.equal(st.allRecords(MAINNET_TEAM).length, accepted, 'a limited record writes nothing')
 
     // many keys from one address: the address bucket stops the spread
@@ -220,4 +223,26 @@ test('M2: the token bucket refills with time and forgets its least recent keys',
   lim.take('b')
   lim.take('c')
   assert.equal(lim.take('a'), true, 'a evicted as least recent, so it starts full again')
+})
+
+test('M5: the mainnet replay reads once per page-rounded window, however many sizes are asked for', async () => {
+  const ran: number[] = []
+  let t = 0
+  const cached = createReplayCache(async (blocks) => (ran.push(blocks), { blocks } as MainnetReplay), () => t)
+  for (const n of [1, 2, 3, 4_999, 5_000]) await cached(n)
+  assert.deepEqual(ran, [5_000], 'five sizes inside one page read the chain once')
+  await cached(5_001)
+  await cached(50_000)
+  await cached(49_999)
+  assert.deepEqual(ran, [5_000, 10_000, 50_000], 'a larger size reads its own window once')
+  assert.equal(replayWindow(1_000_000), 50_000, 'no size reads past the cap')
+  const sizes = new Set<number>()
+  for (let n = 1; n <= 50_000; n += 7) sizes.add(replayWindow(n))
+  assert.equal(sizes.size, 10, 'every size maps to one of ten windows, so the map is bounded')
+  t += 11 * 60_000
+  await cached(1)
+  assert.deepEqual(ran, [5_000, 10_000, 50_000, 5_000], 'a window is read again after the cache expires')
+  const failing = createReplayCache(async () => { throw new Error('rpc down') }, () => t)
+  await assert.rejects(failing(1))
+  await assert.rejects(failing(1), /rpc down/, 'a failed read is not cached as a success')
 })
