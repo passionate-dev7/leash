@@ -3,7 +3,7 @@ import type { Address, Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { Account } from 'viem/tempo'
 import { NETWORKS } from './client.js'
-import type { NetworkConfig } from './client.js'
+import type { NetworkConfig, NetworkName } from './client.js'
 import type { AgentAccount, DeliveryRecord } from './mpp.js'
 
 /**
@@ -19,10 +19,17 @@ import type { AgentAccount, DeliveryRecord } from './mpp.js'
 export const OUSD: Address = '0x20c0000000000000000000006a37DA5C996874BE'
 
 /**
- * The network an agent pays on. Gas is paid in OUSD, the token the budget is denominated in:
- * an access key can only spend a token it has a limit for.
+ * The network an agent pays on, with the token its budget, payments and gas share: an access key can
+ * only spend a token it has a limit for. Moderato pays in OUSD. Mainnet pays in USDC.e, the asset
+ * 141 of 141 Tempo-payable MPP services quote, and has no sponsor: gas debits the same budget.
  */
-export const AGENT_NETWORK: NetworkConfig = { ...NETWORKS.moderato, feeToken: OUSD, settlementToken: OUSD }
+export function agentNetwork(name: NetworkName): NetworkConfig {
+  const token = name === 'mainnet' ? NETWORKS.mainnet.settlementToken : OUSD
+  return { ...NETWORKS[name], feeToken: token, settlementToken: token }
+}
+
+/** The Moderato agent network: OUSD for budget, payment and fees. */
+export const AGENT_NETWORK: NetworkConfig = agentNetwork('moderato')
 
 /** JSON with object keys sorted at every depth, so two parties serialise one record to the same bytes. */
 export function canonicalJson(value: unknown): string {
@@ -106,6 +113,15 @@ export async function fetchBlocked(deskApi: string, team: Address): Promise<Set<
   if (!res.ok) throw new DeskError(res.status, `blocked list answered ${res.status}`, null)
   const json = (await res.json()) as { recipients?: string[] }
   return new Set((json.recipients ?? []).map((r) => r.toLowerCase()))
+}
+
+/** The network a team's desk record says it runs on. A desk that predates mainnet teams has only Moderato ones. */
+export async function fetchTeamNetwork(deskApi: string, team: Address): Promise<NetworkName> {
+  const res = await fetch(`${trim(deskApi)}/api/teams/${team}`, { signal: AbortSignal.timeout(30_000) })
+  if (!res.ok) throw new DeskError(res.status, `team lookup answered ${res.status}`, null)
+  const network = ((await res.json()) as { team?: { network?: string } }).team?.network ?? 'moderato'
+  if (network !== 'moderato' && network !== 'mainnet') throw new DeskError(502, 'the desk named an unknown network', network.slice(0, 40))
+  return network
 }
 
 /** The signing account for an agent key authorized under `team`. Its `accessKeyAddress` is the key id. */

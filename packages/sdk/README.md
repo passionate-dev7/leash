@@ -1,15 +1,15 @@
 # @leash/sdk
 
-The agent side of Leash. An agent holds its own Tempo access key, pays MPP services with it, and reports every payment to the team's spend desk. The desk reads each settlement back from Moderato before it counts it.
+The agent side of Leash. An agent holds its own Tempo access key, pays MPP services with it, and reports every payment to the team's spend desk. The desk reads each settlement back from the team's chain (Moderato or Tempo mainnet) before it counts it.
 
 ## Wrap an agent's fetch
 
 ```ts
-import { agentAccount, AGENT_NETWORK, createLeashFetch, fetchBlocked, reportTo } from '@leash/sdk'
+import { agentAccount, agentNetwork, createLeashFetch, fetchBlocked, reportTo } from '@leash/sdk'
 
 const blocked = await fetchBlocked(DESK_API, TEAM)            // recipients the desk has cut
 const leashFetch = createLeashFetch({
-  network: AGENT_NETWORK,                                     // Moderato, OUSD for payment and fees
+  network: agentNetwork('moderato'),                          // or 'mainnet': USDC.e for budget, payment and fees
   agent: agentAccount(AGENT_PRIVATE_KEY, TEAM),               // the key id the team authorized
   blocked: () => blocked,
   onRecord: reportTo(DESK_API, AGENT_PRIVATE_KEY),            // signed delivery record to the desk
@@ -30,10 +30,11 @@ leash-agent init                                    # writes .leash-agent.json (
 leash-agent pay https://desk.example/v/atlas/scrape \
   --method POST --data '{"url":"https://example.com"}' \
   --team 0xTEAM --api https://desk.example
+leash-agent pay https://vendor.example/v1/search --team 0xTEAM --api https://desk.example --network mainnet
 ```
 
-`pay` fetches the desk's blocked recipients first, pays the request, prints the response and the delivery record, and posts the signed record to the desk. From this repository: `pnpm --filter @leash/sdk leash-agent init`.
+`--network` is `moderato` (default, OUSD) or `mainnet` (Tempo 4217, USDC.e). `pay` reads the team's network from the desk and refuses a different `--network` before anything is signed. It fetches the desk's blocked recipients, pays the request, prints the response and the delivery record, and posts the signed record to the desk. From this repository: `pnpm --filter @leash/sdk leash-agent init`.
 
 ## Exports
 
-`createLeashFetch`, `planCutoff`, `reportTo`, `postRecord`, `signRecord`, `recordDigest`, `canonicalJson`, `fetchBlocked`, `agentAccount`, `AGENT_NETWORK`, plus the chain reads in `reads.ts`.
+`createLeashFetch`, `planCutoff`, `reportTo`, `postRecord`, `signRecord`, `recordDigest`, `canonicalJson`, `fetchBlocked`, `fetchTeamNetwork`, `agentAccount`, `agentNetwork`, `AGENT_NETWORK`, plus the chain reads in `reads.ts`.

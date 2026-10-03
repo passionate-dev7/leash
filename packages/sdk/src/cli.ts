@@ -3,7 +3,7 @@ import { parseArgs } from 'node:util'
 import { getAddress, isAddress } from 'viem'
 import type { Address, Hex } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { AGENT_NETWORK, agentAccount, fetchBlocked, postRecord } from './agent.js'
+import { agentAccount, agentNetwork, fetchBlocked, fetchTeamNetwork, postRecord } from './agent.js'
 import { createLeashFetch } from './mpp.js'
 
 const DEFAULT_KEY_FILE = '.leash-agent.json'
@@ -16,10 +16,12 @@ const USAGE = `leash-agent: run an agent with your own key and report what it pa
       Generates a secp256k1 agent key in a file (mode 600, never printed) and prints its key id.
       Authorize that key id in the desk: Agents, "I run it".
 
-  leash-agent pay <url> --team <account> --api <desk api base> [--method POST] [--data '{...}']
-                        [--key .leash-agent.json] [--json]
-      Pays one MPP request on Moderato with the agent key, prints the response and the delivery
-      record, and reports the signed record to the desk.
+  leash-agent pay <url> --team <account> --api <desk api base> [--network moderato|mainnet]
+                        [--method POST] [--data '{...}'] [--key .leash-agent.json] [--json]
+      Pays one MPP request with the agent key (Moderato in OUSD by default, mainnet in USDC.e),
+      prints the response and the delivery record, and reports the signed record to the desk.
+      The desk's record of the team names its network; a different --network is refused before
+      anything is signed.
 
 Environment: LEASH_API_URL stands in for --api, LEASH_DESK_URL for --desk.`
 
@@ -56,6 +58,7 @@ async function pay(argv: string[]) {
     options: {
       team: { type: 'string' },
       api: { type: 'string' },
+      network: { type: 'string', default: 'moderato' },
       method: { type: 'string' },
       data: { type: 'string' },
       key: { type: 'string', default: DEFAULT_KEY_FILE },
@@ -69,7 +72,11 @@ async function pay(argv: string[]) {
   const team = getAddress(values.team)
   const api = values.api ?? process.env['LEASH_API_URL']
   if (!api) throw new UsageError('--api (or LEASH_API_URL) must name the desk api base')
+  if (values.network !== 'moderato' && values.network !== 'mainnet') throw new UsageError("--network must be 'moderato' or 'mainnet'")
+  const network = values.network
   const { keyId, privateKey } = readKey(values.key!)
+  const teamNetwork = await fetchTeamNetwork(api, team)
+  if (teamNetwork !== network) throw new UsageError(`team ${team} runs on ${teamNetwork} but --network is ${network}. Pass --network ${teamNetwork}.`)
 
   let blocked: ReadonlySet<string> = new Set()
   try {
@@ -80,7 +87,7 @@ async function pay(argv: string[]) {
 
   let desk: { accepted: true; outcome: string; seq: number } | { rejected: string } | null = null
   const leashFetch = createLeashFetch({
-    network: AGENT_NETWORK,
+    network: agentNetwork(network),
     agent: agentAccount(privateKey, team),
     blocked: () => blocked,
     onRecord: async (record) => {
