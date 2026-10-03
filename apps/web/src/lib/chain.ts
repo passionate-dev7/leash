@@ -1,8 +1,10 @@
 import { createClient, createPublicClient, http, publicActions, walletActions, erc20Abi } from 'viem'
+import { Abis, Addresses } from 'viem/tempo'
 import type { Address, Hash, Hex } from 'viem'
 import type { Account } from 'viem'
 import { NETWORKS } from './config'
 import type { NetworkName } from './config'
+import type { Scope } from './verifyCalls'
 
 const publicClients = new Map<NetworkName, ReturnType<typeof makePublicClient>>()
 const makePublicClient = (network: NetworkName) => createPublicClient({ chain: NETWORKS[network].chain, transport: http(NETWORKS[network].rpcUrl) })
@@ -56,3 +58,16 @@ export async function waitForSuccess(hash: Hash, network: NetworkName, timeoutMs
 }
 
 export type Call = { to: Address; data: Hex }
+
+/** The scopes each key holds on chain right now, read by this browser from the network's own RPC, not through the API. */
+export async function readScopes(network: NetworkName, account: Address, keyIds: readonly Address[]): Promise<Record<string, Scope[]>> {
+  const client = publicClient(network)
+  const out: Record<string, Scope[]> = {}
+  await Promise.all(
+    keyIds.map(async (keyId) => {
+      const [, scopes] = await client.readContract({ address: Addresses.accountKeychain, abi: Abis.accountKeychain, functionName: 'getAllowedCalls', args: [account, keyId] })
+      out[keyId.toLowerCase()] = scopes as unknown as Scope[]
+    }),
+  )
+  return out
+}

@@ -188,7 +188,6 @@ export const api = {
   featured: () => request<{ account: Address }>('/api/featured'),
   mainnetEvidence: (blocks: number) => request<MainnetEvidence>(`/api/mainnet/evidence?blocks=${blocks}`),
   confirmCutoff: (id: number, tx: Hash, auth: DeskAuth) => request<CutConfirm>(`/api/cutoffs/${id}/confirm`, { body: { tx }, auth }),
-  revokePlan: (keyId: Address) => request<{ calls: { to: Address; data: Hex }[] }>(`/api/agents/${keyId}/revoke-plan`, { body: {} }),
   revokeConfirm: (keyId: Address, tx: Hash, auth: DeskAuth) => request<unknown>(`/api/agents/${keyId}/revoke-confirm`, { body: { tx }, auth }),
   mainnet: (blocks: number) => request<MainnetReplay>(`/api/mainnet/mpp?blocks=${blocks}`),
 }

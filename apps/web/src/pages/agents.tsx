@@ -10,11 +10,15 @@ import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
 import { money, short, units } from '@/lib/format'
+import { parseUnits } from 'viem'
 import { Button } from '@/components/ui/button'
 import { Check, Field, Input, Radio } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
 import { NeedsTeam, PageHead, Cell, Table, TBody, Th, THead, Tr } from '@/components/page'
 import { RecordTable } from '@/components/records'
+import { CallReview } from '@/components/review'
+import { assertAuthorize, buildRevokeCall, reviewRevoke } from '@/lib/verifyCalls'
+import type { Review } from '@/lib/verifyCalls'
 import { asRecords } from '@/lib/records'
 import { cn } from '@/components/ui/cn'
 
@@ -69,6 +73,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
   const [steps, setSteps] = useState<Step[]>([])
   const [busy, setBusy] = useState(false)
   const [omitted, setOmitted] = useState<string[]>([])
+  const [review, setReview] = useState<Review | null>(null)
 
   const byId = useMemo(() => new Map(catalog.services.map((s) => [s.serviceId, s])), [catalog])
   const vendors = useMemo(() => {
@@ -99,6 +104,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     if (busy) return
     setSteps([])
     setOmitted([])
+    setReview(null)
   }
 
   const [attempted, setAttempted] = useState(false)
@@ -119,6 +125,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     setBusy(true)
     setSteps([])
     setOmitted([])
+    setReview(null)
     let stage = mode === 'own' ? 'Register your key id on the API' : 'Create key on the API'
     try {
       mark(stage, 'run')
@@ -132,9 +139,23 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
       }, auth)
       mark(stage, 'done', short(created.keyId, 8, 6))
       if (created.omitted.length > 0) setOmitted(created.omitted.map((o) => o.serviceId))
-      stage = 'Sign authorizeKey with the team key'
+      stage = 'Check the plan against what you entered'
       mark(stage, 'run')
       const a = created.authorize
+      // The plan came from the API. The team key signs it only if it is what was asked for.
+      const decoded = assertAuthorize(a, {
+        keyId: mode === 'own' ? (ownKey.trim() as Address) : null,
+        answeredKeyId: created.keyId,
+        token: net.token,
+        symbol: net.symbol,
+        budgetUnits: parseUnits(budget, 6),
+        periodSeconds: 86400,
+        recipients: [...picked].map((id) => byId.get(id)?.recipient).filter((r): r is Address => !!r),
+      })
+      setReview(decoded)
+      mark(stage, 'done')
+      stage = 'Sign authorizeKey with the team key'
+      mark(stage, 'run')
       const tx = await Actions.accessKey.authorize(client, {
         accessKey: { accessKeyAddress: a.accessKey.accessKeyAddress, keyType: a.accessKey.keyType },
         expiry: a.expiry,
@@ -283,6 +304,11 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
           </Notice>
         </div>
       )}
+      {review && (
+        <div className="mt-6">
+          <CallReview review={review} />
+        </div>
+      )}
       {steps.length > 0 && (
         <ol className="mt-6 grid gap-2" aria-live="polite">
           {steps.map((s) => (
@@ -416,13 +442,15 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
   const [open, setOpen] = useState(false)
   const [revoking, setRevoking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [review, setReview] = useState<Review | null>(null)
 
   const revoke = async () => {
     setRevoking(true)
     setError(null)
     try {
-      const plan = await api.revokePlan(agent.keyId)
-      const tx = await client.sendTransaction({ calls: plan.calls } as never)
+      // The call is built here from the key id. The API is not asked for it.
+      setReview(reviewRevoke(agent.keyId, agent.name))
+      const tx = await client.sendTransaction({ calls: [buildRevokeCall(agent.keyId)] } as never)
       await waitForSuccess(tx, net.name)
       await api.revokeConfirm(agent.keyId, tx, deskAuth(client, net.name))
       onChange()
@@ -475,6 +503,13 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
           </span>
         </Cell>
       </Tr>
+      {review && (revoking || error) && (
+        <Tr>
+          <td colSpan={7} className="px-4 pb-3 max-md:block max-md:px-0">
+            <CallReview review={review} />
+          </td>
+        </Tr>
+      )}
       {error && (
         <Tr>
           <td colSpan={7} className="px-4 pb-3 max-md:block max-md:px-0">

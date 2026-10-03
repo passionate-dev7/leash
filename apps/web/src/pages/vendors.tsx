@@ -2,7 +2,10 @@ import { useMemo, useState } from 'react'
 import type { Address } from 'viem'
 import { api, deskAuth } from '@/lib/api'
 import type { AgentView, CatalogService, CutConfirm, CutPlan, CutReason, LedgerRecord, VendorRow } from '@/lib/api'
-import { waitForSuccess } from '@/lib/chain'
+import { readScopes, waitForSuccess } from '@/lib/chain'
+import { CallReview } from '@/components/review'
+import { assertCutCalls } from '@/lib/verifyCalls'
+import type { Review } from '@/lib/verifyCalls'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
 import { short, units } from '@/lib/format'
@@ -46,6 +49,7 @@ function CutSheet({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stage, setStage] = useState('')
+  const [review, setReview] = useState<Review | null>(null)
   const { name: net } = useNetwork()
 
   const names = new Map(agents.map((a) => [a.keyId.toLowerCase(), a.name]))
@@ -55,7 +59,14 @@ function CutSheet({
     setBusy(true)
     setError(null)
     try {
-      setPlan(await api.planCutoff(account, row.recipient, reason, deskAuth(client, net)))
+      const planned = await api.planCutoff(account, row.recipient, reason, deskAuth(client, net))
+      // The calls came from the API. They are signed only if they are the cut of this recipient from keys of this team, checked against the scopes this browser reads from the chain.
+      const keyIds = agents.map((a) => a.keyId)
+      if (planned.calls.length > 0) {
+        const scopesByKey = await readScopes(net, account, agents.filter((a) => a.status === 'active').map((a) => a.keyId))
+        setReview(assertCutCalls(planned.calls, { keyIds, recipient: row.recipient, scopesByKey }))
+      }
+      setPlan(planned)
       setPhase('prepared')
       onChanged()
     } catch (e) {
@@ -191,7 +202,12 @@ function CutSheet({
                 </Notice>
               </div>
             )}
-            <p className="mt-3 text-caption text-ink-muted">Leash already blocks this address on the server side. The chain enforces it for every key once the transaction confirms.</p>
+            {review && (
+              <div className="mt-3">
+                <CallReview review={review} />
+              </div>
+            )}
+            <p className="mt-3 text-caption text-ink-muted">The chain enforces the cut for every key once the transaction confirms.</p>
           </section>
         )}
 
