@@ -10,13 +10,13 @@ export function Field({ label, help, error, children }: { label: string; help?: 
         {label}
       </label>
       {children(id)}
-      {error ? <p className="text-caption text-error-ink">{error}</p> : help ? <p className="text-caption text-ink-subtle">{help}</p> : null}
+      {error ? <p id={`${id}-error`} role="alert" className="text-caption text-error-ink">{error}</p> : help ? <p className="text-caption text-ink-subtle">{help}</p> : null}
     </div>
   )
 }
 
 const control =
-  'w-full min-h-10 bg-surface-1 px-4 text-body-sm text-ink placeholder:text-ink-subtle border-0 border-b border-ink-subtle outline-none focus:border-b-2 focus:border-primary focus:outline-2 focus:-outline-offset-2 focus:outline-primary disabled:bg-surface-2 disabled:text-ink-subtle'
+  'w-full min-h-10 bg-surface-1 px-4 text-body-sm text-ink placeholder:text-ink-subtle border-0 border-b border-ink-subtle outline-none focus:border-b-2 focus:border-primary focus:outline-2 focus:-outline-offset-2 focus:outline-primary disabled:bg-surface-2 disabled:text-ink-subtle aria-invalid:border-b-2 aria-invalid:border-error'
 
 export const Input = ({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) => <input className={cn(control, className)} {...rest} />
 export const Select = ({ className, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) => <select className={cn(control, 'pr-8', className)} {...rest} />
