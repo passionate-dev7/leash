@@ -32,7 +32,7 @@ leash-agent pay https://desk.example/v/atlas/scrape \
   --team 0xTEAM --api https://desk.example
 ```
 
-`pay` fetches the desk's blocked recipients first, pays the request, prints the response and the delivery record, and posts the signed record to the desk. From this repository: `pnpm --filter @leash/sdk leash-agent -- init`.
+`pay` fetches the desk's blocked recipients first, pays the request, prints the response and the delivery record, and posts the signed record to the desk. From this repository: `pnpm --filter @leash/sdk leash-agent init`.
 
 ## Exports
 
