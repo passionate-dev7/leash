@@ -29,8 +29,8 @@ leash-agent init                                    # writes .leash-agent.json (
 # desk: Agents, "I run it", paste the key id, sign the authorization with the team key
 leash-agent pay https://desk.example/v/atlas/scrape \
   --method POST --data '{"url":"https://example.com"}' \
-  --team 0xTEAM --api https://desk.example
-leash-agent pay https://vendor.example/v1/search --team 0xTEAM --api https://desk.example --network mainnet
+  --team 0xTEAM
+leash-agent pay https://vendor.example/v1/search --team 0xTEAM --network mainnet
 ```
 
 `--network` is `moderato` (default, OUSD) or `mainnet` (Tempo 4217, USDC.e). `pay` reads the team's network from the desk and refuses a different `--network` before anything is signed. It fetches the desk's blocked recipients, pays the request, prints the response and the delivery record, and posts the signed record to the desk. From this repository: `pnpm --filter @leash/sdk leash-agent init`.

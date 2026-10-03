@@ -8,6 +8,7 @@ import { createLeashFetch } from './mpp.js'
 
 const DEFAULT_KEY_FILE = '.leash-agent.json'
 const DEFAULT_DESK = 'https://leash-spend.vercel.app'
+const DEFAULT_API = 'https://leash-api.fly.dev'
 const MAX_BODY_PRINT = 8_000
 
 const USAGE = `leash-agent: run an agent with your own key and report what it pays to a Leash desk.
@@ -16,14 +17,14 @@ const USAGE = `leash-agent: run an agent with your own key and report what it pa
       Generates a secp256k1 agent key in a file (mode 600, never printed) and prints its key id.
       Authorize that key id in the desk: Agents, "I run it".
 
-  leash-agent pay <url> --team <account> --api <desk api base> [--network moderato|mainnet]
+  leash-agent pay <url> --team <account> [--api <desk api base>] [--network moderato|mainnet]
                         [--method POST] [--data '{...}'] [--key .leash-agent.json] [--json]
       Pays one MPP request with the agent key (Moderato in OUSD by default, mainnet in USDC.e),
       prints the response and the delivery record, and reports the signed record to the desk.
       The desk's record of the team names its network; a different --network is refused before
       anything is signed.
 
-Environment: LEASH_API_URL stands in for --api, LEASH_DESK_URL for --desk.`
+Environment: LEASH_API_URL stands in for --api (default ${DEFAULT_API}), LEASH_DESK_URL for --desk.`
 
 class UsageError extends Error {}
 
@@ -70,8 +71,7 @@ async function pay(argv: string[]) {
   if (!/^https?:\/\//.test(url)) throw new UsageError('the url must start with http:// or https://')
   if (!values.team || !isAddress(values.team, { strict: false })) throw new UsageError('--team must be the team account address')
   const team = getAddress(values.team)
-  const api = values.api ?? process.env['LEASH_API_URL']
-  if (!api) throw new UsageError('--api (or LEASH_API_URL) must name the desk api base')
+  const api = values.api ?? process.env['LEASH_API_URL'] ?? DEFAULT_API
   if (values.network !== 'moderato' && values.network !== 'mainnet') throw new UsageError("--network must be 'moderato' or 'mainnet'")
   const network = values.network
   const { keyId, privateKey } = readKey(values.key!)
