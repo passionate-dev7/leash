@@ -22,6 +22,8 @@ const { response, record } = await leashFetch('https://vendor.example/v/atlas/sc
 
 `reportTo` signs each record with the agent key (EIP-191 personal_sign over the keccak256 of the record's canonical JSON) and posts it to `POST /api/agents/:keyId/records`. The desk accepts a record when the signature recovers to an active agent key and, for a payment, the settlement transaction shows the transferWithMemo to the recorded recipient with the recorded memo and an AccessKeySpend by that key for the recorded amount.
 
+The outcome of a record, whether the vendor delivered, is the agent's report, signed by its own key. The payment inside it is checked against the settlement on chain, and each team's failure rates are computed from its own agents' records only.
+
 ## The `leash-agent` CLI
 
 ```sh

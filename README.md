@@ -77,6 +77,10 @@ Explorer: https://explore.testnet.tempo.xyz
 The team key never leaves the browser. The API holds only agent keys, and every agent key is capped and
 scoped by the team key on chain.
 
+Delivery outcomes for agents that run outside Leash are reported by the agent's own key. The desk checks each
+payment in a record against its settlement on chain (payer, recipient, amount, memo, and the key's own spend),
+and the HTTP outcome, whether the vendor delivered, is the agent's report. Every failure rate is kept per team.
+
 ## Run it
 
 ```bash
