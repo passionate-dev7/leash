@@ -45,7 +45,6 @@ export function createRunner(store: Store) {
     const leashFetch = createLeashFetch({
       network: AGENT_NETWORK,
       agent: keyAccount as never,
-      blocked: () => store.blocked(account),
       onRecord: (record) => {
         store.insertRecord(record, ctx)
         saved = { ...record, ...ctx }

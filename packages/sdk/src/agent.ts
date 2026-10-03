@@ -2,6 +2,7 @@ import { keccak256, toHex } from 'viem'
 import type { Address, Hex } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { Account } from 'viem/tempo'
+import { canonicalJson } from '@leash/policy'
 import { NETWORKS } from './client.js'
 import type { NetworkConfig, NetworkName } from './client.js'
 import type { AgentAccount, DeliveryRecord } from './mpp.js'
@@ -31,15 +32,7 @@ export function agentNetwork(name: NetworkName): NetworkConfig {
 /** The Moderato agent network: OUSD for budget, payment and fees. */
 export const AGENT_NETWORK: NetworkConfig = agentNetwork('moderato')
 
-/** JSON with object keys sorted at every depth, so two parties serialise one record to the same bytes. */
-export function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null'
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`
-  const entries = Object.entries(value as Record<string, unknown>)
-    .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJson(v)}`).join(',')}}`
-}
+export { canonicalJson }
 
 /** The 32 bytes an agent signs: keccak256 of the record's canonical JSON. */
 export const recordDigest = (record: unknown): Hex => keccak256(toHex(canonicalJson(record)))

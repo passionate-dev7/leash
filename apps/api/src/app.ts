@@ -7,17 +7,19 @@ import { getAllowedCalls, getRemainingLimit, planCutoff } from '@leash/sdk'
 import { SELECTOR } from '@leash/policy'
 import type { ServiceId, VendorRouter } from '@leash/vendors'
 import type { NetworkName } from '@leash/sdk'
+import { requireTeamSignature } from './auth.js'
 import { ALLOWED_ORIGINS, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
 import { balances, budgetBalance, chains, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
 import { parseRecord, signerOf } from './external.js'
 import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, readBody, route, sendJson, str, txHash } from './http.js'
-import type { Route } from './http.js'
+import type { HandlerContext, Route } from './http.js'
 import { cachedReplay, MAX_REPLAY_BLOCKS, mainnetServices, probedServices } from './mainnet.js'
 import { outsideFeed } from './outside.js'
 import { sponsorBalance } from './sponsor.js'
 import { evidenceOf, mainnetVendorRows, vendorRows } from './vendors.js'
 import type { Runner } from './runner.js'
 import { isServiceId, mainnetServicesPaying, payoutGroups, publicCatalog, servicesOn, servicesPaying, serviceOfUrl } from './services.js'
+import { PENDING_TTL_MS } from './store.js'
 import type { AgentRow, Store, TeamRow } from './store.js'
 
 const FAUCET_WINDOW_MS = 10 * 60_000
@@ -64,19 +66,14 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
   /** The chain a team's reads and verifications go to. */
   const chainOfTeam = (account: Address) => chains[teamOf(account).network]
   const chainOfAgent = (agent: AgentRow) => chainOfTeam(agent.account)
+  /** Every write that changes a team carries a signature by that team account's root key. */
+  const authorize = (ctx: HandlerContext, account: Address, network: NetworkName, body: unknown) =>
+    requireTeamSignature(store, ctx.req, { method: ctx.req.method ?? 'POST', path: ctx.path, account, chainId: chains[network].config.chainId, body })
   /** The desk pays only for agents whose key it holds. An external agent pays with its own process. */
-  const runnerAgent = (keyId: string): AgentRow => {
-    const agent = agentOf(keyId)
+  const assertRunnable = (agent: AgentRow): AgentRow => {
     if (teamOf(agent.account).network === 'mainnet') throw conflict('mainnet_team', `team ${agent.account} runs on mainnet: its agents pay from their own processes, and the desk never signs or funds anything on mainnet`)
     if (agent.external === 1) throw conflict('external_agent', `agent ${agent.key_id} runs outside Leash: it pays from its own process, and the desk cannot run or call for it`)
     return agent
-  }
-
-  /** Recipients this team has cut on chain. New keys are never granted them. */
-  const cutRecipients = (account: Address): Set<string> => {
-    const cut = new Set<string>()
-    for (const c of store.cutoffs(account)) if (c.status === 'confirmed' && c.tx) cut.add(lower(c.recipient))
-    return cut
   }
 
   const routes: Route[] = [
@@ -117,8 +114,8 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       }
     }),
 
-    route('POST', '/api/teams', async ({ req }) => {
-      const b = await body(req)
+    route('POST', '/api/teams', async (ctx) => {
+      const b = await body(ctx.req)
       const account = address(b['account'], 'account')
       const label = str(b, 'label', { max: 60 })
       const signer = b['signer']
@@ -126,6 +123,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       const network = b['network'] === undefined ? 'moderato' : b['network']
       if (network !== 'moderato' && network !== 'mainnet') throw bad("network must be 'moderato' or 'mainnet'")
       if (network === 'mainnet' && !mainnet) throw new HttpError(400, 'mainnet_disabled', 'this desk does not run mainnet teams')
+      authorize(ctx, account, network, b)
       const existing = store.team(account)
       if (existing && existing.network !== network) throw conflict('network_mismatch', `team ${account} runs on ${existing.network}, not ${network}`)
       store.upsertTeam(account, label, signer, network)
@@ -135,6 +133,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     route('GET', '/api/teams/:account', async ({ params }) => {
       const account = address(params['account'], 'account')
       const team = teamOf(account)
+      store.purgePendingAgents(account)
       const chain = chains[team.network]
       const deposit = await budgetBalance(chain, account).then(
         (b) => ({ token: chain.token, units: String(b.balance), block: Number(b.block), chainId: chain.config.chainId, error: null }),
@@ -196,11 +195,12 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       }
     }),
 
-    route('POST', '/api/teams/:account/agents', async ({ params, req }) => {
-      const account = address(params['account'], 'account')
+    route('POST', '/api/teams/:account/agents', async (ctx) => {
+      const account = address(ctx.params['account'], 'account')
       const team = teamOf(account)
       const chain = chains[team.network]
-      const b = await body(req)
+      const b = await body(ctx.req)
+      authorize(ctx, account, team.network, b)
       const external = b['external'] === undefined ? false : b['external']
       if (typeof external !== 'boolean') throw bad('external must be true or false')
       if (team.network === 'mainnet' && !external) throw conflict('mainnet_requires_external', 'a mainnet team holds only agents that run outside Leash: pass external: true with the key id from leash-agent init')
@@ -214,9 +214,10 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       const offered = servicesOn(team.network)
       if (!requested.every((id) => offered.some((s) => s.serviceId === id))) throw bad(`serviceIds may only contain ${offered.map((s) => s.serviceId).join(', ')}`)
       if (new Set(requested).size !== requested.length) throw bad('serviceIds must not repeat')
+      store.purgePendingAgents(account)
       if (store.openAgentCount(account) >= MAX_OPEN_AGENTS) throw conflict('too_many_agents', `a team can hold at most ${MAX_OPEN_AGENTS} agents`)
 
-      const cut = cutRecipients(account)
+      const cut = store.blocked(account)
       const catalog = offered
       const granted = catalog.filter((s) => requested.includes(s.serviceId) && !cut.has(lower(s.recipient)))
       const omitted = catalog.filter((s) => requested.includes(s.serviceId) && cut.has(lower(s.recipient))).map((s) => ({ serviceId: s.serviceId, reason: 'cut' }))
@@ -244,9 +245,15 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       }
     }),
 
-    route('POST', '/api/agents/:keyId/confirm', async ({ params, req }) => {
-      const agent = agentOf(params['keyId']!)
-      const tx = txHash((await body(req))['tx'])
+    route('POST', '/api/agents/:keyId/confirm', async (ctx) => {
+      const agent = agentOf(ctx.params['keyId']!)
+      const b = await body(ctx.req)
+      authorize(ctx, agent.account, teamOf(agent.account).network, b)
+      const tx = txHash(b['tx'])
+      if (agent.status === 'pending' && Date.parse(agent.created_at) < Date.now() - PENDING_TTL_MS) {
+        store.purgePendingAgents(agent.account)
+        throw conflict('pending_expired', `agent ${agent.key_id} was not authorized within an hour and was dropped: add it again`)
+      }
       if (agent.status === 'revoked') throw conflict('agent_revoked', `agent ${agent.key_id} is revoked`)
       if (agent.status === 'active') return { keyId: agent.key_id, status: 'active', authorizeTx: agent.authorize_tx }
       const chain = chainOfAgent(agent)
@@ -257,15 +264,19 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       return { keyId: agent.key_id, status: 'active', authorizeTx: tx, block: check.block }
     }),
 
-    route('POST', '/api/agents/:keyId/run', async ({ params, req }) => {
-      const agent = runnerAgent(params['keyId']!)
-      const topic = str(await body(req), 'topic', { max: 120 })
-      return runner.research(agent, topic)
+    route('POST', '/api/agents/:keyId/run', async (ctx) => {
+      const agent = agentOf(ctx.params['keyId']!)
+      const b = await body(ctx.req)
+      authorize(ctx, agent.account, teamOf(agent.account).network, b)
+      assertRunnable(agent)
+      return runner.research(agent, str(b, 'topic', { max: 120 }))
     }),
 
-    route('POST', '/api/agents/:keyId/call', async ({ params, req }) => {
-      const agent = runnerAgent(params['keyId']!)
-      const b = await body(req)
+    route('POST', '/api/agents/:keyId/call', async (ctx) => {
+      const agent = agentOf(ctx.params['keyId']!)
+      const b = await body(ctx.req)
+      authorize(ctx, agent.account, teamOf(agent.account).network, b)
+      assertRunnable(agent)
       const serviceId = b['serviceId']
       if (!isServiceId(serviceId)) throw bad('serviceId is not a known service')
       const { record, body: text } = await runner.paidCall(agent, serviceId, b['input'])
@@ -315,7 +326,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     route('GET', '/api/teams/:account/blocked', async ({ params }) => {
       const account = address(params['account'], 'account')
       teamOf(account)
-      return { recipients: [...new Set([...store.blocked(account), ...cutRecipients(account)])] }
+      return { recipients: [...store.blocked(account)] }
     }),
 
     route('GET', '/api/teams/:account/ledger', async ({ params, query }) => {
@@ -334,10 +345,11 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       return { services: vendorRows({ catalog: publicCatalog(), records, cutoffs, blocked }) }
     }),
 
-    route('POST', '/api/teams/:account/cutoffs', async ({ params, req }) => {
-      const account = address(params['account'], 'account')
+    route('POST', '/api/teams/:account/cutoffs', async (ctx) => {
+      const account = address(ctx.params['account'], 'account')
       const chain = chainOfTeam(account)
-      const b = await body(req)
+      const b = await body(ctx.req)
+      authorize(ctx, account, chain.name, b)
       const recipient = address(b['recipient'], 'recipient')
       const reason = b['reason'] === undefined ? 'manual' : b['reason']
       if (reason !== 'failures' && reason !== 'manual') throw bad("reason must be 'failures' or 'manual'")
@@ -377,26 +389,26 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
         reason,
         evidence,
       })
-      if (plan.calls.length > 0) store.addBlock(account, recipient)
       return { id, calls: plan.calls, rescoped: plan.rescoped, revoked: plan.revoked, unchanged: plan.unchanged, unbounded: plan.unbounded, servicesCut, reason, evidence }
     }),
 
-    route('POST', '/api/cutoffs/:id/confirm', async ({ params, req }) => {
-      const id = Number(params['id'])
+    route('POST', '/api/cutoffs/:id/confirm', async (ctx) => {
+      const id = Number(ctx.params['id'])
       const cutoff = Number.isInteger(id) ? store.cutoff(id) : undefined
-      if (!cutoff) throw notFound(`no cutoff ${params['id']}`)
-      const tx = txHash((await body(req))['tx'])
+      if (!cutoff) throw notFound(`no cutoff ${ctx.params['id']}`)
+      const b = await body(ctx.req)
+      authorize(ctx, cutoff.account, teamOf(cutoff.account).network, b)
+      const tx = txHash(b['tx'])
       const rescoped = JSON.parse(cutoff.rescoped) as Address[]
       const revoked = JSON.parse(cutoff.revoked) as Address[]
       if (cutoff.status === 'confirmed' && cutoff.tx) return cutoffView(cutoff.id)
-      const check = await verifyCutoff(chainOfTeam(cutoff.account), { tx, account: cutoff.account, recipient: cutoff.recipient, rescoped, revoked })
+      const teamKeys = store.agents(cutoff.account).map((a) => a.key_id)
+      const check = await verifyCutoff(chainOfTeam(cutoff.account), { tx, account: cutoff.account, recipient: cutoff.recipient, teamKeys, rescoped, revoked })
       if (!check.ok) {
         store.finishCutoff(cutoff.id, 'failed', tx, check.gasUsed, check.reason)
-        store.removeBlock(cutoff.account, cutoff.recipient)
         throw new HttpError(422, 'cutoff_not_confirmed', check.reason)
       }
       store.finishCutoff(cutoff.id, 'confirmed', tx, check.gasUsed, null)
-      store.removeBlock(cutoff.account, cutoff.recipient)
       for (const keyId of revoked) store.setAgentStatus(keyId, 'revoked')
       return { ...cutoffView(cutoff.id), block: check.block }
     }),
@@ -407,9 +419,11 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       return { calls: [{ to: Addresses.accountKeychain, data: encodeFunctionData({ abi: Abis.accountKeychain, functionName: 'revokeKey', args: [agent.key_id] }) }] }
     }),
 
-    route('POST', '/api/agents/:keyId/revoke-confirm', async ({ params, req }) => {
-      const agent = agentOf(params['keyId']!)
-      const tx = txHash((await body(req))['tx'])
+    route('POST', '/api/agents/:keyId/revoke-confirm', async (ctx) => {
+      const agent = agentOf(ctx.params['keyId']!)
+      const b = await body(ctx.req)
+      authorize(ctx, agent.account, teamOf(agent.account).network, b)
+      const tx = txHash(b['tx'])
       if (agent.status === 'revoked') return { keyId: agent.key_id, status: 'revoked' }
       const check = await verifyRevoke(chainOfAgent(agent), { tx, account: agent.account, keyId: agent.key_id })
       if (!check.ok) throw new HttpError(422, 'revoke_not_confirmed', check.reason)
@@ -490,7 +504,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       ? {
           'access-control-allow-origin': origin,
           'access-control-allow-methods': 'GET, POST, OPTIONS',
-          'access-control-allow-headers': 'content-type, authorization',
+          'access-control-allow-headers': 'content-type, authorization, x-leash-issued-at, x-leash-signature',
           'access-control-expose-headers': 'www-authenticate, payment-receipt',
           'access-control-max-age': '600',
           vary: 'Origin',
@@ -527,7 +541,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       }
       if (found === null) throw notFound(`${method} ${path}`)
       if (found === 'method') throw new HttpError(405, 'method_not_allowed', `${method} is not allowed on ${path}`)
-      const result = await found.route.handler({ params: found.params, query: url.searchParams, req })
+      const result = await found.route.handler({ params: found.params, query: url.searchParams, req, path })
       sendJson(res, 200, result, cors)
     } catch (e) {
       if (e instanceof HttpError) return sendJson(res, e.status, { error: e.code, detail: e.detail ?? null }, cors)

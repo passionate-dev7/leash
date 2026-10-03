@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Address } from 'viem'
 import { Actions } from 'viem/tempo'
-import { api } from '@/lib/api'
+import { api, deskAuth } from '@/lib/api'
 import type { AgentView, LedgerRecord } from '@/lib/api'
 import { API_BASE } from '@/lib/config'
 import type { NetworkName } from '@/lib/config'
@@ -122,13 +122,14 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     let stage = mode === 'own' ? 'Register your key id on the API' : 'Create key on the API'
     try {
       mark(stage, 'run')
+      const auth = deskAuth(client, net.name)
       const created = await api.createAgent(account, {
         name: name.trim(),
         budget,
         periodSeconds: 86400,
         serviceIds: [...picked],
         ...(mode === 'own' ? { external: true, keyId: ownKey.trim() as Address } : {}),
-      })
+      }, auth)
       mark(stage, 'done', short(created.keyId, 8, 6))
       if (created.omitted.length > 0) setOmitted(created.omitted.map((o) => o.serviceId))
       stage = 'Sign authorizeKey with the team key'
@@ -147,7 +148,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
       mark(stage, 'done')
       stage = 'API reads the key back from chain'
       mark(stage, 'run')
-      await api.confirmAgent(created.keyId, tx)
+      await api.confirmAgent(created.keyId, tx, auth)
       mark(stage, 'done', 'active')
       setName('')
       setOwnKey('')
@@ -299,7 +300,8 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
   )
 }
 
-function RunResearch({ agent, account }: { agent: AgentView; account: Address }) {
+function RunResearch({ agent, account, client }: { agent: AgentView; account: Address; client: RootClient }) {
+  const net = useNetwork()
   const [topic, setTopic] = useState('agent payments')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -333,7 +335,7 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
     setSkipped([])
     startedAt.current = Date.now() - 2000
     try {
-      const result = await api.runAgent(agent.keyId, topic.trim())
+      const result = await api.runAgent(agent.keyId, topic.trim(), deskAuth(client, net.name))
       setRecords(result.records)
       setSkipped(result.errors)
     } catch (e) {
@@ -422,7 +424,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
       const plan = await api.revokePlan(agent.keyId)
       const tx = await client.sendTransaction({ calls: plan.calls } as never)
       await waitForSuccess(tx, net.name)
-      await api.revokeConfirm(agent.keyId, tx)
+      await api.revokeConfirm(agent.keyId, tx, deskAuth(client, net.name))
       onChange()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -483,7 +485,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
       {open && (
         <Tr className="max-md:p-0">
           <td colSpan={7} className="p-0 max-md:block">
-            {agent.external ? <Connect agent={agent} account={account} /> : <RunResearch agent={agent} account={account} />}
+            {agent.external ? <Connect agent={agent} account={account} /> : <RunResearch agent={agent} account={account} client={client} />}
           </td>
         </Tr>
       )}

@@ -14,13 +14,12 @@ import { openDatabase } from '../src/db.js'
 import { mainnetServices } from '../src/mainnet.js'
 import { createRunner } from '../src/runner.js'
 import { mainnetServicesPaying } from '../src/services.js'
-import { ACCOUNT, memoryStore, record } from './helpers.js'
+import { ACCOUNT, caller, MAINNET_ROOT, MAINNET_TEAM, memoryStore, record } from './helpers.js'
 import type { TestStore } from './helpers.js'
 
 const USDCE = NETWORKS.mainnet.settlementToken
 const OUSD: Address = '0x20c0000000000000000000006a37DA5C996874BE'
 const SPONSOR = '0x4444444444444444444444444444444444444444'
-const MAINNET_TEAM: Address = '0x8888888888888888888888888888888888888888'
 const KEY_ID = privateKeyToAccount(generatePrivateKey()).address
 // 0xca4e pays 12 services in the live 402 probe of 2026-10-03: the shared-payout case on mainnet.
 const OPENAI_PAYOUT: Address = '0xca4e835f803cb0b7c428222b3a3b98518d4779fe'
@@ -34,9 +33,11 @@ async function desk(mainnet: boolean): Promise<Desk> {
   await new Promise<void>((r) => server.listen(0, '127.0.0.1', r))
   return { server, base: `http://127.0.0.1:${(server.address() as { port: number }).port}`, store }
 }
-const call = (d: Desk) => async (method: 'GET' | 'POST', path: string, body?: unknown) => {
-  const res = await fetch(`${d.base}${path}`, { method, headers: { 'content-type': 'application/json' }, ...(method === 'POST' ? { body: JSON.stringify(body ?? {}) } : {}) })
-  return { status: res.status, json: (await res.json()) as Record<string, any> }
+const call = (d: Desk) => caller(() => d.base)
+/** The same caller signing as the mainnet team's root. */
+const mcall = (d: Desk) => {
+  const c = call(d)
+  return (method: 'GET' | 'POST', path: string, body?: unknown) => c(method, path, body, { as: MAINNET_ROOT })
 }
 
 let off: Desk
@@ -82,21 +83,21 @@ test('a mainnet team is refused with 400 unless the desk runs with mainnet on; a
 })
 
 test('a mainnet team keeps its network: another network on the same account is a 409', async () => {
-  const d = call(on)
+  const d = mcall(on)
   const made = await d('POST', '/api/teams', { account: MAINNET_TEAM, label: 'ops', signer: 'webcrypto', network: 'mainnet' })
   assert.equal(made.status, 200)
   assert.equal(made.json['team'].network, 'mainnet')
   const again = await d('POST', '/api/teams', { account: MAINNET_TEAM, label: 'ops renamed', signer: 'webcrypto', network: 'mainnet' })
   assert.equal(again.status, 200)
   assert.equal(on.store.team(MAINNET_TEAM)!.label, 'ops renamed')
-  const flip = await d('POST', '/api/teams', { account: MAINNET_TEAM, label: 'ops', signer: 'webcrypto', network: 'moderato' })
+  const flip = await call(on)('POST', '/api/teams', { account: MAINNET_TEAM, label: 'ops', signer: 'webcrypto', network: 'moderato' }, { as: { ...MAINNET_ROOT, chainId: 42431 } })
   assert.equal(flip.status, 409)
   assert.equal(flip.json['error'], 'network_mismatch')
   assert.equal(on.store.team(MAINNET_TEAM)!.network, 'mainnet')
 })
 
 test('mainnet agents must be external and scoped to USDC.e payouts from the live probe; the desk never runs or funds them', async () => {
-  const d = call(on)
+  const d = mcall(on)
   const services = mainnetServices()
   assert.ok(services.length > 20, 'the live probe names mainnet services')
   const openai = services.find((s) => s.serviceId === 'openai')!
@@ -132,7 +133,7 @@ test('mainnet agents must be external and scoped to USDC.e payouts from the live
 })
 
 test('a mainnet record that pays in another token is rejected before any chain read', async () => {
-  const d = call(on)
+  const d = mcall(on)
   const rec = {
     ...record({ serviceId: 'openai', outcome: 'delivered' }),
     keyId: KEY_ID,
@@ -157,7 +158,7 @@ test('a mainnet record that pays in another token is rejected before any chain r
 })
 
 test('the vendors roll-up of a mainnet team names services from the live payout map, and shows an unknown payout as its address', async () => {
-  const d = call(on)
+  const d = mcall(on)
   const seed = (recipient: Address, outcome: 'delivered' | 'paid_not_delivered') =>
     on.store.insertRecord({ ...record({ serviceId: 'x', outcome }), account: MAINNET_TEAM, keyId: KEY_ID, recipient, currency: USDCE, amount: '5000' }, { agentName: 'outside', vendorId: 'external', serviceId: 'api.example.com/v1/x' }, 'external')
   for (let i = 0; i < 3; i++) seed(OPENAI_PAYOUT, 'delivered')

@@ -12,7 +12,7 @@ import { createVendorRouter } from '@leash/vendors'
 import { createApp } from '../src/app.js'
 import { settlementProof, signerOf } from '../src/external.js'
 import { createRunner } from '../src/runner.js'
-import { ACCOUNT, memoryStore, record, SCRAPE_RECIPIENT } from './helpers.js'
+import { ACCOUNT, caller, memoryStore, record, SCRAPE_RECIPIENT } from './helpers.js'
 import type { TestStore } from './helpers.js'
 
 const OUSD: Address = '0x20c0000000000000000000006a37DA5C996874BE'
@@ -36,10 +36,7 @@ before(async () => {
 })
 after(() => void server.close())
 
-async function call(method: 'GET' | 'POST', path: string, body?: unknown) {
-  const res = await fetch(`${base}${path}`, { method, headers: { 'content-type': 'application/json' }, ...(method === 'POST' ? { body: JSON.stringify(body ?? {}) } : {}) })
-  return { status: res.status, json: (await res.json()) as Record<string, any> }
-}
+const call = caller(() => base)
 
 /** A record the way an external agent's leashFetch would report it, for this key. */
 function reported(over: Parameters<typeof record>[0], patch: Partial<DeliveryRecord> = {}): DeliveryRecord {
@@ -150,12 +147,16 @@ test('a record for a runner agent is refused: the desk writes those itself', asy
   assert.equal(r.json['error'], 'not_external')
 })
 
-test('blocked lists the recipients that are cut or being cut for the team', async () => {
-  assert.deepEqual((await call('GET', `/api/teams/${ACCOUNT}/blocked`)).json['recipients'], [])
-  store.addBlock(ACCOUNT, SCRAPE_RECIPIENT)
-  assert.deepEqual((await call('GET', `/api/teams/${ACCOUNT}/blocked`)).json['recipients'], [SCRAPE_RECIPIENT.toLowerCase()])
+test('blocked lists the recipients whose cut confirmed on chain, and a prepared cut blocks nothing', async () => {
+  const blocked = async () => (await call('GET', `/api/teams/${ACCOUNT}/blocked`)).json['recipients']
+  assert.deepEqual(await blocked(), [])
+  const id = store.insertCutoff({ account: ACCOUNT, recipient: SCRAPE_RECIPIENT, serviceIds: ['atlas-scrape'], status: 'prepared', rescoped: [KEY_ID], revoked: [], unbounded: [], unchanged: [], reason: 'manual', evidence: null })
+  assert.deepEqual(await blocked(), [], 'a prepared cut is a plan, not a block')
+  store.finishCutoff(id, 'failed', `0x${'ee'.repeat(32)}`, 1n, 'did not confirm')
+  assert.deepEqual(await blocked(), [], 'a failed cut blocks nothing')
+  store.finishCutoff(id, 'confirmed', `0x${'ef'.repeat(32)}`, 1n, null)
+  assert.deepEqual(await blocked(), [SCRAPE_RECIPIENT.toLowerCase()], 'a confirmed cut blocks the recipient')
   assert.equal((await call('GET', '/api/teams/0x5555555555555555555555555555555555555555/blocked')).status, 404)
-  store.removeBlock(ACCOUNT, SCRAPE_RECIPIENT)
 })
 
 // settlementProof reads logs the way the chain emits them, so the logs here are encoded with the chain's own ABIs.

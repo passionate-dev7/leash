@@ -5,7 +5,7 @@ import { after, before, test } from 'node:test'
 import { createVendorRouter } from '@leash/vendors'
 import { createApp } from '../src/app.js'
 import { createRunner } from '../src/runner.js'
-import { ACCOUNT, memoryStore, seed, SCRAPE_RECIPIENT } from './helpers.js'
+import { ACCOUNT, caller, memoryStore, seed, SCRAPE_RECIPIENT } from './helpers.js'
 import type { TestStore } from './helpers.js'
 
 let server: Server
@@ -25,10 +25,7 @@ before(async () => {
 })
 after(() => void server.close())
 
-async function call(method: 'GET' | 'POST', path: string, body?: unknown, raw?: string) {
-  const res = await fetch(`${base}${path}`, { method, headers: { 'content-type': 'application/json' }, ...(method === 'POST' ? { body: raw ?? JSON.stringify(body ?? {}) } : {}) })
-  return { status: res.status, json: (await res.json()) as Record<string, any> }
-}
+const call = caller(() => base)
 
 const AGENT = { name: 'a', budget: '1.50', periodSeconds: 86_400, serviceIds: ['atlas-search'] }
 
@@ -72,9 +69,9 @@ test('every write route rejects bad input with a 4xx and an error body, before a
     assert.equal(r.status, status, `${method} ${path} ${JSON.stringify(body)} answered ${r.status} ${JSON.stringify(r.json)}`)
     assert.equal(typeof r.json['error'], 'string')
   }
-  const notJson = await call('POST', '/api/teams', undefined, '{broken')
+  const notJson = await call('POST', '/api/teams', undefined, { raw: '{broken' })
   assert.equal(notJson.status, 422)
-  const array = await call('POST', '/api/teams', undefined, '[]')
+  const array = await call('POST', '/api/teams', undefined, { raw: '[]' })
   assert.equal(array.status, 422)
 })
 

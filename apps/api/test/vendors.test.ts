@@ -2,10 +2,10 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { publicCatalog } from '../src/services.js'
 import { evidenceOf, recommendCut, vendorRows } from '../src/vendors.js'
-import { memoryStore, seed } from './helpers.js'
+import { ACCOUNT, memoryStore, seed } from './helpers.js'
 
 const rows = (store: ReturnType<typeof memoryStore>) =>
-  vendorRows({ catalog: publicCatalog(), records: store.allRecords('0x1111111111111111111111111111111111111111'), cutoffs: [], blocked: new Set() })
+  vendorRows({ catalog: publicCatalog(), records: store.allRecords(ACCOUNT), cutoffs: [], blocked: new Set() })
 const scrape = (rs: ReturnType<typeof rows>) => rs.find((s) => s.serviceId === 'atlas-scrape')!
 
 test('roll-up counts only settled payments and computes the failure rate over them', () => {
@@ -34,7 +34,7 @@ test('evidence: window, newest-first txs, cap of 10, and an empty service has ra
     { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered', minutesAgo: 25 * 60 },
     { serviceId: 'atlas-scrape', outcome: 'delivered', minutesAgo: 25 * 60 },
   ])
-  const all = store.allRecords('0x1111111111111111111111111111111111111111')
+  const all = store.allRecords(ACCOUNT)
   const e = evidenceOf(all)
   assert.equal(e.window, '24h')
   assert.equal(e.paid, 12)
@@ -84,12 +84,25 @@ test('a confirmed cut stops recommending a cut for that service', () => {
   const before = scrape(rows(store))
   assert.equal(before.recommendCut, true)
   const cutoffs = [{
-    id: 1, account: '0x1111111111111111111111111111111111111111', recipient: before.recipient, service_ids: '["atlas-scrape"]',
+    id: 1, account: ACCOUNT, recipient: before.recipient, service_ids: '["atlas-scrape"]',
     tx: `0x${'ab'.repeat(32)}`, status: 'confirmed', gas_used: '131844', rescoped: '[]', revoked: '[]', unbounded: '[]', unchanged: '[]',
     failure: null, created_at: new Date().toISOString(), confirmed_at: new Date().toISOString(), reason: 'failures', evidence: null,
   }] as unknown as Parameters<typeof vendorRows>[0]['cutoffs']
-  const after = vendorRows({ catalog: publicCatalog(), records: store.allRecords('0x1111111111111111111111111111111111111111'), cutoffs, blocked: new Set() })
+  const after = vendorRows({ catalog: publicCatalog(), records: store.allRecords(ACCOUNT), cutoffs, blocked: new Set() })
   const s = after.find((x) => x.serviceId === 'atlas-scrape')!
   assert.equal(s.cut?.status, 'confirmed')
   assert.equal(s.recommendCut, false)
+})
+
+test('a prepared cut is a plan: it shows as prepared and the failures keep recommending the cut', () => {
+  const store = memoryStore()
+  seed(store, Array.from({ length: 3 }, () => ({ serviceId: 'atlas-scrape', outcome: 'paid_not_delivered' as const })))
+  const recipient = scrape(rows(store)).recipient
+  const cutoffs = [{
+    id: 1, account: ACCOUNT, recipient, service_ids: '["atlas-scrape"]', tx: null, status: 'prepared', gas_used: null, rescoped: '[]', revoked: '[]', unbounded: '[]', unchanged: '[]',
+    failure: null, created_at: new Date().toISOString(), confirmed_at: null, reason: 'failures', evidence: null,
+  }] as unknown as Parameters<typeof vendorRows>[0]['cutoffs']
+  const s = vendorRows({ catalog: publicCatalog(), records: store.allRecords(ACCOUNT), cutoffs, blocked: new Set() }).find((x) => x.serviceId === 'atlas-scrape')!
+  assert.equal(s.cut?.status, 'prepared')
+  assert.equal(s.recommendCut, true, 'only a confirmed cut suppresses the recommendation')
 })

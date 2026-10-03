@@ -68,11 +68,14 @@ export function txHash(value: unknown, field = 'tx'): Hex {
   return value.toLowerCase() as Hex
 }
 
-export type Handler = (ctx: {
+export type HandlerContext = {
   params: Record<string, string>
   query: URLSearchParams
   req: IncomingMessage
-}) => Promise<unknown>
+  /** The request path without query or proxy prefix: the path a team signs. */
+  path: string
+}
+export type Handler = (ctx: HandlerContext) => Promise<unknown>
 
 export type Route = { method: string; pattern: RegExp; keys: string[]; handler: Handler }
 

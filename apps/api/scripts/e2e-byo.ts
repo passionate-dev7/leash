@@ -22,6 +22,8 @@ import { tempoModerato } from 'viem/chains'
 import { generatePrivateKey } from 'viem/accounts'
 import { Abis, Account, Actions } from 'viem/tempo'
 import { signRecord } from '@leash/sdk'
+import { signDeskRequest } from '@leash/policy'
+import type { DeskSigner } from '@leash/policy'
 
 const run = promisify(execFile)
 const API = (process.env['LEASH_API_URL'] ?? 'http://127.0.0.1:4180').replace(/\/+$/, '')
@@ -36,10 +38,14 @@ function check(cond: unknown, message: string): asserts cond {
 }
 const log = (...a: unknown[]) => console.log(...a)
 
-async function api(method: 'GET' | 'POST', path: string, body?: unknown, expect: number | number[] = 200): Promise<Json> {
+/** Team writes carry the root's signature, the way the browser sends them. The faucet and agent-signed records take none. */
+const signsWrite = (method: string, path: string) => method === 'POST' && !path.startsWith('/api/faucet') && !path.endsWith('/records')
+
+async function api(method: 'GET' | 'POST', path: string, body?: unknown, expect: number | number[] = 200, signer: DeskSigner | null = root as unknown as DeskSigner): Promise<Json> {
+  const auth = signer && signsWrite(method, path) ? await signDeskRequest(signer, { method, path, chainId: 42431, body: body ?? {} }) : {}
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    headers: body === undefined ? auth : { 'content-type': 'application/json', ...auth },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(120_000),
   })
@@ -64,6 +70,14 @@ async function main() {
   log(`throwaway team root ${root.address}`)
 
   await api('POST', '/api/teams', { account: root.address, label: 'byo e2e team', signer: 'webcrypto' })
+  // a stranger, with or without a key of their own, changes nothing about this team
+  const intruder = { name: 'intruder', budget: '1.00', periodSeconds: 86400, serviceIds: ['atlas-scrape'], external: true, keyId: Account.fromSecp256k1(generatePrivateKey()).address }
+  const bare = await api('POST', `/api/teams/${root.address}/agents`, intruder, 401, null)
+  const foreign = await api('POST', `/api/teams/${root.address}/agents`, intruder, 401, Account.fromSecp256k1(generatePrivateKey()) as unknown as DeskSigner)
+  const renamed = await api('POST', '/api/teams', { account: root.address, label: 'pwned', signer: 'webcrypto' }, 401, null)
+  check(bare.error === 'unauthorized' && foreign.error === 'unauthorized' && renamed.error === 'unauthorized', 'an unsigned or foreign write must be unauthorized')
+  check((await api('GET', `/api/teams/${root.address}`)).agents.length === 0, 'a refused write must register nothing')
+  log('stranger writes refused: unsigned add 401, foreign-key add 401, unsigned rename 401')
   const funded = await api('POST', '/api/faucet', { address: root.address })
   check(BigInt(funded.ousd) > 0n && BigInt(funded.pathusd) > 0n, 'faucet did not credit OUSD and PathUSD')
   const catalog = await api('GET', '/api/catalog')

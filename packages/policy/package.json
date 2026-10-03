@@ -6,6 +6,8 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./desk-auth": "./src/desk-auth.ts",
+    "./cutoff": "./src/cutoff.ts",
     "./data/*": "./data/*"
   },
   "scripts": {

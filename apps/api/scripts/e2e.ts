@@ -14,6 +14,8 @@ import type { Address, Hash } from 'viem'
 import { tempoModerato } from 'viem/chains'
 import { generatePrivateKey } from 'viem/accounts'
 import { Abis, Account, Actions, Addresses } from 'viem/tempo'
+import { signDeskRequest } from '@leash/policy'
+import type { DeskSigner } from '@leash/policy'
 
 const API = (process.env['LEASH_API_URL'] ?? 'http://127.0.0.1:4180').replace(/\/+$/, '')
 const SKIP_CUT = process.env['E2E_SKIP_CUT'] === '1'
@@ -33,10 +35,14 @@ function check(cond: unknown, message: string): asserts cond {
   if (!cond) throw new Failure(message)
 }
 
+/** Team writes carry the root's signature, the way the browser sends them. The faucet is open and takes none. */
+const signsWrite = (method: string, path: string) => method === 'POST' && !path.startsWith('/api/faucet') && !path.endsWith('/revoke-plan')
+
 async function api(method: 'GET' | 'POST', path: string, body?: unknown, expect = 200): Promise<Json> {
+  const auth = signsWrite(method, path) ? await signDeskRequest(root as unknown as DeskSigner, { method, path, chainId: 42431, body: body ?? {} }) : {}
   const res = await fetch(`${API}${path}`, {
     method,
-    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    headers: body === undefined ? auth : { 'content-type': 'application/json', ...auth },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     signal: AbortSignal.timeout(300_000),
   })
@@ -167,10 +173,11 @@ async function main() {
   check(cut.calls.length === 2 && cut.rescoped.length === 2 && cut.revoked.length === 0 && cut.unbounded.length === 0, `cut plan: ${JSON.stringify({ calls: cut.calls.length, rescoped: cut.rescoped.length, revoked: cut.revoked.length })}`)
   check(cut.servicesCut.join() === 'atlas-scrape', 'cutting the scrape recipient must cut scrape and nothing else')
   const blockedCall = await api('POST', `/api/agents/${agents[0]!.keyId}/call`, { serviceId: 'atlas-scrape', input: { url: 'https://example.com' } })
-  check(blockedCall.record.outcome === 'refused' && blockedCall.record.refused === 'LeashBlocked' && blockedCall.record.settlement === null, 'before the cut lands, the local block list must refuse the call')
-  refusals.push(`${agents[0]!.name} scrape before confirm: ${blockedCall.record.refused}`)
+  check(blockedCall.record.outcome !== 'refused' && blockedCall.record.settlement?.status === 'success', 'a prepared cut is a plan: only a cut that confirmed on chain stops a payment')
+  check((await api('GET', `/api/teams/${root.address}/blocked`)).recipients.length === 0, 'a prepared cut puts nothing on the blocked list')
   const pendingView = (await api('GET', `/api/teams/${root.address}/vendors`)).services.find((s: Json) => s.serviceId === 'atlas-scrape')
-  check(pendingView.blocked === true && pendingView.cut?.status === 'prepared', 'vendors view must show the prepared cut and the local block')
+  check(pendingView.blocked === false && pendingView.cut?.status === 'prepared' && pendingView.recommendCut === true, 'vendors view must show the prepared cut, no block, and the failures still recommending a cut')
+  hashes['settlements']!.push(blockedCall.record.settlement.tx)
 
   const cutTx = SKIP_CUT
     ? await client.sendTransaction({ calls: [{ to: Addresses.accountKeychain, data: encodeFunctionData({ abi: Abis.accountKeychain, functionName: 'getAllowedCalls', args: [root.address, agents[0]!.keyId] }) }] })
@@ -204,9 +211,10 @@ async function main() {
 
   const after = (await api('GET', `/api/teams/${root.address}/vendors`)).services as Json[]
   const scrapeAfter = after.find((s) => s.serviceId === 'atlas-scrape')!
-  check(scrapeAfter.cut?.status === 'confirmed' && scrapeAfter.cut.tx === cutTx && scrapeAfter.blocked === false, 'vendors view must show the confirmed cut and no local block')
+  check(scrapeAfter.cut?.status === 'confirmed' && scrapeAfter.cut.tx === cutTx && scrapeAfter.blocked === true && scrapeAfter.recommendCut === false, 'vendors view must show the confirmed cut and the block it puts on the list')
+  check((await api('GET', `/api/teams/${root.address}/blocked`)).recipients.join() === scrapeRecipient.toLowerCase(), 'the blocked list holds the cut recipient once the cut confirmed on chain')
   check(scrapeAfter.cut.reason === 'failures' && confirmedCut.reason === 'failures' && confirmedCut.evidence.paidNotDelivered === ev.paidNotDelivered, 'reason and evidence must persist through confirm')
-  check(scrapeAfter.refused === 3 && after.find((s) => s.serviceId === 'atlas-search')!.cut === null, 'refusals counted on scrape only')
+  check(scrapeAfter.refused === 2 && after.find((s) => s.serviceId === 'atlas-search')!.cut === null, 'refusals counted on scrape only')
   const featured = await api('GET', '/api/featured')
   check(/^0x[0-9a-fA-F]{40}$/.test(featured.account), 'featured must name an account')
   const mainnet = await api('GET', '/api/mainnet/evidence')
@@ -219,7 +227,7 @@ async function main() {
   check(big && big.services.length === 12 && big.vet402.paid > 0, `0xca4e must pay 12 probed services and have vet402 rows, got ${big?.services.length}/${big?.vet402.paid}`)
   log(`mainnet evidence: ${payouts.length} payouts, top ${top.payout} (${top.vet402.paidNotDelivered} paid not delivered, ${top.replay.charges} charges, ${top.cutTakes} services); featured ${featured.account}`)
   const stats = await api('GET', '/api/stats')
-  check(stats.cutoffsConfirmed >= 1 && stats.refused >= 3 && stats.paidCalls >= 8, 'stats must reflect the run')
+  check(stats.cutoffsConfirmed >= 1 && stats.refused >= 2 && stats.paidCalls >= 9, 'stats must reflect the run')
 
   log('\nauthorize txs:\n  ' + hashes['authorize']!.join('\n  '))
   log('settlement txs:\n  ' + [...new Set(hashes['settlements']!)].join('\n  '))

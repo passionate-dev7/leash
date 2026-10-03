@@ -1,6 +1,17 @@
 import type { Address, Hash, Hex } from 'viem'
-import { API_BASE } from './config'
+import { signDeskRequest } from '@leash/policy/desk-auth'
+import type { DeskSigner } from '@leash/policy/desk-auth'
+import { API_BASE, NETWORKS } from './config'
 import type { NetworkName } from './config'
+
+/** The team key that signs a write, and the chain the team lives on. Every write that changes a team carries its signature. */
+export type DeskAuth = { signer: DeskSigner; chainId: number }
+
+export function deskAuth(client: { account: unknown }, network: NetworkName): DeskAuth {
+  const signer = client.account as Partial<DeskSigner> | undefined
+  if (!signer?.address || typeof signer.sign !== 'function') throw new Error('The team key cannot sign here. Reload the page, or create the team again on this browser.')
+  return { signer: signer as DeskSigner, chainId: NETWORKS[network].chainId }
+}
 
 export class ApiError extends Error {
   constructor(
@@ -13,12 +24,14 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: { method?: string; body?: unknown; signal?: AbortSignal }): Promise<T> {
+async function request<T>(path: string, init?: { method?: string; body?: unknown; signal?: AbortSignal; auth?: DeskAuth }): Promise<T> {
   let res: Response
+  const method = init?.method ?? (init?.body === undefined ? 'GET' : 'POST')
+  const signed = init?.auth ? await signDeskRequest(init.auth.signer, { method, path, chainId: init.auth.chainId, body: init.body ?? {} }) : undefined
   try {
     res = await fetch(`${API_BASE}${path}`, {
-      method: init?.method ?? (init?.body === undefined ? 'GET' : 'POST'),
-      headers: init?.body === undefined ? undefined : { 'content-type': 'application/json' },
+      method,
+      headers: init?.body === undefined ? signed : { 'content-type': 'application/json', ...signed },
       body: init?.body === undefined ? undefined : JSON.stringify(init.body),
       signal: init?.signal,
     })
@@ -158,25 +171,25 @@ export const api = {
   mainnetCatalog: () => request<MainnetCatalog>('/api/catalog?network=mainnet'),
   stats: () => request<Record<string, number | string | null>>('/api/stats'),
   faucet: (address: Address) => request<{ txs: Hash[]; ousd: string; pathusd: string }>('/api/faucet', { body: { address } }),
-  upsertTeam: (account: Address, label: string, signer: 'passkey' | 'webcrypto', network: NetworkName) =>
-    request<unknown>('/api/teams', { body: { account, label, signer, network } }),
+  upsertTeam: (account: Address, label: string, signer: 'passkey' | 'webcrypto', network: NetworkName, auth: DeskAuth) =>
+    request<unknown>('/api/teams', { body: { account, label, signer, network }, auth }),
   team: (account: Address) => request<TeamView>(`/api/teams/${account}`),
-  createAgent: (account: Address, input: { name: string; budget: string; periodSeconds: number; serviceIds: string[]; external?: boolean; keyId?: Address }) =>
-    request<{ keyId: Address; reach: string[]; omitted: { serviceId: string; reason: string }[]; authorize: AuthorizePayload }>(`/api/teams/${account}/agents`, { body: input }),
-  confirmAgent: (keyId: Address, tx: Hash) => request<{ status: string }>(`/api/agents/${keyId}/confirm`, { body: { tx } }),
-  runAgent: (keyId: Address, topic: string, signal?: AbortSignal) =>
-    request<{ records: LedgerRecord[]; errors: { serviceId: string; message: string }[] }>(`/api/agents/${keyId}/run`, { body: { topic }, signal }),
-  callAgent: (keyId: Address, serviceId: string, input: unknown) =>
-    request<{ record: LedgerRecord; body: string | null }>(`/api/agents/${keyId}/call`, { body: { serviceId, input } }),
+  createAgent: (account: Address, input: { name: string; budget: string; periodSeconds: number; serviceIds: string[]; external?: boolean; keyId?: Address }, auth: DeskAuth) =>
+    request<{ keyId: Address; reach: string[]; omitted: { serviceId: string; reason: string }[]; authorize: AuthorizePayload }>(`/api/teams/${account}/agents`, { body: input, auth }),
+  confirmAgent: (keyId: Address, tx: Hash, auth: DeskAuth) => request<{ status: string }>(`/api/agents/${keyId}/confirm`, { body: { tx }, auth }),
+  runAgent: (keyId: Address, topic: string, auth: DeskAuth, signal?: AbortSignal) =>
+    request<{ records: LedgerRecord[]; errors: { serviceId: string; message: string }[] }>(`/api/agents/${keyId}/run`, { body: { topic }, signal, auth }),
+  callAgent: (keyId: Address, serviceId: string, input: unknown, auth: DeskAuth) =>
+    request<{ record: LedgerRecord; body: string | null }>(`/api/agents/${keyId}/call`, { body: { serviceId, input }, auth }),
   ledger: (account: Address, limit = 100) => request<{ records: LedgerRecord[] }>(`/api/teams/${account}/ledger?limit=${limit}`),
   vendors: (account: Address) => request<{ services: VendorRow[] }>(`/api/teams/${account}/vendors`),
-  planCutoff: (account: Address, recipient: Address, reason: CutReason) =>
-    request<CutPlan>(`/api/teams/${account}/cutoffs`, { body: { recipient, reason } }),
+  planCutoff: (account: Address, recipient: Address, reason: CutReason, auth: DeskAuth) =>
+    request<CutPlan>(`/api/teams/${account}/cutoffs`, { body: { recipient, reason }, auth }),
   featured: () => request<{ account: Address }>('/api/featured'),
   mainnetEvidence: (blocks: number) => request<MainnetEvidence>(`/api/mainnet/evidence?blocks=${blocks}`),
-  confirmCutoff: (id: number, tx: Hash) => request<CutConfirm>(`/api/cutoffs/${id}/confirm`, { body: { tx } }),
+  confirmCutoff: (id: number, tx: Hash, auth: DeskAuth) => request<CutConfirm>(`/api/cutoffs/${id}/confirm`, { body: { tx }, auth }),
   revokePlan: (keyId: Address) => request<{ calls: { to: Address; data: Hex }[] }>(`/api/agents/${keyId}/revoke-plan`, { body: {} }),
-  revokeConfirm: (keyId: Address, tx: Hash) => request<unknown>(`/api/agents/${keyId}/revoke-confirm`, { body: { tx } }),
+  revokeConfirm: (keyId: Address, tx: Hash, auth: DeskAuth) => request<unknown>(`/api/agents/${keyId}/revoke-confirm`, { body: { tx }, auth }),
   mainnet: (blocks: number) => request<MainnetReplay>(`/api/mainnet/mpp?blocks=${blocks}`),
 }
 

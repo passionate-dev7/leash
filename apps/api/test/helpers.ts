@@ -1,12 +1,21 @@
 import type { Address, Hex } from 'viem'
+import { Account } from 'viem/tempo'
 import type { DeliveryRecord } from '@leash/sdk'
+import { signDeskRequest } from '@leash/policy'
+import type { DeskSigner } from '@leash/policy'
 import { createStore } from '../src/store.js'
 import { openDatabase } from '../src/db.js'
 import { createCipher } from '../src/keystore.js'
 import { publicCatalog } from '../src/services.js'
 
 export const KEY = Buffer.alloc(32, 7)
-export const ACCOUNT: Address = '0x1111111111111111111111111111111111111111'
+/** A team root: the key that signs the team's writes, and the chain its team lives on. */
+export type TestRoot = { account: DeskSigner; chainId: number }
+const root = (key: Hex, chainId: number): TestRoot => ({ account: Account.fromSecp256k1(key) as DeskSigner, chainId })
+export const MODERATO_ROOT = root(`0x${'11'.repeat(32)}`, 42431)
+export const MAINNET_ROOT = root(`0x${'22'.repeat(32)}`, 4217)
+export const ACCOUNT: Address = MODERATO_ROOT.account.address
+export const MAINNET_TEAM: Address = MAINNET_ROOT.account.address
 export const RELAY_PAYOUT: Address = '0x3Ea86ae0B21C583772514e98dcD0943c19D4daf4'
 export const SCRAPE_RECIPIENT: Address = publicCatalog().find((s) => s.serviceId === 'atlas-scrape')!.recipient
 
@@ -44,3 +53,22 @@ export function seed(store: TestStore, rows: Parameters<typeof record>[0][], ven
   store.upsertTeam(ACCOUNT, 'test team', 'webcrypto')
   for (const r of rows) store.insertRecord(record(r), { agentName: 'a', vendorId: r.serviceId.startsWith('relay') ? 'relay' : vendorId, serviceId: r.serviceId })
 }
+
+export type Json = Record<string, any>
+
+/**
+ * An HTTP caller for a test desk. A POST carries the signature of `as` (the team root) the way the
+ * browser sends it; `unsigned` sends it bare, and `raw` replaces the body text after signing.
+ */
+export const caller = (base: () => string) =>
+  async (method: 'GET' | 'POST', path: string, body?: unknown, opts: { as?: TestRoot; unsigned?: boolean; raw?: string; headers?: Record<string, string> } = {}): Promise<{ status: number; json: Json }> => {
+    const as = opts.as ?? MODERATO_ROOT
+    const sent = body ?? {}
+    const auth = method === 'POST' && !opts.unsigned && opts.raw === undefined ? await signDeskRequest(as.account, { method, path, chainId: as.chainId, body: sent }) : {}
+    const res = await fetch(`${base()}${path}`, {
+      method,
+      headers: { 'content-type': 'application/json', ...auth, ...opts.headers },
+      ...(method === 'POST' ? { body: opts.raw ?? JSON.stringify(sent) } : {}),
+    })
+    return { status: res.status, json: (await res.json()) as Json }
+  }

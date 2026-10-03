@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Address } from 'viem'
-import { api } from '@/lib/api'
+import { api, deskAuth } from '@/lib/api'
 import type { AgentView, CatalogService, CutConfirm, CutPlan, CutReason, LedgerRecord, VendorRow } from '@/lib/api'
 import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
@@ -55,7 +55,7 @@ function CutSheet({
     setBusy(true)
     setError(null)
     try {
-      setPlan(await api.planCutoff(account, row.recipient, reason))
+      setPlan(await api.planCutoff(account, row.recipient, reason, deskAuth(client, net)))
       setPhase('prepared')
       onChanged()
     } catch (e) {
@@ -77,7 +77,7 @@ function CutSheet({
       setStage('Wait for the chain')
       await waitForSuccess(hash, net)
       setStage('API reads the scopes back from chain')
-      const confirmed = await api.confirmCutoff(plan.id, hash)
+      const confirmed = await api.confirmCutoff(plan.id, hash, deskAuth(client, net))
       setResult(confirmed)
       const team = await api.team(account)
       setAfter(team.agents)
@@ -236,8 +236,8 @@ function CutSheet({
   )
 }
 
-function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; svc: CatalogService | undefined; agents: AgentView[]; onClose: () => void; onChanged: () => void }) {
-  const { symbol } = useNetwork()
+function TrySheet({ row, svc, agents, client, onClose, onChanged }: { row: VendorRow; svc: CatalogService | undefined; agents: AgentView[]; client: RootClient; onClose: () => void; onChanged: () => void }) {
+  const { symbol, name: net } = useNetwork()
   const active = agents.filter((a) => a.status === 'active' && a.serviceIds.includes(row.serviceId))
   const [keyId, setKeyId] = useState<string>(active[0]?.keyId ?? '')
   const [busy, setBusy] = useState(false)
@@ -249,7 +249,7 @@ function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; sv
     setError(null)
     setRecord(null)
     try {
-      setRecord((await api.callAgent(keyId as Address, row.serviceId, svc?.inputExample ?? {})).record)
+      setRecord((await api.callAgent(keyId as Address, row.serviceId, svc?.inputExample ?? {}, deskAuth(client, net))).record)
       onChanged()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -368,7 +368,7 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
           onTry={() => { const r = cut.row; setCut(null); setTrying(r); refresh() }}
         />
       )}
-      {trying && <TrySheet row={trying} svc={svcById.get(trying.serviceId)} agents={agents} onClose={() => setTrying(null)} onChanged={refresh} />}
+      {trying && <TrySheet row={trying} svc={svcById.get(trying.serviceId)} agents={agents} client={client} onClose={() => setTrying(null)} onChanged={refresh} />}
     </>
   )
 }

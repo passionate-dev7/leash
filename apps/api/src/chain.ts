@@ -6,6 +6,8 @@ import type { AllowedCalls, LeashClient, NetworkConfig, NetworkName } from '@lea
 import { SELECTOR } from '@leash/policy'
 import { PATH_USD } from './config.js'
 import { settlementProof } from './external.js'
+import { cutCallsProof } from './cutcalls.js'
+import type { ChainCall } from './cutcalls.js'
 import { HttpError } from './http.js'
 
 /** One network the desk reads: a read-only client, and the token budgets, payments and gas are denominated in. Never signs. */
@@ -134,11 +136,19 @@ export async function verifyAuthorize(chain: Chain, args: { tx: Hash; account: A
 
 export type CutCheck = { ok: true; gasUsed: bigint; block: number } | { ok: false; reason: string; gasUsed: bigint | null }
 
-/** A cut counts only when every rescoped key reads back without the recipient and every revoked key reads revoked. */
-export async function verifyCutoff(chain: Chain, args: { tx: Hash; account: Address; recipient: Address; rescoped: readonly Address[]; revoked: readonly Address[] }): Promise<CutCheck> {
+/**
+ * A cut counts only when the team account sent it, its calls are the planned keychain scope and revoke
+ * calls on this team's keys and nothing else, every rescoped key reads back without the recipient and
+ * every revoked key reads revoked. A cut that confirms is what puts a recipient on the blocked list.
+ */
+export async function verifyCutoff(chain: Chain, args: { tx: Hash; account: Address; recipient: Address; teamKeys: readonly Address[]; rescoped: readonly Address[]; revoked: readonly Address[] }): Promise<CutCheck> {
   const rx = await receiptOf(chain, args.tx)
   if (rx.status !== 'success') return { ok: false, reason: `transaction ${args.tx} did not succeed (status ${rx.status})`, gasUsed: rx.gasUsed }
   if (lower(rx.from) !== lower(args.account)) return { ok: false, reason: `transaction was sent by ${rx.from}, not the team account ${args.account}`, gasUsed: rx.gasUsed }
+  const sent = await retryRead(() => chain.reader.getTransaction({ hash: args.tx }))
+  const calls: ChainCall[] = (sent as { calls?: ChainCall[] }).calls ?? [{ to: sent.to, data: sent.input }]
+  const proof = cutCallsProof(calls, args)
+  if (!proof.ok) return { ok: false, reason: proof.reason, gasUsed: rx.gasUsed }
   const r = lower(args.recipient)
   for (const keyId of args.rescoped) {
     const read = await until(

@@ -51,13 +51,16 @@ export type LedgerRecord = DeliveryRecord & {
   source: RecordSource
 }
 
+/** How long a pending agent waits for its authorization before it stops counting and is dropped. */
+export const PENDING_TTL_MS = 60 * 60_000
+
 const now = () => new Date().toISOString()
 const rows = <T>(v: unknown[]): T[] => v as T[]
 
 export function createStore(db: Db, cipher: Cipher) {
   const q = {
     upsertTeam: db.prepare(
-      'insert into team(account, label, signer, created_at, network) values (?, ?, ?, ?, ?) on conflict(account) do update set label = excluded.label, signer = excluded.signer',
+      'insert into team(account, label, signer, created_at, network) values (?, ?, ?, ?, ?) on conflict(account) do update set label = excluded.label',
     ),
     team: db.prepare('select * from team where account = ?'),
     insertAgent: db.prepare(
@@ -68,7 +71,11 @@ export function createStore(db: Db, cipher: Cipher) {
     plainAgents: db.prepare("select key_id, private_key from agent where external = 0 and private_key not like 'enc1:%'"),
     setKey: db.prepare('update agent set private_key = ? where key_id = ?'),
     mostRecords: db.prepare('select account from record group by account order by count(*) desc, min(seq) limit 1'),
-    countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and status != 'revoked'"),
+    // A pending agent holds a slot only while its authorization can still arrive.
+    countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and (status = 'active' or (status = 'pending' and created_at >= ?))"),
+    purgePending: db.prepare("delete from agent where account = ? and status = 'pending' and created_at < ?"),
+    claimDesk: db.prepare('insert or ignore into desk_seen(digest, expires_at) values (?, ?)'),
+    pruneDesk: db.prepare('delete from desk_seen where expires_at < ?'),
     setAgent: db.prepare('update agent set status = ?, authorize_tx = coalesce(?, authorize_tx) where key_id = ?'),
     insertRecord: db.prepare(
       `insert into record(id, account, agent_key_id, agent_name, vendor_id, service_id, url, method, request_hash, realm, recipient, amount, currency, memo, status, refused,
@@ -85,9 +92,7 @@ export function createStore(db: Db, cipher: Cipher) {
     cutoff: db.prepare('select * from cutoff where id = ?'),
     cutoffs: db.prepare('select * from cutoff where account = ? order by id desc'),
     finishCutoff: db.prepare('update cutoff set status = ?, tx = ?, gas_used = ?, failure = ?, confirmed_at = ? where id = ?'),
-    addBlock: db.prepare('insert or ignore into block(account, recipient, created_at) values (?, ?, ?)'),
-    removeBlock: db.prepare('delete from block where account = ? and recipient = ?'),
-    blocks: db.prepare('select recipient from block where account = ?'),
+    blocks: db.prepare("select recipient from cutoff where account = ? and status = 'confirmed' and tx is not null"),
     faucetAt: db.prepare('select at from faucet where address = ?'),
     setFaucet: db.prepare('insert into faucet(address, at) values (?, ?) on conflict(address) do update set at = excluded.at'),
     faucetGlobal: db.prepare('select count(*) as n from faucet_global where at > ?'),
@@ -168,7 +173,14 @@ export function createStore(db: Db, cipher: Cipher) {
     /** The team with the most ledger records, or undefined on an empty ledger. */
     busiestTeam: () => (q.mostRecords.get() as { account: Address } | undefined)?.account,
     agents: (account: Address) => rows<AgentRow>(q.agents.all(account)),
-    openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account) as { n: number }).n),
+    openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account, new Date(Date.now() - PENDING_TTL_MS).toISOString()) as { n: number }).n),
+    /** Drops the team's pending agents whose authorization window passed. Returns how many it removed. */
+    purgePendingAgents: (account: Address): number => Number(q.purgePending.run(account, new Date(Date.now() - PENDING_TTL_MS).toISOString()).changes),
+    /** Claims a signed request's digest. False when it was claimed before: a replay. */
+    claimDeskDigest(digest: string, expiresAtMs: number): boolean {
+      q.pruneDesk.run(Date.now())
+      return Number(q.claimDesk.run(digest, expiresAtMs).changes) === 1
+    },
     setAgentStatus(keyId: Address, status: AgentStatus, authorizeTx: Hex | null = null) {
       q.setAgent.run(status, authorizeTx, keyId)
     },
@@ -211,9 +223,8 @@ export function createStore(db: Db, cipher: Cipher) {
       q.finishCutoff.run(status, tx, gasUsed === null ? null : String(gasUsed), failure, status === 'confirmed' ? now() : null, id)
     },
 
-    addBlock: (account: Address, recipient: Address) => void q.addBlock.run(account, recipient.toLowerCase(), now()),
-    removeBlock: (account: Address, recipient: Address) => void q.removeBlock.run(account, recipient.toLowerCase()),
-    blocked: (account: Address): ReadonlySet<string> => new Set(rows<{ recipient: string }>(q.blocks.all(account)).map((r) => r.recipient)),
+    /** Recipients this team cut on chain: a cut counts once its transaction confirmed. A prepared cut blocks nothing. */
+    blocked: (account: Address): ReadonlySet<string> => new Set(rows<{ recipient: string }>(q.blocks.all(account)).map((r) => r.recipient.toLowerCase())),
 
     /** Claims a faucet slot. Returns false when the address was funded inside `windowMs`. */
     claimFaucet(address: Address, windowMs: number, globalLimit: number): 'ok' | 'address' | 'global' {

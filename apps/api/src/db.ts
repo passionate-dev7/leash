@@ -73,11 +73,9 @@ create table if not exists cutoff (
   evidence text
 );
 create index if not exists cutoff_account on cutoff(account);
-create table if not exists block (
-  account text not null,
-  recipient text not null,
-  created_at text not null,
-  primary key (account, recipient)
+create table if not exists desk_seen (
+  digest text primary key,
+  expires_at integer not null
 );
 create table if not exists faucet (
   address text primary key,

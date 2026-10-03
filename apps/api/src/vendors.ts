@@ -84,8 +84,8 @@ export function vendorRows(args: {
       siblings: catalog.filter((o) => o.serviceId !== s.serviceId && lower(o.recipient) === lower(s.recipient)).map((o) => o.serviceId),
       cut: cut ? { status: cut.status, tx: cut.tx, reason: cut.reason } : null,
       blocked: blocked.has(lower(s.recipient)),
-      // A service already cut, or being cut, has nothing left to recommend.
-      recommendCut: !cut && recommendCut(stats.evidence),
+      // A service whose cut confirmed on chain has nothing left to recommend. A prepared cut is only a plan.
+      recommendCut: cut?.status !== 'confirmed' && recommendCut(stats.evidence),
     }
   })
 }
@@ -120,7 +120,7 @@ export function mainnetVendorRows(args: {
       siblings: services,
       cut: cut ? { status: cut.status, tx: cut.tx, reason: cut.reason } : null,
       blocked: blocked.has(key),
-      recommendCut: !cut && recommendCut(stats.evidence),
+      recommendCut: cut?.status !== 'confirmed' && recommendCut(stats.evidence),
     }
   })
 }

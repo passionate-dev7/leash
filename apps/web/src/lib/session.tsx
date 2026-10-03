@@ -5,7 +5,7 @@ import { accountFor, createSigner, forgetSigner, getActive, listSigners, setActi
 import type { SignerKind, StoredSigner } from './signer'
 import { rootClient } from './chain'
 import type { RootClient } from './chain'
-import { api } from './api'
+import { api, ApiError, deskAuth } from './api'
 import { NetworkProvider } from './network'
 import type { NetworkName } from './config'
 
@@ -51,18 +51,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [active, network])
 
-  // Registering is an idempotent upsert, so a team created while the API was down is registered on the next load.
+  // A team the API does not know yet is registered with the team key's signature, so one created while the API was down is registered on the next load. A known team is left alone: no prompt on reload.
   useEffect(() => {
-    if (!active) return
+    if (!active || !client) return
     let live = true
     setRegisterError(null)
     api
-      .upsertTeam(active.address, active.label, active.kind, network)
+      .ledger(active.address, 1)
+      .then(
+        () => undefined,
+        (e: unknown) => {
+          if (e instanceof ApiError && e.status === 404) return api.upsertTeam(active.address, active.label, active.kind, network, deskAuth(client, network))
+          throw e
+        },
+      )
       .catch((e: unknown) => live && setRegisterError(e instanceof Error ? e.message : String(e)))
     return () => {
       live = false
     }
-  }, [active, network])
+  }, [active, network, client])
 
   const create = useCallback(async (kind: SignerKind, label: string, network: NetworkName) => {
     const stored = await createSigner(kind, label, network)
