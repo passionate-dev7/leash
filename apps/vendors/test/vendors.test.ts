@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { generatePrivateKey } from 'viem/accounts'
+import { Account } from 'viem/tempo'
 import { assertFetchable, catalog, createVendorRouter, extractPage, isPublicAddress, keywords, summarize } from '../src/index.js'
 
 const ARTICLE =
@@ -71,4 +73,20 @@ test('router ignores paths outside /v/ and answers 404 and 405 inside it', async
   assert.equal(await router(new Request('http://127.0.0.1/api/health')), null)
   assert.equal((await router(new Request('http://127.0.0.1/v/atlas/nothing')))?.status, 404)
   assert.equal((await router(new Request('http://127.0.0.1/v/atlas/scrape')))?.status, 405)
+})
+
+const feePayerOf = async (r: ReturnType<typeof createVendorRouter>) => {
+  const res = await r(new Request('http://127.0.0.1/v/atlas/fx?base=USD&symbols=EUR'))
+  assert.equal(res?.status, 402)
+  const header = res!.headers.get('www-authenticate')!
+  const request = /request="([^"]+)"/.exec(header)?.[1]
+  assert.ok(request, 'challenge carries a request')
+  const decoded = JSON.parse(Buffer.from(request, 'base64url').toString('utf8')) as { methodDetails?: { feePayer?: boolean } }
+  return decoded.methodDetails?.feePayer
+}
+
+test('a vendor with a fee payer advertises sponsorship in every challenge, one without does not', async () => {
+  const sponsored = createVendorRouter({ secretKey: 'test-secret-test-secret-test-secret', feePayer: Account.fromSecp256k1(generatePrivateKey()) })
+  assert.equal(await feePayerOf(sponsored), true)
+  assert.notEqual(await feePayerOf(router), true)
 })
