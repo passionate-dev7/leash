@@ -10,9 +10,10 @@ import { money, short } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Check, Field, Input } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
-import { NeedsTeam, PageHead, Cell, Th } from '@/components/page'
+import { NeedsTeam, PageHead, Cell, Table, TBody, Th, THead, Tr } from '@/components/page'
 import { RecordTable } from '@/components/records'
 import { asRecords } from '@/lib/records'
+import { cn } from '@/components/ui/cn'
 
 type Step = { label: string; state: 'run' | 'done' | 'fail'; detail?: string }
 
@@ -55,13 +56,20 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     setOmitted([])
   }
 
-  const budgetValid = /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0
-  const valid = name.trim().length >= 2 && budgetValid && picked.size > 0
+  const [attempted, setAttempted] = useState(false)
+  const errors = {
+    name: name.trim().length >= 2 ? null : 'Enter a name of at least 2 characters.',
+    budget: /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0 ? null : budget.trim() === '' ? 'Enter a daily budget in OUSD.' : 'Enter a positive amount with up to 6 decimals.',
+    services: picked.size > 0 ? null : 'Select at least one service this key may pay.',
+  }
+  const shown = (key: keyof typeof errors) => (attempted ? errors[key] : null)
 
   const mark = (label: string, state: Step['state'], detail?: string) =>
     setSteps((prev) => [...prev.filter((s) => s.label !== label), { label, state, detail }])
 
   const submit = async () => {
+    setAttempted(true)
+    if (errors.name || errors.budget || errors.services) return
     setBusy(true)
     setSteps([])
     setOmitted([])
@@ -91,6 +99,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
       mark(stage, 'done', 'active')
       setName('')
       setPicked(new Set())
+      setAttempted(false)
       onDone()
     } catch (e) {
       mark(stage, 'fail', e instanceof Error ? e.message : String(e))
@@ -103,18 +112,36 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     <Panel title="Add an agent">
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <Field label="Agent name">{(id) => <Input id={id} value={name} onChange={(e) => { touch(); setName(e.target.value) }} placeholder="researcher-1" maxLength={32} />}</Field>
-          <Field
-            label="Daily budget (OUSD)"
-            help="The chain enforces this limit per 24 hours on the agent's key."
-            error={budget && !budgetValid ? 'Enter a positive amount with up to 6 decimals.' : null}
-          >
-            {(id) => <Input id={id} inputMode="decimal" value={budget} onChange={(e) => { touch(); setBudget(e.target.value) }} className="num" />}
+          <Field label="Agent name" error={shown('name')}>
+            {(id) => (
+              <Input
+                id={id}
+                value={name}
+                onChange={(e) => { touch(); setName(e.target.value) }}
+                placeholder="researcher-1"
+                maxLength={32}
+                aria-invalid={shown('name') ? true : undefined}
+                aria-describedby={shown('name') ? `${id}-error` : undefined}
+              />
+            )}
+          </Field>
+          <Field label="Daily budget (OUSD)" help="The chain enforces this limit per 24 hours on the agent's key." error={shown('budget')}>
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="decimal"
+                value={budget}
+                onChange={(e) => { touch(); setBudget(e.target.value) }}
+                className="num"
+                aria-invalid={shown('budget') ? true : undefined}
+                aria-describedby={shown('budget') ? `${id}-error` : undefined}
+              />
+            )}
           </Field>
         </div>
         <fieldset>
           <legend className="text-caption text-ink-muted">Services this key may pay</legend>
-          <div className="mt-2 divide-y divide-hairline border border-hairline px-4">
+          <div className={cn('mt-2 divide-y divide-hairline border px-4', shown('services') ? 'border-error' : 'border-hairline')}>
             {vendors.map(([vendorId, v]) => (
               <div key={vendorId} className="py-2">
                 <p className="text-caption font-semibold text-ink-muted">{v.name}</p>
@@ -142,6 +169,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
               </div>
             ))}
           </div>
+          {shown('services') && <p role="alert" className="mt-1 text-caption text-error-ink">{shown('services')}</p>}
         </fieldset>
       </div>
       {exposure.size > 0 && (
@@ -157,7 +185,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
         </div>
       )}
       <div className="mt-6 flex flex-wrap items-center gap-4">
-        <Button disabled={!valid} busy={busy} onClick={submit}>
+        <Button busy={busy} onClick={submit}>
           Authorize agent key
         </Button>
         <span className="text-body-sm text-ink-muted">Your team key signs one transaction and pays its gas in PathUSD.</span>
@@ -296,18 +324,18 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
   const tone = agent.status === 'active' ? 'ok' : agent.status === 'pending' ? 'warn' : 'idle'
   return (
     <>
-      <tr className="border-t border-hairline">
+      <Tr>
         <Cell>
           <p className="font-semibold">{agent.name}</p>
           <p className="num text-caption text-ink-muted" title={agent.keyId}>{short(agent.keyId, 8, 6)}</p>
         </Cell>
-        <Cell>
+        <Cell label="Status">
           <Status tone={tone}>{agent.status}</Status>
           {agent.readError && <p className="mt-1 max-w-48 text-caption text-error-ink">Chain read failed: {agent.readError}</p>}
         </Cell>
-        <Cell className="num text-right">{money(agent.budgetUnits)}</Cell>
-        <Cell className="num text-right">{agent.remaining === null ? '' : money(agent.remaining)}</Cell>
-        <Cell>
+        <Cell label="Daily budget (OUSD)" className="num text-right">{money(agent.budgetUnits)}</Cell>
+        <Cell label="Remaining now" className="num text-right">{agent.remaining === null ? '' : money(agent.remaining)}</Cell>
+        <Cell label="In scope on chain">
           {agent.status === 'revoked' ? (
             <span className="text-ink-subtle">key revoked</span>
           ) : inScope.length === 0 ? (
@@ -316,11 +344,11 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
             <span className="num">{inScope.join(', ')}</span>
           )}
         </Cell>
-        <Cell>
+        <Cell label="Authorize tx">
           <TxLink hash={agent.authorizeTx} />
         </Cell>
-        <Cell>
-          <span className="flex">
+        <Cell className="max-md:border-t max-md:border-hairline max-md:pt-3">
+          <span className="flex max-md:justify-end">
             <Button size="sm" variant="tertiary" disabled={agent.status !== 'active'} onClick={() => setOpen((v) => !v)}>
               {open ? 'Close' : 'Run research'}
             </Button>
@@ -329,20 +357,20 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
             </Button>
           </span>
         </Cell>
-      </tr>
+      </Tr>
       {error && (
-        <tr>
-          <td colSpan={7} className="px-4 pb-3">
+        <Tr>
+          <td colSpan={7} className="px-4 pb-3 max-md:block max-md:px-0">
             <Notice tone="error" title="Revoke failed">{error}</Notice>
           </td>
-        </tr>
+        </Tr>
       )}
       {open && (
-        <tr>
-          <td colSpan={7} className="p-0">
+        <Tr className="max-md:p-0">
+          <td colSpan={7} className="p-0 max-md:block">
             <RunResearch agent={agent} account={account} />
           </td>
-        </tr>
+        </Tr>
       )}
     </>
   )
@@ -390,26 +418,24 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
           </Empty>
         )}
         {agents.length > 0 && cat && (
-          <div className="overflow-x-auto border border-hairline">
-            <table className="w-full min-w-[900px] text-body-sm">
-              <thead>
-                <tr>
-                  <Th>Agent</Th>
-                  <Th>Status</Th>
-                  <Th className="text-right">Daily budget (OUSD)</Th>
-                  <Th className="text-right">Remaining now</Th>
-                  <Th>Services in scope on chain</Th>
-                  <Th>Authorize tx</Th>
-                  <Th>Actions</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {agents.map((a) => (
-                  <AgentRow key={a.keyId} agent={a} account={account} client={client} catalog={cat} onChange={team.reload} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <THead>
+              <tr>
+                <Th>Agent</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Daily budget (OUSD)</Th>
+                <Th className="text-right">Remaining now</Th>
+                <Th>Services in scope on chain</Th>
+                <Th>Authorize tx</Th>
+                <Th>Actions</Th>
+              </tr>
+            </THead>
+            <TBody>
+              {agents.map((a) => (
+                <AgentRow key={a.keyId} agent={a} account={account} client={client} catalog={cat} onChange={team.reload} />
+              ))}
+            </TBody>
+          </Table>
         )}
         {agents.length > 0 && <p className="text-caption text-ink-subtle">Remaining is read from the chain on every refresh, every few seconds.</p>}
       </div>
