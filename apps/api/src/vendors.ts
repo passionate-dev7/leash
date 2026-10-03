@@ -44,6 +44,25 @@ export function evidenceOf(records: readonly LedgerRecord[], now = Date.now()): 
 
 export const recommendCut = (e: Evidence): boolean => e.paidNotDelivered >= CUT_MIN_FAILURES && e.failureRate >= CUT_MIN_RATE
 
+/** What one vendor's records say: counts over settled payments, spend, and the trailing 24 hours. */
+function rollup(mine: readonly LedgerRecord[], now?: number) {
+  const settled = mine.filter(isPaid)
+  const delivered = settled.filter((r) => r.outcome === 'delivered').length
+  const paidNotDelivered = settled.length - delivered
+  const evidence = evidenceOf(mine, now)
+  return {
+    paid: settled.length,
+    delivered,
+    paidNotDelivered,
+    refused: mine.filter((r) => r.outcome === 'refused').length,
+    spent: String(settled.reduce((sum, r) => sum + BigInt(r.amount ?? '0'), 0n)),
+    failureRate: settled.length === 0 ? 0 : paidNotDelivered / settled.length,
+    evidence,
+  }
+}
+
+const cutOf = (cutoffs: readonly CutoffRow[], recipient: string) => cutoffs.find((c) => lower(c.recipient) === lower(recipient) && (c.status === 'prepared' || (c.status === 'confirmed' && c.tx)))
+
 export function vendorRows(args: {
   catalog: readonly CatalogEntry[]
   records: readonly LedgerRecord[]
@@ -53,29 +72,55 @@ export function vendorRows(args: {
 }) {
   const { catalog, records, cutoffs, blocked, now } = args
   return catalog.map((s) => {
-    const mine = records.filter((r) => r.serviceId === s.serviceId)
-    const settled = mine.filter(isPaid)
-    const delivered = settled.filter((r) => r.outcome === 'delivered').length
-    const paidNotDelivered = settled.length - delivered
-    const cut = cutoffs.find((c) => lower(c.recipient) === lower(s.recipient) && (c.status === 'prepared' || (c.status === 'confirmed' && c.tx)))
-    const evidence = evidenceOf(mine, now)
+    const stats = rollup(records.filter((r) => r.serviceId === s.serviceId), now)
+    const cut = cutOf(cutoffs, s.recipient)
     return {
       serviceId: s.serviceId,
       vendorId: s.vendorId,
       recipient: s.recipient,
       virtual: s.virtual,
-      paid: settled.length,
-      delivered,
-      paidNotDelivered,
-      refused: mine.filter((r) => r.outcome === 'refused').length,
-      spent: String(settled.reduce((sum, r) => sum + BigInt(r.amount ?? '0'), 0n)),
-      failureRate: settled.length === 0 ? 0 : paidNotDelivered / settled.length,
+      services: [s.serviceId],
+      ...stats,
       siblings: catalog.filter((o) => o.serviceId !== s.serviceId && lower(o.recipient) === lower(s.recipient)).map((o) => o.serviceId),
       cut: cut ? { status: cut.status, tx: cut.tx, reason: cut.reason } : null,
       blocked: blocked.has(lower(s.recipient)),
-      evidence,
       // A service already cut, or being cut, has nothing left to recommend.
-      recommendCut: !cut && recommendCut(evidence),
+      recommendCut: !cut && recommendCut(stats.evidence),
+    }
+  })
+}
+
+/**
+ * The vendor view of a mainnet team. There is no fixed catalog behind a team that brings its own
+ * agents, so a row is a payout address the team's agents paid (or cut). `services` names what the live
+ * payout map says that address pays for; an address the map does not know has none and the page shows the address.
+ */
+export function mainnetVendorRows(args: {
+  records: readonly LedgerRecord[]
+  cutoffs: readonly CutoffRow[]
+  blocked: ReadonlySet<string>
+  servicesPaying: (recipient: string) => string[]
+  now?: number
+}) {
+  const { records, cutoffs, blocked, servicesPaying, now } = args
+  const recipients = new Map<string, string>()
+  for (const r of records) if (r.recipient) recipients.set(lower(r.recipient), r.recipient)
+  for (const c of cutoffs) recipients.set(lower(c.recipient), c.recipient)
+  return [...recipients].map(([key, recipient]) => {
+    const stats = rollup(records.filter((r) => r.recipient !== null && lower(r.recipient) === key), now)
+    const services = servicesPaying(recipient)
+    const cut = cutOf(cutoffs, recipient)
+    return {
+      serviceId: key,
+      vendorId: 'mainnet',
+      recipient,
+      virtual: false,
+      services,
+      ...stats,
+      siblings: services,
+      cut: cut ? { status: cut.status, tx: cut.tx, reason: cut.reason } : null,
+      blocked: blocked.has(key),
+      recommendCut: !cut && recommendCut(stats.evidence),
     }
   })
 }

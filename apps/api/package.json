@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "start": "tsx src/index.ts", "dev": "tsx watch src/index.ts", "e2e": "tsx scripts/e2e.ts", "e2e:byo": "tsx scripts/e2e-byo.ts", "test": "node --import tsx --test test/*.test.ts" },
+  "scripts": { "start": "tsx src/index.ts", "dev": "tsx watch src/index.ts", "e2e": "tsx scripts/e2e.ts", "e2e:byo": "tsx scripts/e2e-byo.ts", "e2e:mainnet": "tsx scripts/e2e-mainnet.ts", "test": "node --import tsx --test test/*.test.ts" },
   "dependencies": { "@leash/policy": "workspace:*", "@leash/sdk": "workspace:*", "@leash/vendors": "workspace:*", "mppx": "0.12.0", "ox": "0.14.45", "viem": "2.57.1" },
   "devDependencies": { "@types/node": "26.6.1", "typescript": "5.9.3", "tsx": "4.23.13" }
 }

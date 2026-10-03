@@ -1,7 +1,10 @@
+import type { Address } from 'viem'
 import { catalog, DEFINITIONS } from '@leash/vendors'
 import type { CatalogEntry, ServiceId } from '@leash/vendors'
+import type { NetworkName } from '@leash/sdk'
 import { LOCAL_BASE, PUBLIC_BASE } from './config.js'
 import { bad } from './http.js'
+import { mainnetServices, probedServices } from './mainnet.js'
 
 export const SERVICE_IDS: readonly ServiceId[] = DEFINITIONS.map((d) => d.serviceId)
 
@@ -72,3 +75,10 @@ export function buildRequest(entry: CatalogEntry, input: unknown): { url: string
 }
 
 const jsonPost = (body: unknown): RequestInit => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+
+/** The services an agent key on this network can be scoped to, with the payout each one pays. */
+export const servicesOn = (network: NetworkName): { serviceId: string; recipient: Address }[] =>
+  network === 'mainnet' ? mainnetServices() : publicCatalog().map((s) => ({ serviceId: s.serviceId, recipient: s.recipient }))
+
+/** The service ids behind a mainnet payout address, from the live 402 probe; empty for an address no probe reached. */
+export const mainnetServicesPaying = (recipient: string): string[] => probedServices().get(recipient.toLowerCase()) ?? []

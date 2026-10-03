@@ -1,9 +1,9 @@
 import type { Address, Hex } from 'viem'
-import type { DeliveryRecord, Outcome } from '@leash/sdk'
+import type { DeliveryRecord, NetworkName, Outcome } from '@leash/sdk'
 import type { Db } from './db.js'
 import type { Cipher } from './keystore.js'
 
-export type TeamRow = { account: Address; label: string; signer: 'passkey' | 'webcrypto'; created_at: string }
+export type TeamRow = { account: Address; label: string; signer: 'passkey' | 'webcrypto'; created_at: string; network: NetworkName }
 export type AgentStatus = 'pending' | 'active' | 'revoked'
 export type AgentRow = {
   key_id: Address
@@ -57,7 +57,7 @@ const rows = <T>(v: unknown[]): T[] => v as T[]
 export function createStore(db: Db, cipher: Cipher) {
   const q = {
     upsertTeam: db.prepare(
-      'insert into team(account, label, signer, created_at) values (?, ?, ?, ?) on conflict(account) do update set label = excluded.label, signer = excluded.signer',
+      'insert into team(account, label, signer, created_at, network) values (?, ?, ?, ?, ?) on conflict(account) do update set label = excluded.label, signer = excluded.signer',
     ),
     team: db.prepare('select * from team where account = ?'),
     insertAgent: db.prepare(
@@ -138,8 +138,9 @@ export function createStore(db: Db, cipher: Cipher) {
   })
 
   return {
-    upsertTeam(account: Address, label: string, signer: TeamRow['signer']) {
-      q.upsertTeam.run(account, label, signer, now())
+    /** A team's network is fixed when it is created: the upsert never changes it. */
+    upsertTeam(account: Address, label: string, signer: TeamRow['signer'], network: NetworkName = 'moderato') {
+      q.upsertTeam.run(account, label, signer, now(), network)
     },
     team: (account: Address) => q.team.get(account) as TeamRow | undefined,
 

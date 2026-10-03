@@ -6,18 +6,19 @@ import { Abis, Addresses } from 'viem/tempo'
 import { getAllowedCalls, getRemainingLimit, planCutoff } from '@leash/sdk'
 import { SELECTOR } from '@leash/policy'
 import type { ServiceId, VendorRouter } from '@leash/vendors'
-import { ALLOWED_ORIGINS, BUDGET_TOKEN, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
-import { balances, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
+import type { NetworkName } from '@leash/sdk'
+import { ALLOWED_ORIGINS, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO } from './config.js'
+import { balances, budgetBalance, chains, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
 import { parseRecord, signerOf } from './external.js'
 import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, readBody, route, sendJson, str, txHash } from './http.js'
 import type { Route } from './http.js'
-import { cachedReplay, MAX_REPLAY_BLOCKS, probedServices } from './mainnet.js'
+import { cachedReplay, MAX_REPLAY_BLOCKS, mainnetServices, probedServices } from './mainnet.js'
 import { outsideFeed } from './outside.js'
 import { sponsorBalance } from './sponsor.js'
-import { evidenceOf, vendorRows } from './vendors.js'
+import { evidenceOf, mainnetVendorRows, vendorRows } from './vendors.js'
 import type { Runner } from './runner.js'
-import { isServiceId, payoutGroups, publicCatalog, servicesPaying, serviceOfUrl } from './services.js'
-import type { AgentRow, Store } from './store.js'
+import { isServiceId, mainnetServicesPaying, payoutGroups, publicCatalog, servicesOn, servicesPaying, serviceOfUrl } from './services.js'
+import type { AgentRow, Store, TeamRow } from './store.js'
 
 const FAUCET_WINDOW_MS = 10 * 60_000
 const FAUCET_GLOBAL_PER_HOUR = 60
@@ -46,9 +47,9 @@ function intParam(query: URLSearchParams, key: string, fallback: number, min: nu
   return n
 }
 
-export type AppDeps = { store: Store; runner: Runner; vendors: VendorRouter; sponsor: Address }
+export type AppDeps = { store: Store; runner: Runner; vendors: VendorRouter; sponsor: Address; mainnet?: boolean }
 
-export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
+export function createApp({ store, runner, vendors, sponsor, mainnet = false }: AppDeps) {
   const teamOf = (account: Address) => {
     const team = store.team(account)
     if (!team) throw notFound(`no team ${account}. Create it with POST /api/teams`)
@@ -60,9 +61,13 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
     return agent
   }
   const serviceIdsOf = (agent: AgentRow) => JSON.parse(agent.service_ids) as string[]
+  /** The chain a team's reads and verifications go to. */
+  const chainOfTeam = (account: Address) => chains[teamOf(account).network]
+  const chainOfAgent = (agent: AgentRow) => chainOfTeam(agent.account)
   /** The desk pays only for agents whose key it holds. An external agent pays with its own process. */
   const runnerAgent = (keyId: string): AgentRow => {
     const agent = agentOf(keyId)
+    if (teamOf(agent.account).network === 'mainnet') throw conflict('mainnet_team', `team ${agent.account} runs on mainnet: its agents pay from their own processes, and the desk never signs or funds anything on mainnet`)
     if (agent.external === 1) throw conflict('external_agent', `agent ${agent.key_id} runs outside Leash: it pays from its own process, and the desk cannot run or call for it`)
     return agent
   }
@@ -77,14 +82,29 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
   const routes: Route[] = [
     route('GET', '/api/health', async () => {
       const block = await retryRead(() => reader.getBlockNumber())
-      return { ok: true, chainId: MODERATO.chainId, block: Number(block), sponsor: { address: sponsor, pathusd: String(await sponsorBalance(sponsor)) } }
+      return { ok: true, chainId: MODERATO.chainId, block: Number(block), mainnet, sponsor: { address: sponsor, pathusd: String(await sponsorBalance(sponsor)) } }
     }),
 
-    route('GET', '/api/catalog', async () => ({ services: publicCatalog(), payoutGroups: payoutGroups() })),
+    route('GET', '/api/catalog', async ({ query }) => {
+      const network = query.get('network') ?? 'moderato'
+      if (network === 'moderato') return { services: publicCatalog(), payoutGroups: payoutGroups() }
+      if (network !== 'mainnet') throw bad("network must be 'moderato' or 'mainnet'")
+      if (!mainnet) throw new HttpError(400, 'mainnet_disabled', 'this desk does not run mainnet teams')
+      // The live 402 probe: a service, the payout it names and what it asked per call. Nothing here is invented.
+      const services = mainnetServices()
+      const groups = new Map<string, { recipient: Address; serviceIds: string[] }>()
+      for (const s of services) {
+        const g = groups.get(lower(s.recipient)) ?? { recipient: s.recipient, serviceIds: [] }
+        g.serviceIds.push(s.serviceId)
+        groups.set(lower(s.recipient), g)
+      }
+      return { network: 'mainnet', services, payoutGroups: [...groups.values()] }
+    }),
 
     route('POST', '/api/faucet', async ({ req }) => {
       const b = await body(req)
       const addr = address(b['address'], 'address')
+      if (store.team(addr)?.network === 'mainnet') throw conflict('mainnet_team', `${addr} is a mainnet team: the desk funds nothing on mainnet, deposit USDC.e to it directly`)
       const claim = store.claimFaucet(addr, FAUCET_WINDOW_MS, FAUCET_GLOBAL_PER_HOUR)
       if (claim === 'address') throw new HttpError(429, 'faucet_rate_limited', `${addr} was funded in the last 10 minutes`)
       if (claim === 'global') throw new HttpError(429, 'faucet_rate_limited', 'the faucet is busy, try again in a few minutes')
@@ -103,13 +123,23 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       const label = str(b, 'label', { max: 60 })
       const signer = b['signer']
       if (signer !== 'passkey' && signer !== 'webcrypto') throw bad("signer must be 'passkey' or 'webcrypto'")
-      store.upsertTeam(account, label, signer)
+      const network = b['network'] === undefined ? 'moderato' : b['network']
+      if (network !== 'moderato' && network !== 'mainnet') throw bad("network must be 'moderato' or 'mainnet'")
+      if (network === 'mainnet' && !mainnet) throw new HttpError(400, 'mainnet_disabled', 'this desk does not run mainnet teams')
+      const existing = store.team(account)
+      if (existing && existing.network !== network) throw conflict('network_mismatch', `team ${account} runs on ${existing.network}, not ${network}`)
+      store.upsertTeam(account, label, signer, network)
       return { team: store.team(account) }
     }),
 
     route('GET', '/api/teams/:account', async ({ params }) => {
       const account = address(params['account'], 'account')
       const team = teamOf(account)
+      const chain = chains[team.network]
+      const deposit = await budgetBalance(chain, account).then(
+        (b) => ({ token: chain.token, units: String(b.balance), block: Number(b.block), chainId: chain.config.chainId, error: null }),
+        (e: Error) => ({ token: chain.token, units: null, block: null, chainId: chain.config.chainId, error: e.message.split('\n')[0]! }),
+      )
       const agents = await Promise.all(
         store.agents(account).map(async (a) => {
           const keyId = a.key_id
@@ -121,8 +151,8 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
           if (a.status === 'active') {
             try {
               const [limit, allowed] = await Promise.all([
-                retryRead(() => getRemainingLimit(reader, account, keyId, BUDGET_TOKEN)),
-                retryRead(() => getAllowedCalls(reader, account, keyId)),
+                retryRead(() => getRemainingLimit(chain.reader, account, keyId, chain.token)),
+                retryRead(() => getAllowedCalls(chain.reader, account, keyId)),
               ])
               remaining = String(limit.remaining)
               periodEnd = String(limit.periodEnd)
@@ -156,6 +186,7 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       const active = agents.filter((a) => a.status === 'active')
       return {
         team,
+        balance: deposit,
         agents,
         totals: {
           activeAgents: active.length,
@@ -167,20 +198,26 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
 
     route('POST', '/api/teams/:account/agents', async ({ params, req }) => {
       const account = address(params['account'], 'account')
-      teamOf(account)
+      const team = teamOf(account)
+      const chain = chains[team.network]
       const b = await body(req)
+      const external = b['external'] === undefined ? false : b['external']
+      if (typeof external !== 'boolean') throw bad('external must be true or false')
+      if (team.network === 'mainnet' && !external) throw conflict('mainnet_requires_external', 'a mainnet team holds only agents that run outside Leash: pass external: true with the key id from leash-agent init')
       const name = str(b, 'name', { max: 40 })
       const budget = str(b, 'budget', { max: 16 })
-      if (!/^\d{1,7}(\.\d{1,6})?$/.test(budget) || parseUnits(budget, DECIMALS) <= 0n) throw bad('budget must be a positive decimal OUSD amount such as "1.50"')
+      const unit = team.network === 'mainnet' ? 'USDC.e' : 'OUSD'
+      if (!/^\d{1,7}(\.\d{1,6})?$/.test(budget) || parseUnits(budget, DECIMALS) <= 0n) throw bad(`budget must be a positive decimal ${unit} amount such as "1.50"`)
       const periodSeconds = integer(b['periodSeconds'], 'periodSeconds', 60, 365 * 86_400)
       const requested = b['serviceIds']
       if (!Array.isArray(requested) || requested.length === 0 || requested.length > 10) throw bad('serviceIds must be a non-empty list of service ids')
-      if (!requested.every(isServiceId)) throw bad(`serviceIds may only contain ${publicCatalog().map((s) => s.serviceId).join(', ')}`)
+      const offered = servicesOn(team.network)
+      if (!requested.every((id) => offered.some((s) => s.serviceId === id))) throw bad(`serviceIds may only contain ${offered.map((s) => s.serviceId).join(', ')}`)
       if (new Set(requested).size !== requested.length) throw bad('serviceIds must not repeat')
       if (store.openAgentCount(account) >= MAX_OPEN_AGENTS) throw conflict('too_many_agents', `a team can hold at most ${MAX_OPEN_AGENTS} agents`)
 
       const cut = cutRecipients(account)
-      const catalog = publicCatalog()
+      const catalog = offered
       const granted = catalog.filter((s) => requested.includes(s.serviceId) && !cut.has(lower(s.recipient)))
       const omitted = catalog.filter((s) => requested.includes(s.serviceId) && cut.has(lower(s.recipient))).map((s) => ({ serviceId: s.serviceId, reason: 'cut' }))
       if (granted.length === 0) throw conflict('services_cut', 'every requested service was cut for this team')
@@ -188,14 +225,12 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       // Every service whose payout is among the recipients is reachable, not only the ones asked for.
       const reach = catalog.filter((s) => recipients.some((r) => lower(r) === lower(s.recipient))).map((s) => s.serviceId)
 
-      const external = b['external'] === undefined ? false : b['external']
-      if (typeof external !== 'boolean') throw bad('external must be true or false')
       // An external agent already holds its key: the desk takes only the key id and never a private key.
       const privateKey = external ? null : generatePrivateKey()
       const keyId = privateKey === null ? address(b['keyId'], 'keyId') : privateKeyToAddress(privateKey)
       if (external && store.agent(keyId)) throw conflict('key_exists', `key ${keyId} is already registered`)
       const expiry = Math.floor(Date.now() / 1000) + KEY_LIFETIME_SECONDS
-      store.insertAgent({ keyId, account, name, privateKey, budget, period: periodSeconds, token: BUDGET_TOKEN, serviceIds: granted.map((s) => s.serviceId), expiry })
+      store.insertAgent({ keyId, account, name, privateKey, budget, period: periodSeconds, token: chain.token, serviceIds: granted.map((s) => s.serviceId), expiry })
       return {
         keyId,
         reach,
@@ -203,8 +238,8 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
         authorize: {
           accessKey: { accessKeyAddress: keyId, keyType: 'secp256k1' },
           expiry,
-          limits: [{ token: BUDGET_TOKEN, limit: String(parseUnits(budget, DECIMALS)), period: periodSeconds }],
-          scopes: [{ address: BUDGET_TOKEN, selector: SELECTOR.transferWithMemo, recipients }],
+          limits: [{ token: chain.token, limit: String(parseUnits(budget, DECIMALS)), period: periodSeconds }],
+          scopes: [{ address: chain.token, selector: SELECTOR.transferWithMemo, recipients }],
         },
       }
     }),
@@ -214,8 +249,9 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       const tx = txHash((await body(req))['tx'])
       if (agent.status === 'revoked') throw conflict('agent_revoked', `agent ${agent.key_id} is revoked`)
       if (agent.status === 'active') return { keyId: agent.key_id, status: 'active', authorizeTx: agent.authorize_tx }
-      const planned = publicCatalog().filter((s) => serviceIdsOf(agent).includes(s.serviceId)).map((s) => s.recipient)
-      const check = await verifyAuthorize({ tx, account: agent.account, keyId: agent.key_id, plannedRecipients: planned })
+      const chain = chainOfAgent(agent)
+      const planned = servicesOn(chain.name).filter((s) => serviceIdsOf(agent).includes(s.serviceId)).map((s) => s.recipient)
+      const check = await verifyAuthorize(chain, { tx, account: agent.account, keyId: agent.key_id, plannedRecipients: planned })
       if (!check.ok) throw new HttpError(422, 'authorize_not_confirmed', check.reason)
       store.setAgentStatus(agent.key_id, 'active', tx)
       return { keyId: agent.key_id, status: 'active', authorizeTx: tx, block: check.block }
@@ -257,12 +293,13 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       let settlement: typeof record.settlement = null
       if (paid) {
         const tx = txHash(record.settlement!.tx, 'record.settlement.tx')
-        const check = await verifySettlement({ tx, account: agent.account, keyId: agent.key_id, recipient: record.recipient!, amount: record.amount!, memo: record.memo!, currency: record.currency! })
+        const check = await verifySettlement(chainOfAgent(agent), { tx, account: agent.account, keyId: agent.key_id, recipient: record.recipient!, amount: record.amount!, memo: record.memo!, currency: record.currency! })
         if (!check.ok) throw new HttpError(422, 'settlement_not_confirmed', check.reason)
         // What the chain read back, never what the agent said.
         settlement = { tx, block: check.block, status: 'success', keySpend: check.keySpend }
       }
-      const known = serviceOfUrl(record.url)
+      // The catalog holds the Moderato vendors the desk runs; a mainnet team's records name where they were paid.
+      const known = teamOf(agent.account).network === 'moderato' ? serviceOfUrl(record.url) : undefined
       if (known && record.recipient && lower(record.recipient) !== lower(known.recipient))
         throw bad(`record.recipient ${record.recipient} is not the payout of ${known.serviceId} (${known.recipient})`)
       // Nothing awaits between this check and the insert, so two reports of one settlement cannot both land.
@@ -289,27 +326,37 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
 
     route('GET', '/api/teams/:account/vendors', async ({ params }) => {
       const account = address(params['account'], 'account')
-      teamOf(account)
-      return { services: vendorRows({ catalog: publicCatalog(), records: store.allRecords(account), cutoffs: store.cutoffs(account), blocked: store.blocked(account) }) }
+      const team = teamOf(account)
+      const records = store.allRecords(account)
+      const cutoffs = store.cutoffs(account)
+      const blocked = store.blocked(account)
+      if (team.network === 'mainnet') return { services: mainnetVendorRows({ records, cutoffs, blocked, servicesPaying: mainnetServicesPaying }) }
+      return { services: vendorRows({ catalog: publicCatalog(), records, cutoffs, blocked }) }
     }),
 
     route('POST', '/api/teams/:account/cutoffs', async ({ params, req }) => {
       const account = address(params['account'], 'account')
-      teamOf(account)
+      const chain = chainOfTeam(account)
       const b = await body(req)
       const recipient = address(b['recipient'], 'recipient')
       const reason = b['reason'] === undefined ? 'manual' : b['reason']
       if (reason !== 'failures' && reason !== 'manual') throw bad("reason must be 'failures' or 'manual'")
-      const servicesCut = servicesPaying(recipient)
+      const onMainnet = chain.name === 'mainnet'
+      const servicesCut: string[] = onMainnet ? mainnetServicesPaying(recipient) : servicesPaying(recipient)
       // The evidence is read from the ledger now and stored with the cut: what the operator saw when they decided.
-      const mine = store.allRecords(account).filter((r) => servicesCut.includes(r.serviceId as ServiceId))
-      const evidence = { ...evidenceOf(mine), recipient, services: servicesCut.map((id) => ({ serviceId: id, ...evidenceOf(mine.filter((r) => r.serviceId === id)) })) }
+      // A mainnet payout is measured as a whole: the records name a payout, not the service behind it.
+      const mine = store.allRecords(account).filter((r) => (onMainnet ? r.recipient !== null && lower(r.recipient) === lower(recipient) : servicesCut.includes(r.serviceId as ServiceId)))
+      const evidence = {
+        ...evidenceOf(mine),
+        recipient,
+        services: servicesCut.map((id) => (onMainnet ? { serviceId: id } : { serviceId: id, ...evidenceOf(mine.filter((r) => r.serviceId === id)) })),
+      }
       if (reason === 'failures' && evidence.paidNotDelivered === 0)
         throw conflict('no measured failures', `no paid-but-not-delivered record for ${recipient} in the last 24 hours (${evidence.paid} paid). Cut it with reason 'manual' if you still want it out of scope`)
       const active = store.agents(account).filter((a) => a.status === 'active')
       const keys = await Promise.all(
         active.map(async (a) => {
-          const allowed = await retryRead(() => getAllowedCalls(reader, account, a.key_id))
+          const allowed = await retryRead(() => getAllowedCalls(chain.reader, account, a.key_id))
           return { keyId: a.key_id, scopes: allowed.scopes, isScoped: allowed.isScoped }
         }),
       )
@@ -342,7 +389,7 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       const rescoped = JSON.parse(cutoff.rescoped) as Address[]
       const revoked = JSON.parse(cutoff.revoked) as Address[]
       if (cutoff.status === 'confirmed' && cutoff.tx) return cutoffView(cutoff.id)
-      const check = await verifyCutoff({ tx, account: cutoff.account, recipient: cutoff.recipient, rescoped, revoked })
+      const check = await verifyCutoff(chainOfTeam(cutoff.account), { tx, account: cutoff.account, recipient: cutoff.recipient, rescoped, revoked })
       if (!check.ok) {
         store.finishCutoff(cutoff.id, 'failed', tx, check.gasUsed, check.reason)
         store.removeBlock(cutoff.account, cutoff.recipient)
@@ -364,7 +411,7 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
       const agent = agentOf(params['keyId']!)
       const tx = txHash((await body(req))['tx'])
       if (agent.status === 'revoked') return { keyId: agent.key_id, status: 'revoked' }
-      const check = await verifyRevoke({ tx, account: agent.account, keyId: agent.key_id })
+      const check = await verifyRevoke(chainOfAgent(agent), { tx, account: agent.account, keyId: agent.key_id })
       if (!check.ok) throw new HttpError(422, 'revoke_not_confirmed', check.reason)
       store.setAgentStatus(agent.key_id, 'revoked')
       return { keyId: agent.key_id, status: 'revoked', tx }
@@ -408,8 +455,13 @@ export function createApp({ store, runner, vendors, sponsor }: AppDeps) {
 
     route('GET', '/api/teams/:account/balances', async ({ params }) => {
       const account = address(params['account'], 'account')
+      const team = store.team(account)
+      if (team?.network === 'mainnet') {
+        const b = await budgetBalance(chains.mainnet, account)
+        return { account, network: 'mainnet', token: chains.mainnet.token, units: String(b.balance), block: Number(b.block) }
+      }
       const b = await balances(account)
-      return { account, ousd: String(b.ousd), pathusd: String(b.pathusd), block: Number(b.block) }
+      return { account, network: 'moderato', ousd: String(b.ousd), pathusd: String(b.pathusd), block: Number(b.block) }
     }),
   ]
 

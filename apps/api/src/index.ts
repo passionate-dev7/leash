@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 import { createVendorRouter } from '@leash/vendors'
 import { createApp } from './app.js'
-import { PORT, vendorSecret } from './config.js'
+import { MAINNET_ENABLED, PORT, vendorSecret } from './config.js'
 import { openDatabase } from './db.js'
 import { createCipher, loadMasterKey, MASTER_KEY_PATH } from './keystore.js'
 import { createRunner } from './runner.js'
@@ -19,12 +19,12 @@ try {
 } catch (e) {
   console.error(`[leash-api] vendor fee sponsor ${sponsor.address} could not be funded, sponsored payments will fail until it is: ${(e as Error).message.split('\n')[0]}`)
 }
-const handle = createApp({ store, runner: createRunner(store), vendors: createVendorRouter({ secretKey: vendorSecret(), feePayer: sponsor }), sponsor: sponsor.address })
+const handle = createApp({ store, runner: createRunner(store), vendors: createVendorRouter({ secretKey: vendorSecret(), feePayer: sponsor }), sponsor: sponsor.address, mainnet: MAINNET_ENABLED })
 
 const host = process.env['LEASH_API_HOST'] ?? '127.0.0.1'
 const server = createServer((req, res) => void handle(req, res))
 server.requestTimeout = 0
-server.listen(PORT, host, () => console.log(`leash api listening on http://${host}:${PORT}`))
+server.listen(PORT, host, () => console.log(`leash api listening on http://${host}:${PORT}, mainnet teams ${MAINNET_ENABLED ? 'on (chain 4217, read only)' : 'off'}`))
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.on(signal, () => {

@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { getAddress, isAddress } from 'viem'
 import type { Address } from 'viem'
-import { NETWORKS } from '@leash/sdk'
+import { agentNetwork, NETWORKS } from '@leash/sdk'
 import type { NetworkConfig } from '@leash/sdk'
 import { OUSD } from '@leash/vendors'
 
@@ -37,12 +37,18 @@ export const DATA_DIR = fileURLToPath(new URL('../data/', import.meta.url))
 export const MODERATO: NetworkConfig = NETWORKS.moderato
 
 /**
+ * Mainnet teams (Tempo 4217, USDC.e) exist only when the API starts with LEASH_MAINNET=1. The desk only
+ * reads chain 4217: the team's root signs in the browser and the agents pay from their own processes.
+ */
+export const MAINNET_ENABLED = process.env['LEASH_MAINNET'] === '1'
+
+/**
  * The network an agent pays on. Gas is paid in OUSD, the token the budget is denominated in:
  * an access key can only spend a token it has a limit for, so a PathUSD fee token would need a
  * second limit. Measured on Moderato: one call debits 2000 units of payment plus about 205 of
  * gas from the same OUSD limit.
  */
-export const AGENT_NETWORK: NetworkConfig = { ...MODERATO, feeToken: OUSD, settlementToken: OUSD }
+export const AGENT_NETWORK: NetworkConfig = agentNetwork('moderato')
 
 export const PATH_USD: Address = MODERATO.feeToken
 export const BUDGET_TOKEN: Address = OUSD

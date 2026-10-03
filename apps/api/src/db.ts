@@ -7,7 +7,8 @@ create table if not exists team (
   account text primary key,
   label text not null,
   signer text not null check (signer in ('passkey', 'webcrypto')),
-  created_at text not null
+  created_at text not null,
+  network text not null default 'moderato' check (network in ('moderato', 'mainnet'))
 );
 create table if not exists agent (
   key_id text primary key,
@@ -102,6 +103,9 @@ export function openDatabase(file = `${ensureDataDir()}leash.db`): DatabaseSync 
   // Databases created before agents could run outside the desk.
   const agentColumns = (db.prepare('pragma table_info(agent)').all() as { name: string }[]).map((c) => c.name)
   if (!agentColumns.includes('external')) db.exec('alter table agent add column external integer not null default 0')
+  // Databases created before mainnet teams: every existing team is a Moderato team.
+  const teamColumns = (db.prepare('pragma table_info(team)').all() as { name: string }[]).map((c) => c.name)
+  if (!teamColumns.includes('network')) db.exec("alter table team add column network text not null default 'moderato' check (network in ('moderato', 'mainnet'))")
   const recordColumns = (db.prepare('pragma table_info(record)').all() as { name: string }[]).map((c) => c.name)
   if (!recordColumns.includes('source')) db.exec("alter table record add column source text not null default 'runner' check (source in ('runner', 'external'))")
   db.exec('create index if not exists record_settlement on record(settlement_tx)')

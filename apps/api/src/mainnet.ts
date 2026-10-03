@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
-import { createPublicClient, http, keccak256, toHex } from 'viem'
+import { createPublicClient, getAddress, http, keccak256, toHex } from 'viem'
 import type { Address, Hex } from 'viem'
 import { tempo } from 'viem/chains'
 import { Abis } from 'viem/tempo'
@@ -42,6 +42,25 @@ export function probedServices(): Map<string, string[]> {
     const ids = out.get(s.rcp.toLowerCase()) ?? []
     if (!ids.includes(s.id)) ids.push(s.id)
     out.set(s.rcp.toLowerCase(), ids)
+  }
+  return out
+}
+
+export type MainnetService = { serviceId: string; recipient: Address; amount: string; currency: Address }
+
+/**
+ * What a mainnet team's agent key can be scoped to: the services whose live 402 offer is a plain
+ * charge in USDC.e, with the payout that offer names. Services quoting another token or a session
+ * are left out, because a USDC.e key cannot pay them.
+ */
+export function mainnetServices(): MainnetService[] {
+  const probe = JSON.parse(readFileSync(new URL('services-1003.4217.json', pathToFileURL(RECIPIENT_INDEX_PATH)), 'utf8')) as { id: string; rcp: string; intent: string; amt: string; cur: string }[]
+  const seen = new Set<string>()
+  const out: MainnetService[] = []
+  for (const s of probe) {
+    if (s.intent !== 'charge' || s.cur.toLowerCase() !== MPP_SETTLEMENT_ASSET_MAINNET.toLowerCase() || seen.has(s.id)) continue
+    seen.add(s.id)
+    out.push({ serviceId: s.id, recipient: getAddress(s.rcp), amount: s.amt, currency: MPP_SETTLEMENT_ASSET_MAINNET })
   }
   return out
 }
