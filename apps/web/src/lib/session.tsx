@@ -6,14 +6,18 @@ import type { SignerKind, StoredSigner } from './signer'
 import { rootClient } from './chain'
 import type { RootClient } from './chain'
 import { api } from './api'
+import { NetworkProvider } from './network'
+import type { NetworkName } from './config'
 
 type Session = {
   signers: StoredSigner[]
   active: StoredSigner | null
+  /** The network of the active team. */
+  network: NetworkName
   client: RootClient | null
   loadError: string | null
   registerError: string | null
-  create: (kind: SignerKind, label: string) => Promise<StoredSigner>
+  create: (kind: SignerKind, label: string, network: NetworkName) => Promise<StoredSigner>
   select: (address: Address) => void
   forget: (address: Address) => void
 }
@@ -32,18 +36,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [signers, activeAddress],
   )
 
+  const network: NetworkName = active?.network ?? 'moderato'
+
   useEffect(() => {
     let live = true
     setClient(null)
     setLoadError(null)
     if (!active) return
     accountFor(active)
-      .then((account) => live && setClient(rootClient(account)))
+      .then((account) => live && setClient(rootClient(account, network)))
       .catch((error: unknown) => live && setLoadError(error instanceof Error ? error.message : String(error)))
     return () => {
       live = false
     }
-  }, [active])
+  }, [active, network])
 
   // Registering is an idempotent upsert, so a team created while the API was down is registered on the next load.
   useEffect(() => {
@@ -51,15 +57,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let live = true
     setRegisterError(null)
     api
-      .upsertTeam(active.address, active.label, active.kind)
+      .upsertTeam(active.address, active.label, active.kind, network)
       .catch((e: unknown) => live && setRegisterError(e instanceof Error ? e.message : String(e)))
     return () => {
       live = false
     }
-  }, [active])
+  }, [active, network])
 
-  const create = useCallback(async (kind: SignerKind, label: string) => {
-    const stored = await createSigner(kind, label)
+  const create = useCallback(async (kind: SignerKind, label: string, network: NetworkName) => {
+    const stored = await createSigner(kind, label, network)
     setSigners(listSigners())
     setActiveAddress(stored.address)
     return stored
@@ -77,10 +83,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ signers, active, client, loadError, registerError, create, select, forget }),
-    [signers, active, client, loadError, registerError, create, select, forget],
+    () => ({ signers, active, network, client, loadError, registerError, create, select, forget }),
+    [signers, active, network, client, loadError, registerError, create, select, forget],
   )
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  return (
+    <Ctx.Provider value={value}>
+      <NetworkProvider network={network}>{children}</NetworkProvider>
+    </Ctx.Provider>
+  )
 }
 
 export function useSession(): Session {

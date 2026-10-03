@@ -7,11 +7,14 @@ import { units } from '@/lib/format'
 import { go } from '@/lib/router'
 import { Button } from '@/components/ui/button'
 import { Field, Input } from '@/components/ui/form'
-import { Empty, Notice, Panel, TxLink } from '@/components/ui/status'
+import { Empty, NetworkBadge, Notice, Panel, TxLink } from '@/components/ui/status'
+import { Radio } from '@/components/ui/form'
 import { FleetStrip } from '@/components/fleet'
 import { useTeamData } from '@/lib/fleet'
 import { PageHead } from '@/components/page'
-import { addressUrl } from '@/lib/config'
+import { addressUrl, NETWORKS } from '@/lib/config'
+import type { NetworkName } from '@/lib/config'
+import { useNetwork } from '@/lib/network'
 import type { Hash } from 'viem'
 
 function CreateTeam({ first, onCreated }: { first: boolean; onCreated: () => void }) {
@@ -19,12 +22,17 @@ function CreateTeam({ first, onCreated }: { first: boolean; onCreated: () => voi
   const [label, setLabel] = useState('')
   const [busy, setBusy] = useState<'passkey' | 'webcrypto' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [choice, setChoice] = useState<NetworkName>('moderato')
+  // The choice is offered only when this desk reads mainnet; otherwise every team is a Moderato team.
+  const health = usePoll(() => api.health(), 0, [])
+  const mainnetOn = health.data?.mainnet === true
+  const network: NetworkName = mainnetOn ? choice : 'moderato'
 
   const run = async (kind: 'passkey' | 'webcrypto') => {
     setBusy(kind)
     setError(null)
     try {
-      await create(kind, label.trim())
+      await create(kind, label.trim(), network)
       onCreated()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -41,6 +49,23 @@ function CreateTeam({ first, onCreated }: { first: boolean; onCreated: () => voi
           <Field label="Team name" help="Shown in this browser and stored with the team on the API.">
             {(id) => <Input id={id} value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Research desk" maxLength={40} />}
           </Field>
+          {mainnetOn && (
+            <fieldset>
+              <legend className="text-caption text-ink-muted">Network</legend>
+              <div className="mt-1">
+                <Radio name="network" checked={choice === 'moderato'} onChange={() => setChoice('moderato')}>
+                  <span className="font-semibold">Moderato testnet</span>
+                  <span className="block text-caption text-ink-muted">Fund from the faucet. Leash can run agents for the team, or you run your own.</span>
+                </Radio>
+                <Radio name="network" checked={choice === 'mainnet'} onChange={() => setChoice('mainnet')}>
+                  <span className="font-semibold">Tempo mainnet</span>
+                  <span className="block text-caption text-ink-muted">
+                    The team address holds your agents' budget in USDC.e. Your agents pay real MPP vendors from their own processes with their own access keys. Leash only reads chain 4217.
+                  </span>
+                </Radio>
+              </div>
+            </fieldset>
+          )}
           <div className="flex flex-wrap gap-0">
             <Button disabled={!valid || !passkeySupported()} busy={busy === 'passkey'} onClick={() => run('passkey')}>
               Create with passkey
@@ -70,8 +95,44 @@ function CreateTeam({ first, onCreated }: { first: boolean; onCreated: () => voi
   )
 }
 
+/** A mainnet team is funded by a deposit to its address: the balance is read live from chain 4217 and nothing here moves funds. */
+function Deposit({ address }: { address: `0x${string}` }) {
+  const bal = usePoll(() => balances('mainnet', address), 8000, [address])
+  const [copied, setCopied] = useState(false)
+  const copy = async () => {
+    await navigator.clipboard.writeText(address)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <section aria-label="Deposit on Tempo mainnet">
+      <div className="border border-hairline bg-surface-1 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          <h2 className="text-body-sm font-semibold max-md:w-full">Deposit</h2>
+          <p className="text-body-sm text-ink-muted">
+            USDC.e <span className="num ml-1 text-ink" data-testid="deposit-balance">{bal.data ? units(bal.data.budget) : '...'}</span>
+          </p>
+          {bal.data && <span className="text-caption text-ink-subtle">read from chain 4217 at block <span className="num">{bal.data.block.toString()}</span></span>}
+        </div>
+        <p className="mt-3 text-caption text-ink-muted">Deposit address on Tempo mainnet</p>
+        <p className="num mt-1 flex flex-wrap items-center gap-x-4 break-all text-body-sm" data-testid="deposit-address">
+          {address}
+          <Button size="sm" variant="ghost" onClick={copy}>{copied ? 'Copied' : 'Copy address'}</Button>
+        </p>
+        <p className="mt-3 text-caption text-ink-muted">
+          Send USDC.e on Tempo mainnet to this address. It holds the daily budget of every agent on the team and pays the gas for the signatures you make here. Your agents spend it from their own processes through the access keys you authorize.
+        </p>
+      </div>
+      {bal.error && <div className="mt-4"><Notice tone="error" title="Could not read the balance from mainnet">{bal.error}</Notice></div>}
+      {bal.data && bal.data.budget === 0n && (
+        <p className="mt-2 text-caption text-ink-muted">The balance is empty. Deposit USDC.e to the address above, then authorize an agent key on the Agents tab.</p>
+      )}
+    </section>
+  )
+}
+
 function Funding({ address }: { address: `0x${string}` }) {
-  const bal = usePoll(() => balances(address), 8000, [address])
+  const bal = usePoll(() => balances('moderato', address), 8000, [address])
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<{ txs: Hash[]; ousd: string; pathusd: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -88,17 +149,17 @@ function Funding({ address }: { address: `0x${string}` }) {
       setBusy(false)
     }
   }
-  const empty = bal.data && bal.data.ousd === 0n
+  const empty = bal.data && bal.data.budget === 0n
 
   return (
     <section aria-label="Balances on chain">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border border-hairline bg-surface-1 px-4 py-3">
         <h2 className="text-body-sm font-semibold max-md:w-full">Balances</h2>
         <p className="text-body-sm text-ink-muted">
-          OUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.ousd) : '...'}</span>
+          OUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.budget) : '...'}</span>
         </p>
         <p className="text-body-sm text-ink-muted">
-          PathUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.pathusd) : '...'}</span>
+          PathUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.fee) : '...'}</span>
         </p>
         {bal.data && <span className="text-caption text-ink-subtle">read at block <span className="num">{bal.data.block.toString()}</span></span>}
         <Button className="md:ml-auto" size="sm" variant={empty ? 'primary' : 'ghost'} busy={busy} onClick={fund}>
@@ -128,12 +189,13 @@ function Funding({ address }: { address: `0x${string}` }) {
 
 export function TeamPage() {
   const { active, signers, select, forget, loadError, registerError } = useSession()
+  const net = useNetwork()
   const [adding, setAdding] = useState(false)
   const fleet = useTeamData(active?.address ?? null)
 
   return (
     <>
-      <PageHead title={active ? active.label : 'Team account'}>
+      <PageHead title={active ? active.label : 'Team account'} actions={<NetworkBadge network={net.name} />}>
         The team account is the root that owns every agent key. It signs key authorizations and vendor cut-offs from this browser. Agents get limits and recipient scopes, never the root.
       </PageHead>
       <div className="grid gap-6">
@@ -145,11 +207,13 @@ export function TeamPage() {
               data={fleet}
               empty={
                 <Empty title="No agents hold a key yet" action={<Button onClick={() => go('agents')}>Add an agent</Button>}>
-                  Fund the team below, then add an agent: pick the services it may pay and a daily budget. Its spend, failures and refusals appear here.
+                  {net.name === 'mainnet'
+                    ? 'Deposit USDC.e below, then add an agent: pick the payouts its key may pay and a daily budget. Its spend, failures and refusals appear here.'
+                    : 'Fund the team below, then add an agent: pick the services it may pay and a daily budget. Its spend, failures and refusals appear here.'}
                 </Empty>
               }
             />
-            <Funding address={active.address} />
+            {net.name === 'mainnet' ? <Deposit address={active.address} /> : <Funding address={active.address} />}
             <Panel
               title={active.label}
               aside={
@@ -161,8 +225,10 @@ export function TeamPage() {
               <dl className="grid gap-4 text-body-sm sm:grid-cols-[160px_minmax(0,1fr)]">
                 <dt className="text-ink-muted">Account address</dt>
                 <dd className="num break-all">
-                  <a href={addressUrl(active.address)} target="_blank" rel="noreferrer" className="text-primary hover:underline">{active.address}</a>
+                  <a href={addressUrl(active.address, net.name)} target="_blank" rel="noreferrer" className="text-primary hover:underline">{active.address}</a>
                 </dd>
+                <dt className="text-ink-muted">Network</dt>
+                <dd>{NETWORKS[net.name].label}, chain <span className="num">{NETWORKS[net.name].chainId}</span>{net.name === 'mainnet' ? ', budget and gas in USDC.e' : ''}</dd>
                 <dt className="text-ink-muted">Signer</dt>
                 <dd>{active.kind === 'passkey' ? 'Passkey (WebAuthn P-256)' : 'Browser key (WebCrypto P-256, non-extractable, IndexedDB)'}</dd>
                 <dt className="text-ink-muted">Key status</dt>

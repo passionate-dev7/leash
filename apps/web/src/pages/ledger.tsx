@@ -25,7 +25,7 @@ function LedgerBody({ account }: { account: Address }) {
   return (
     <>
       <PageHead title="Ledger">
-        Every payment an agent attempted, newest first. Settlement links open the transaction on the Moderato explorer. Refused calls never reach the vendor and move nothing.
+        Every payment an agent attempted, newest first. Settlement links open the transaction on the team's chain explorer. Refused calls never reach the vendor and move nothing.
       </PageHead>
       {ledger.error && <Notice tone="error" title="Could not load the ledger">{ledger.error}</Notice>}
       {ledger.data && all.length === 0 && (

@@ -1,9 +1,17 @@
 import type { ReactNode } from 'react'
 import type { CatalogService, VendorRow } from '@/lib/api'
-import { pct, units } from '@/lib/format'
+import { pct, short, units } from '@/lib/format'
 import { AddressLink, TxLink } from '@/components/ui/status'
 import { Cell, Table, TBody, Th, THead, Tr } from '@/components/page'
 import { cn } from '@/components/ui/cn'
+import { useNetwork } from '@/lib/network'
+
+/** What a vendor row is called: its service on Moderato, the services behind its payout (or the address) on mainnet. */
+export function vendorLabel(row: VendorRow, network: 'moderato' | 'mainnet'): string {
+  if (network === 'moderato') return row.serviceId
+  if (row.services.length === 0) return short(row.recipient, 10, 6)
+  return `${row.services.slice(0, 3).join(', ')}${row.services.length > 3 ? ` +${row.services.length - 3} more` : ''}`
+}
 
 export function FailureBar({ rate, paid }: { rate: number; paid: number }) {
   if (paid === 0) return <span className="text-ink-subtle">no payments</span>
@@ -40,6 +48,7 @@ export function Evidence({ row, max = 3 }: { row: VendorRow; max?: number }) {
 
 /** Delivery per service. `action` renders the last column; omit it for the read-only public view. */
 export function VendorTable({ rows, svcById, action }: { rows: VendorRow[]; svcById: Map<string, CatalogService>; action?: (row: VendorRow) => ReactNode }) {
+  const { symbol, name } = useNetwork()
   return (
     <Table>
       <THead>
@@ -49,7 +58,7 @@ export function VendorTable({ rows, svcById, action }: { rows: VendorRow[]; svcB
           <Th className="text-right">Delivered</Th>
           <Th className="text-right">Not delivered</Th>
           <Th className="text-right">Refused</Th>
-          <Th className="text-right">Spent (OUSD)</Th>
+          <Th className="text-right">Spent ({symbol})</Th>
           <Th>Failure rate</Th>
           <Th>Last 24h</Th>
           {action && <Th>Action</Th>}
@@ -59,18 +68,29 @@ export function VendorTable({ rows, svcById, action }: { rows: VendorRow[]; svcB
         {rows.map((r) => (
           <Tr key={r.serviceId}>
             <Cell>
-              <p className="num font-semibold">{r.serviceId}</p>
-              <p className="text-caption text-ink-muted">{svcById.get(r.serviceId)?.vendorName ?? r.vendorId}</p>
-              <p className="mt-0.5 text-caption text-ink-muted">
-                <AddressLink address={r.recipient} />{' '}
-                {r.virtual ? 'one per service' : r.siblings.length > 0 ? `shared with ${r.siblings.join(', ')}` : 'plain address'}
-              </p>
+              {name === 'mainnet' ? (
+                <>
+                  <p className="num font-semibold">{vendorLabel(r, name)}</p>
+                  <p className="mt-0.5 text-caption text-ink-muted">
+                    <AddressLink address={r.recipient} /> {r.services.length === 0 ? 'no service is known behind this payout' : `pays ${r.services.length} service${r.services.length === 1 ? '' : 's'}`}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="num font-semibold">{r.serviceId}</p>
+                  <p className="text-caption text-ink-muted">{svcById.get(r.serviceId)?.vendorName ?? r.vendorId}</p>
+                  <p className="mt-0.5 text-caption text-ink-muted">
+                    <AddressLink address={r.recipient} />{' '}
+                    {r.virtual ? 'one per service' : r.siblings.length > 0 ? `shared with ${r.siblings.join(', ')}` : 'plain address'}
+                  </p>
+                </>
+              )}
             </Cell>
             <Cell label="Paid" className="num text-right">{r.paid}</Cell>
             <Cell label="Delivered" className="num text-right">{r.delivered}</Cell>
             <Cell label="Not delivered" className={cn('num text-right', r.paidNotDelivered > 0 && 'font-semibold text-error-ink')}>{r.paidNotDelivered}</Cell>
             <Cell label="Refused" className="num text-right">{r.refused}</Cell>
-            <Cell label="Spent (OUSD)" className="num text-right">{units(r.spent)}</Cell>
+            <Cell label={`Spent (${symbol})`} className="num text-right">{units(r.spent)}</Cell>
             <Cell label="Failure rate"><FailureBar rate={r.failureRate} paid={r.paid} /></Cell>
             <Cell label="Last 24h"><Evidence row={r} /></Cell>
             {action && <Cell className="max-md:border-t max-md:border-hairline max-md:pt-3">{action(r)}</Cell>}

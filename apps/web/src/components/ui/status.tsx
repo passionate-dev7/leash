@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from './cn'
 import { txUrl, addressUrl } from '@/lib/config'
+import { useNetwork } from '@/lib/network'
 import { short } from '@/lib/format'
 
 type Tone = 'ok' | 'bad' | 'warn' | 'info' | 'idle'
@@ -39,17 +40,25 @@ export function Notice({ tone, title, children }: { tone: 'error' | 'success' | 
 }
 
 export function TxLink({ hash }: { hash: string | null | undefined }) {
+  const { name } = useNetwork()
   if (!hash) return <span className="text-ink-subtle">none</span>
   return (
-    <a href={txUrl(hash)} target="_blank" rel="noreferrer" className="num text-primary hover:text-link-hover hover:underline" title={hash}>
+    <a href={txUrl(hash, name)} target="_blank" rel="noreferrer" className="num text-primary hover:text-link-hover hover:underline" title={hash}>
       {short(hash, 8, 6)}
     </a>
   )
 }
 
+/** Marks a team whose money is real: shown beside a mainnet team's name, nothing for a testnet team. */
+export function NetworkBadge({ network }: { network: 'moderato' | 'mainnet' }) {
+  if (network !== 'mainnet') return null
+  return <span className="num border border-ink px-2 py-0.5 text-caption font-semibold text-ink" title="Tempo mainnet, chain 4217">Mainnet</span>
+}
+
 export function AddressLink({ address, full }: { address: string; full?: boolean }) {
+  const { name } = useNetwork()
   return (
-    <a href={addressUrl(address)} target="_blank" rel="noreferrer" className="num text-primary hover:text-link-hover hover:underline" title={address}>
+    <a href={addressUrl(address, name)} target="_blank" rel="noreferrer" className="num text-primary hover:text-link-hover hover:underline" title={address}>
       {full ? address : short(address, 8, 6)}
     </a>
   )

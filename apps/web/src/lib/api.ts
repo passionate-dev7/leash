@@ -1,5 +1,6 @@
 import type { Address, Hash, Hex } from 'viem'
 import { API_BASE } from './config'
+import type { NetworkName } from './config'
 
 export class ApiError extends Error {
   constructor(
@@ -58,6 +59,8 @@ export type CatalogService = {
   inputExample: unknown
 }
 export type Catalog = { services: CatalogService[]; payoutGroups: { recipient: Address; master: Address | null; serviceIds: string[] }[] }
+/** A mainnet service as the live 402 probe found it: the payout it names and the price it quoted per call, in base units. */
+export type MainnetCatalog = { network: 'mainnet'; services: { serviceId: string; recipient: Address; amount: string; currency: Address }[]; payoutGroups: { recipient: Address; serviceIds: string[] }[] }
 
 export type Scope = { target: Address; selectorRules: { selector: Hex; recipients: Address[] }[] }
 export type AgentView = {
@@ -79,7 +82,9 @@ export type AgentView = {
   authorizeTx: Hash | null
 }
 export type TeamView = {
-  team: { account: Address; label: string; signer: string; createdAt?: string }
+  team: { account: Address; label: string; signer: string; network: NetworkName; created_at?: string }
+  /** The team address's balance of its network's budget token, read from that chain. */
+  balance: { token: Address; units: string | null; block: number | null; chainId: number; error: string | null }
   agents: AgentView[]
   totals: Record<string, unknown>
 }
@@ -124,6 +129,8 @@ export type VendorRow = {
   spent: string
   failureRate: number
   siblings: string[]
+  /** What the row stands for: the one service on Moderato, the services behind a payout on mainnet (empty for an address nothing is known about). */
+  services: string[]
   cut: { status: 'prepared' | 'confirmed' | 'failed'; tx: Hash | null } | null
   blocked: boolean
   /** Failures measured in the last 24 hours; txs are the settlement hashes of paid_not_delivered records, newest first. */
@@ -146,12 +153,13 @@ export type CutPlan = {
 export type CutConfirm = { id: number; status: 'confirmed' | 'failed'; tx: Hash | null; gasUsed: string | null; failure: string | null; servicesCut: string[]; rescoped: Address[]; revoked: Address[]; unbounded: Address[] }
 
 export const api = {
-  health: () => request<{ ok: boolean; chainId: number; block: number | string }>('/api/health'),
+  health: () => request<{ ok: boolean; chainId: number; block: number | string; mainnet?: boolean }>('/api/health'),
   catalog: () => request<Catalog>('/api/catalog'),
+  mainnetCatalog: () => request<MainnetCatalog>('/api/catalog?network=mainnet'),
   stats: () => request<Record<string, number | string | null>>('/api/stats'),
   faucet: (address: Address) => request<{ txs: Hash[]; ousd: string; pathusd: string }>('/api/faucet', { body: { address } }),
-  upsertTeam: (account: Address, label: string, signer: 'passkey' | 'webcrypto') =>
-    request<unknown>('/api/teams', { body: { account, label, signer } }),
+  upsertTeam: (account: Address, label: string, signer: 'passkey' | 'webcrypto', network: NetworkName) =>
+    request<unknown>('/api/teams', { body: { account, label, signer, network } }),
   team: (account: Address) => request<TeamView>(`/api/teams/${account}`),
   createAgent: (account: Address, input: { name: string; budget: string; periodSeconds: number; serviceIds: string[]; external?: boolean; keyId?: Address }) =>
     request<{ keyId: Address; reach: string[]; omitted: { serviceId: string; reason: string }[]; authorize: AuthorizePayload }>(`/api/teams/${account}/agents`, { body: input }),

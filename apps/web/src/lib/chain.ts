@@ -1,37 +1,49 @@
 import { createClient, createPublicClient, http, publicActions, walletActions, erc20Abi } from 'viem'
 import type { Address, Hash, Hex } from 'viem'
 import type { Account } from 'viem'
-import { CHAIN, OUSD, PATHUSD, RPC_URL } from './config'
+import { NETWORKS } from './config'
+import type { NetworkName } from './config'
 
-export const publicClient = createPublicClient({ chain: CHAIN, transport: http(RPC_URL) })
+const publicClients = new Map<NetworkName, ReturnType<typeof makePublicClient>>()
+const makePublicClient = (network: NetworkName) => createPublicClient({ chain: NETWORKS[network].chain, transport: http(NETWORKS[network].rpcUrl) })
+export function publicClient(network: NetworkName) {
+  let client = publicClients.get(network)
+  if (!client) {
+    client = makePublicClient(network)
+    publicClients.set(network, client)
+  }
+  return client
+}
 
-export function rootClient(account: Account) {
+/** The team key's client on its network. Gas is paid in the network's fee token: PathUSD on Moderato, USDC.e on mainnet. */
+export function rootClient(account: Account, network: NetworkName) {
+  const n = NETWORKS[network]
   return createClient({
     account,
-    chain: CHAIN.extend({ feeToken: PATHUSD }),
-    transport: http(RPC_URL),
+    chain: n.chain.extend({ feeToken: n.feeToken }),
+    transport: http(n.rpcUrl),
   })
     .extend(publicActions)
     .extend(walletActions)
 }
 export type RootClient = ReturnType<typeof rootClient>
 
-export async function balances(address: Address): Promise<{ ousd: bigint; pathusd: bigint; block: bigint }> {
-  const [ousd, pathusd, block] = await Promise.all([
-    publicClient.readContract({ address: OUSD, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
-    publicClient.readContract({ address: PATHUSD, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
-    publicClient.getBlockNumber(),
-  ])
-  return { ousd, pathusd, block }
+/** The team's budget token balance and, where gas is paid in another token, that balance too. */
+export async function balances(network: NetworkName, address: Address): Promise<{ budget: bigint; fee: bigint | null; block: bigint }> {
+  const n = NETWORKS[network]
+  const client = publicClient(network)
+  const read = (token: Address) => client.readContract({ address: token, abi: erc20Abi, functionName: 'balanceOf', args: [address] })
+  const [budget, fee, block] = await Promise.all([read(n.token), n.feeToken === n.token ? Promise.resolve(null) : read(n.feeToken), client.getBlockNumber()])
+  return { budget, fee, block }
 }
 
 /** Receipt wait that survives a flaky public RPC: polls, tolerates transient errors, fails on a revert or timeout. */
-export async function waitForSuccess(hash: Hash, timeoutMs = 60_000): Promise<void> {
+export async function waitForSuccess(hash: Hash, network: NetworkName, timeoutMs = 60_000): Promise<void> {
   const deadline = Date.now() + timeoutMs
   let lastError: unknown
   while (Date.now() < deadline) {
     try {
-      const receipt = await publicClient.getTransactionReceipt({ hash })
+      const receipt = await publicClient(network).getTransactionReceipt({ hash })
       if (receipt.status !== 'success') throw new Error(`Transaction ${hash} reverted on chain`)
       return
     } catch (error) {

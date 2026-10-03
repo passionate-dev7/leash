@@ -11,7 +11,8 @@ import { Select, Field } from '@/components/ui/form'
 import { Sheet } from '@/components/ui/sheet'
 import { AddressLink, Empty, Notice, Status, TxLink } from '@/components/ui/status'
 import { NeedsTeam, PageHead } from '@/components/page'
-import { Evidence, VendorTable } from '@/components/vendors'
+import { Evidence, VendorTable, vendorLabel } from '@/components/vendors'
+import { useNetwork } from '@/lib/network'
 import { OutcomeStatus } from '@/components/records'
 
 type Phase = 'review' | 'prepared' | 'signing' | 'done'
@@ -45,6 +46,7 @@ function CutSheet({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [stage, setStage] = useState('')
+  const { name: net } = useNetwork()
 
   const names = new Map(agents.map((a) => [a.keyId.toLowerCase(), a.name]))
   const nameOf = (k: Address) => names.get(k.toLowerCase()) ?? short(k)
@@ -73,7 +75,7 @@ function CutSheet({
       const hash = await client.sendTransaction({ calls: plan.calls } as never)
       setTx(hash)
       setStage('Wait for the chain')
-      await waitForSuccess(hash)
+      await waitForSuccess(hash, net)
       setStage('API reads the scopes back from chain')
       const confirmed = await api.confirmCutoff(plan.id, hash)
       setResult(confirmed)
@@ -89,12 +91,15 @@ function CutSheet({
     }
   }
 
-  const sibs = row.siblings
+  const label = vendorLabel(row, net)
+  // On Moderato a row is one service and its siblings share the payout; on mainnet a row is the payout and every service behind it goes together.
+  const sibs = net === 'mainnet' ? [] : row.siblings
+  const behind = net === 'mainnet' ? row.services : [row.serviceId]
   const manual = reason === 'manual'
 
   return (
     <Sheet
-      title={phase === 'done' ? (manual ? 'Removed from scope' : 'Cut-off confirmed') : manual ? `Remove ${row.serviceId} from scope` : `Cut ${row.serviceId}`}
+      title={phase === 'done' ? (manual ? 'Removed from scope' : 'Cut-off confirmed') : manual ? `Remove ${label} from scope` : `Cut ${label}`}
       onClose={onClose}
       footer={
         phase === 'review' ? (
@@ -112,7 +117,7 @@ function CutSheet({
         ) : (
           <>
             <Button variant="secondary" className="flex-1 justify-start py-4" onClick={onClose}>Done</Button>
-            <Button className="flex-1 justify-start py-4" onClick={onTry}>Try a payment</Button>
+            {net === 'moderato' && <Button className="flex-1 justify-start py-4" onClick={onTry}>Try a payment</Button>}
           </>
         )
       }
@@ -134,10 +139,19 @@ function CutSheet({
             The payout address <AddressLink address={row.recipient} /> is removed from every agent key in one transaction. A scope is per address, so everything that pays out there goes with it.
           </p>
           <ul className="mt-3 divide-y divide-hairline border border-hairline text-body-sm">
-            <li className="flex items-baseline justify-between gap-4 px-4 py-2">
-              <span className="num">{row.serviceId}</span>
-              <span className="text-ink-muted">{svc ? `${svc.vendorName}, ${svc.virtual ? 'virtual address' : 'shared payout'}` : ''}</span>
-            </li>
+            {behind.length === 0 ? (
+              <li className="flex items-baseline justify-between gap-4 px-4 py-2">
+                <span className="num">{short(row.recipient, 10, 6)}</span>
+                <span className="text-ink-muted">no service is known behind this payout</span>
+              </li>
+            ) : (
+              behind.map((s) => (
+                <li key={s} className="flex items-baseline justify-between gap-4 px-4 py-2">
+                  <span className="num">{s}</span>
+                  <span className="text-ink-muted">{svc ? `${svc.vendorName}, ${svc.virtual ? 'virtual address' : 'shared payout'}` : net === 'mainnet' ? 'cut with this payout' : ''}</span>
+                </li>
+              ))
+            )}
             {sibs.map((s) => (
               <li key={s} className="flex items-baseline justify-between gap-4 px-4 py-2">
                 <span className="num">{s}</span>
@@ -212,7 +226,9 @@ function CutSheet({
                 </ul>
               </div>
             )}
-            <p className="text-body-sm text-ink-muted">Next, try a payment from an agent to see the chain refuse it.</p>
+            <p className="text-body-sm text-ink-muted">
+              {net === 'mainnet' ? 'The next payment any agent key on this team makes to this address is refused by the chain.' : 'Next, try a payment from an agent to see the chain refuse it.'}
+            </p>
           </section>
         )}
       </div>
@@ -221,6 +237,7 @@ function CutSheet({
 }
 
 function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; svc: CatalogService | undefined; agents: AgentView[]; onClose: () => void; onChanged: () => void }) {
+  const { symbol } = useNetwork()
   const active = agents.filter((a) => a.status === 'active' && a.serviceIds.includes(row.serviceId))
   const [keyId, setKeyId] = useState<string>(active[0]?.keyId ?? '')
   const [busy, setBusy] = useState(false)
@@ -271,7 +288,7 @@ function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; sv
           <div className="border border-hairline p-4 text-body-sm" aria-live="polite">
             <p className="flex items-center gap-3"><OutcomeStatus outcome={record.outcome} />{record.refused && <span className="num font-semibold text-error-ink">{record.refused}</span>}</p>
             <dl className="mt-3 grid grid-cols-[120px_1fr] gap-y-1 text-ink-muted">
-              <dt>Amount moved</dt><dd className="num text-ink">{record.outcome === 'refused' ? '0' : units(record.amount)} OUSD</dd>
+              <dt>Amount moved</dt><dd className="num text-ink">{record.outcome === 'refused' ? '0' : units(record.amount)} {symbol}</dd>
               <dt>HTTP status</dt><dd className="num text-ink">{record.status ?? 'none'}</dd>
               <dt>Settlement</dt><dd><TxLink hash={record.settlement?.tx} /></dd>
             </dl>
@@ -283,7 +300,8 @@ function TrySheet({ row, svc, agents, onClose, onChanged }: { row: VendorRow; sv
 }
 
 function VendorsBody({ account, client }: { account: Address; client: RootClient }) {
-  const catalog = usePoll(() => api.catalog(), 0, [])
+  const { name: net } = useNetwork()
+  const catalog = usePoll(net === 'moderato' ? () => api.catalog() : null, 0, [net])
   const vendors = usePoll(() => api.vendors(account), 5000, [account])
   const team = usePoll(() => api.team(account), 8000, [account])
   const [cut, setCut] = useState<{ row: VendorRow; reason: CutReason } | null>(null)
@@ -304,7 +322,11 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
       </PageHead>
       {vendors.error && <Notice tone="error" title="Could not load vendors">{vendors.error}</Notice>}
       {vendors.data && rows.length === 0 && (
-        <Empty title="No vendor has been paid yet">Run research from the Agents tab. Each service an agent pays shows up here with how many calls were delivered.</Empty>
+        <Empty title="No vendor has been paid yet">
+          {net === 'mainnet'
+            ? 'Run an agent with leash-agent pay --network mainnet. Each payout address it pays shows up here with how many calls were delivered.'
+            : 'Run research from the Agents tab. Each service an agent pays shows up here with how many calls were delivered.'}
+        </Empty>
       )}
       {rows.length > 0 && (
         <VendorTable
@@ -315,7 +337,7 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
               <span className="flex flex-col items-start gap-1 max-md:items-end">
                 <Status tone="bad">Cut</Status>
                 <span className="flex items-center gap-2 text-caption text-ink-muted"><TxLink hash={r.cut.tx} /></span>
-                <Button size="sm" variant="tertiary" onClick={() => setTrying(r)}>Try a payment</Button>
+                {net === 'moderato' && <Button size="sm" variant="tertiary" onClick={() => setTrying(r)}>Try a payment</Button>}
               </span>
             ) : (
               <span className="flex flex-col items-start gap-1 max-md:items-end">

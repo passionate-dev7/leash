@@ -1,11 +1,14 @@
 import type { Address, Hex } from 'viem'
 import { Account, WebAuthnP256, WebCryptoP256 } from 'viem/tempo'
+import type { NetworkName } from './config'
 
 export type SignerKind = 'passkey' | 'webcrypto'
 export type StoredSigner = {
   address: Address
   kind: SignerKind
   label: string
+  /** Teams created before mainnet teams have none: they are Moderato teams. */
+  network?: NetworkName
   /** Passkey only: credential id and uncompressed public key (the browser cannot read it back later). */
   credential?: { id: string; publicKey: Hex }
 }
@@ -60,17 +63,17 @@ type KeyPair = Awaited<ReturnType<typeof WebCryptoP256.createKeyPair>>
 
 export const passkeySupported = () => typeof navigator !== 'undefined' && !!navigator.credentials && typeof PublicKeyCredential !== 'undefined'
 
-export async function createSigner(kind: SignerKind, label: string): Promise<StoredSigner> {
+export async function createSigner(kind: SignerKind, label: string, network: NetworkName = 'moderato'): Promise<StoredSigner> {
   let stored: StoredSigner
   if (kind === 'passkey') {
     const credential = await WebAuthnP256.createCredential({ label })
     const account = Account.fromWebAuthnP256(credential)
-    stored = { address: account.address, kind, label, credential: { id: credential.id, publicKey: credential.publicKey } }
+    stored = { address: account.address, kind, label, network, credential: { id: credential.id, publicKey: credential.publicKey } }
   } else {
     const keyPair = await WebCryptoP256.createKeyPair({ extractable: false })
     const account = Account.fromWebCryptoP256(keyPair)
     await putKey(account.address, keyPair)
-    stored = { address: account.address, kind, label }
+    stored = { address: account.address, kind, label, network }
   }
   saveSigners([...listSigners().filter((s) => s.address.toLowerCase() !== stored.address.toLowerCase()), stored])
   setActive(stored.address)

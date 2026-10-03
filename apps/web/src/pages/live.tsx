@@ -5,9 +5,10 @@ import { api } from '@/lib/api'
 import { useSession, usePoll } from '@/lib/session'
 import { useTeamData } from '@/lib/fleet'
 import { go } from '@/lib/router'
-import { addressUrl } from '@/lib/config'
+import { addressUrl, NETWORKS } from '@/lib/config'
+import { NetworkProvider } from '@/lib/network'
 import { Button } from '@/components/ui/button'
-import { Empty, Notice } from '@/components/ui/status'
+import { Empty, NetworkBadge, Notice } from '@/components/ui/status'
 import { PageHead } from '@/components/page'
 import { FleetStrip } from '@/components/fleet'
 import { VendorTable } from '@/components/vendors'
@@ -30,6 +31,7 @@ export function LivePage({ account: param }: { account: string | null }) {
   }, [param, account])
 
   const label = data.team.data?.team.label
+  const network = data.team.data?.team.network ?? 'moderato'
   const rows = data.vendors.data?.services.filter((s) => s.paid > 0 || s.refused > 0 || s.cut) ?? []
   const latest = (data.ledger.data?.records ?? []).slice(0, LATEST)
 
@@ -45,12 +47,12 @@ export function LivePage({ account: param }: { account: string | null }) {
   }
 
   return (
-    <>
-      <PageHead title={label ? `${label}` : 'Live team'} actions={create}>
+    <NetworkProvider network={network}>
+      <PageHead title={label ? `${label}` : 'Live team'} actions={<span className="flex items-center gap-4"><NetworkBadge network={network} />{create}</span>}>
         {account ? (
           <>
-            Read-only view of a team that is paying vendors right now. Spend limits are read from Tempo Moderato and every payment links to its settlement transaction. Account{' '}
-            <a href={addressUrl(account)} target="_blank" rel="noreferrer" className="num text-primary hover:underline">{account.slice(0, 10)}...{account.slice(-6)}</a>.
+            Read-only view of a team that is paying vendors right now. Spend limits are read from {NETWORKS[network].label} and every payment links to its settlement transaction. Account{' '}
+            <a href={addressUrl(account, network)} target="_blank" rel="noreferrer" className="num text-primary hover:underline">{account.slice(0, 10)}...{account.slice(-6)}</a>.
           </>
         ) : (
           'Loading the featured team.'
@@ -79,6 +81,6 @@ export function LivePage({ account: param }: { account: string | null }) {
           )}
         </div>
       )}
-    </>
+    </NetworkProvider>
   )
 }

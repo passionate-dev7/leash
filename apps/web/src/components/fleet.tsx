@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTeamData, agentStats, LEDGER_WINDOW } from '@/lib/fleet'
 import { money, short } from '@/lib/format'
+import { useNetwork } from '@/lib/network'
 import { Notice, Status } from '@/components/ui/status'
 import { Cell, Table, TBody, Th, THead, Tr } from '@/components/page'
 import { cn } from '@/components/ui/cn'
@@ -18,6 +19,7 @@ function Figure({ label, value, tone, note }: { label: string; value: ReactNode;
 }
 
 function SpendBar({ budget, remaining }: { budget: string; remaining: string | null }) {
+  const { symbol } = useNetwork()
   if (remaining === null) return <span className="text-ink-subtle">not read from chain</span>
   const total = BigInt(budget)
   const left = BigInt(remaining) > total ? total : BigInt(remaining)
@@ -25,11 +27,11 @@ function SpendBar({ budget, remaining }: { budget: string; remaining: string | n
   const share = total === 0n ? 0 : Number((spent * 10_000n) / total) / 100
   return (
     <div className="md:w-56">
-      <div className="h-2 bg-surface-2" role="img" aria-label={`${money(spent)} of ${money(total)} OUSD spent`}>
+      <div className="h-2 bg-surface-2" role="img" aria-label={`${money(spent)} of ${money(total)} ${symbol} spent`}>
         <div className="h-full bg-primary" style={{ width: `${spent > 0n ? Math.max(share, 2) : 0}%` }} />
       </div>
       <p className="num mt-1 text-caption text-ink-muted">
-        {money(spent)} of {money(total)} OUSD
+        {money(spent)} of {money(total)} {symbol}
       </p>
     </div>
   )

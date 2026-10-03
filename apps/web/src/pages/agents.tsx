@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Address } from 'viem'
 import { Actions } from 'viem/tempo'
 import { api } from '@/lib/api'
-import type { AgentView, Catalog, LedgerRecord } from '@/lib/api'
+import type { AgentView, LedgerRecord } from '@/lib/api'
 import { API_BASE } from '@/lib/config'
+import type { NetworkName } from '@/lib/config'
+import { useNetwork } from '@/lib/network'
 import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
-import { money, short } from '@/lib/format'
+import { money, short, units } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Check, Field, Input, Radio } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
@@ -18,10 +20,50 @@ import { cn } from '@/components/ui/cn'
 
 type Step = { label: string; state: 'run' | 'done' | 'fail'; detail?: string }
 
-function AddAgent({ account, client, catalog, onDone }: { account: Address; client: RootClient; catalog: Catalog; onDone: () => void }) {
+/** A service a key can be scoped to, as either network offers it. */
+type Offer = { serviceId: string; vendorId: string; vendorName: string; description: string; price: string; recipient: Address }
+type Offers = { services: Offer[]; payoutGroups: { recipient: Address; serviceIds: string[] }[] }
+
+/** The Moderato vendors Leash operates, or the mainnet services the live 402 probe found grouped by the payout they name. */
+async function loadOffers(network: NetworkName): Promise<Offers> {
+  if (network === 'moderato') {
+    const c = await api.catalog()
+    return { services: c.services.map((s) => ({ serviceId: s.serviceId, vendorId: s.vendorId, vendorName: s.vendorName, description: s.description, price: `${s.price} OUSD per call`, recipient: s.recipient })), payoutGroups: c.payoutGroups }
+  }
+  const c = await api.mainnetCatalog()
+  return {
+    services: c.services.map((s) => ({
+      serviceId: s.serviceId,
+      vendorId: s.recipient.toLowerCase(),
+      vendorName: `Payout ${short(s.recipient, 10, 6)}`,
+      description: '',
+      price: s.amount === '0' ? 'priced per request' : `${units(s.amount)} USDC.e per call`,
+      recipient: s.recipient,
+    })),
+    payoutGroups: c.payoutGroups,
+  }
+}
+
+/** The lines an agent's own process needs to pay with its key and report to this desk. */
+function sdkLines(network: NetworkName, account: Address, keyId: string) {
+  const desk = API_BASE || location.origin
+  const flag = network === 'mainnet' ? ' --network mainnet' : ''
+  return {
+    snippet: `import { agentAccount, agentNetwork, createLeashFetch, reportTo } from '@leash/sdk'
+const agent = agentAccount(process.env.LEASH_AGENT_KEY, '${account}') // key id ${keyId}
+const leashFetch = createLeashFetch({ network: agentNetwork('${network}'), agent, onRecord: reportTo('${desk}', process.env.LEASH_AGENT_KEY) })`,
+    cli: `leash-agent pay <service url> --team ${account} --api ${desk}${flag}`,
+  }
+}
+
+function AddAgent({ account, client, catalog, onDone }: { account: Address; client: RootClient; catalog: Offers; onDone: () => void }) {
+  const net = useNetwork()
+  const mainnet = net.name === 'mainnet'
   const [name, setName] = useState('')
   const [budget, setBudget] = useState('1.00')
-  const [mode, setMode] = useState<'desk' | 'own'>('desk')
+  const [deskMode, setMode] = useState<'desk' | 'own'>('desk')
+  // A mainnet team holds only agents that run in their owner's process: the desk never signs or funds anything there.
+  const mode = mainnet ? 'own' : deskMode
   const [ownKey, setOwnKey] = useState('')
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [steps, setSteps] = useState<Step[]>([])
@@ -62,7 +104,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
   const [attempted, setAttempted] = useState(false)
   const errors = {
     name: name.trim().length >= 2 ? null : 'Enter a name of at least 2 characters.',
-    budget: /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0 ? null : budget.trim() === '' ? 'Enter a daily budget in OUSD.' : 'Enter a positive amount with up to 6 decimals.',
+    budget: /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0 ? null : budget.trim() === '' ? `Enter a daily budget in ${net.symbol}.` : 'Enter a positive amount with up to 6 decimals.',
     services: picked.size > 0 ? null : 'Select at least one service this key may pay.',
     ownKey: mode === 'desk' || /^0x[0-9a-fA-F]{40}$/.test(ownKey.trim()) ? null : ownKey.trim() === '' ? 'Paste the key id printed by leash-agent init.' : 'A key id is an address: 0x followed by 40 hex characters.',
   }
@@ -101,7 +143,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
       mark(stage, 'done', short(tx, 8, 6))
       stage = 'Wait for the chain'
       mark(stage, 'run')
-      await waitForSuccess(tx)
+      await waitForSuccess(tx, net.name)
       mark(stage, 'done')
       stage = 'API reads the key back from chain'
       mark(stage, 'run')
@@ -126,10 +168,12 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
           <fieldset>
             <legend className="text-caption text-ink-muted">Who runs this agent</legend>
             <div className="mt-1">
-              <Radio name="runs" checked={mode === 'desk'} onChange={() => { touch(); setMode('desk') }}>
-                <span className="font-semibold">Leash runs it</span>
-                <span className="block text-caption text-ink-muted">Leash generates the key, holds it, and runs research tasks for you.</span>
-              </Radio>
+              {!mainnet && (
+                <Radio name="runs" checked={mode === 'desk'} onChange={() => { touch(); setMode('desk') }}>
+                  <span className="font-semibold">Leash runs it</span>
+                  <span className="block text-caption text-ink-muted">Leash generates the key, holds it, and runs research tasks for you.</span>
+                </Radio>
+              )}
               <Radio name="runs" checked={mode === 'own'} onChange={() => { touch(); setMode('own') }}>
                 <span className="font-semibold">I run it</span>
                 <span className="block text-caption text-ink-muted">Your process holds the key. Leash only learns the key id and the payments your agent reports.</span>
@@ -165,7 +209,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
               />
             )}
           </Field>
-          <Field label="Daily budget (OUSD)" help="The chain enforces this limit per 24 hours on the agent's key." error={shown('budget')}>
+          <Field label={`Daily budget (${net.symbol})`} help={mainnet ? "The chain enforces this limit per 24 hours on the agent's key. The gas of each payment is paid from the same budget." : "The chain enforces this limit per 24 hours on the agent's key."} error={shown('budget')}>
             {(id) => (
               <Input
                 id={id}
@@ -201,9 +245,9 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
                   >
                     <span className="flex flex-wrap items-baseline justify-between gap-x-4">
                       <span className="num">{s.serviceId}</span>
-                      <span className="num text-ink-muted">{s.price} OUSD per call</span>
+                      <span className="num text-ink-muted">{s.price}</span>
                     </span>
-                    <span className="block text-caption text-ink-muted">{s.description}</span>
+                    {s.description && <span className="block text-caption text-ink-muted">{s.description}</span>}
                   </Check>
                 ))}
               </div>
@@ -228,8 +272,9 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
         <Button busy={busy} onClick={submit}>
           Authorize agent key
         </Button>
-        <span className="text-body-sm text-ink-muted">Your team key signs one transaction and pays its gas in PathUSD.</span>
+        <span className="text-body-sm text-ink-muted">Your team key signs one transaction and pays its gas in {net.feeSymbol}.</span>
       </div>
+      {mode === 'own' && <SdkLines network={net.name} account={account} keyId={/^0x[0-9a-fA-F]{40}$/.test(ownKey.trim()) ? ownKey.trim() : '<key id from leash-agent init>'} intro={mainnet ? 'Your agent pays from its own process on Tempo mainnet. Once the key is authorized, wire it in with these lines.' : 'Once the key is authorized, wire it in with these lines.'} />}
       {omitted.length > 0 && (
         <div className="mt-6">
           <Notice tone="info" title="Cut services were left out">
@@ -336,13 +381,21 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
   )
 }
 
-/** The lines an agent's own process needs to pay with its key and report to this desk. */
+function SdkLines({ network, account, keyId, intro }: { network: NetworkName; account: Address; keyId: string; intro: string }) {
+  const { snippet, cli } = sdkLines(network, account, keyId)
+  return (
+    <div className="mt-6 border border-hairline bg-surface-1 p-4">
+      <p className="text-caption text-ink-muted">{intro}</p>
+      <pre className="num mt-3 overflow-x-auto bg-surface-2 p-3 text-caption">{snippet}</pre>
+      <p className="mt-3 text-caption text-ink-muted">Or pay one request from the command line:</p>
+      <pre className="num mt-1 overflow-x-auto bg-surface-2 p-3 text-caption">{cli}</pre>
+    </div>
+  )
+}
+
 function Connect({ agent, account }: { agent: AgentView; account: Address }) {
-  const api = API_BASE || location.origin
-  const snippet = `import { agentAccount, AGENT_NETWORK, createLeashFetch, reportTo } from '@leash/sdk'
-const agent = agentAccount(process.env.LEASH_AGENT_KEY, '${account}') // key id ${agent.keyId}
-const leashFetch = createLeashFetch({ network: AGENT_NETWORK, agent, onRecord: reportTo('${api}', process.env.LEASH_AGENT_KEY) })`
-  const cli = `leash-agent pay <service url> --team ${account} --api ${api}`
+  const net = useNetwork()
+  const { snippet, cli } = sdkLines(net.name, account, agent.keyId)
   return (
     <div className="border-t border-hairline bg-surface-1 p-4">
       <p className="text-body-sm font-semibold">{agent.name} runs outside Leash</p>
@@ -356,7 +409,8 @@ const leashFetch = createLeashFetch({ network: AGENT_NETWORK, agent, onRecord: r
   )
 }
 
-function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentView; account: Address; client: RootClient; catalog: Catalog; onChange: () => void }) {
+function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentView; account: Address; client: RootClient; catalog: Offers; onChange: () => void }) {
+  const net = useNetwork()
   const [open, setOpen] = useState(false)
   const [revoking, setRevoking] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -367,7 +421,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
     try {
       const plan = await api.revokePlan(agent.keyId)
       const tx = await client.sendTransaction({ calls: plan.calls } as never)
-      await waitForSuccess(tx)
+      await waitForSuccess(tx, net.name)
       await api.revokeConfirm(agent.keyId, tx)
       onChange()
     } catch (e) {
@@ -394,7 +448,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
           <Status tone={tone}>{agent.status}</Status>
           {agent.readError && <p className="mt-1 max-w-48 text-caption text-error-ink">Chain read failed: {agent.readError}</p>}
         </Cell>
-        <Cell label="Daily budget (OUSD)" className="num text-right">{money(agent.budgetUnits)}</Cell>
+        <Cell label={`Daily budget (${net.symbol})`} className="num text-right">{money(agent.budgetUnits)}</Cell>
         <Cell label="Remaining now" className="num text-right">{agent.remaining === null ? '' : money(agent.remaining)}</Cell>
         <Cell label="In scope on chain">
           {agent.status === 'revoked' ? (
@@ -438,7 +492,8 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
 }
 
 function AgentsBody({ account, client }: { account: Address; client: RootClient }) {
-  const catalog = usePoll(() => api.catalog(), 0, [])
+  const net = useNetwork()
+  const catalog = usePoll(() => loadOffers(net.name), 0, [net.name])
   const team = usePoll(() => api.team(account), 6000, [account])
   const [adding, setAdding] = useState(false)
   const opened = useRef(false)
@@ -465,7 +520,9 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
           </Button>
         }
       >
-        Each agent is a Tempo access key with a daily OUSD limit and a list of recipients it may pay. Leash can run an agent for you, or you run it yourself with its own key. You always hold the team key.
+        {net.name === 'mainnet'
+          ? 'Each agent is a Tempo access key with a daily USDC.e limit and a list of recipients it may pay. Your agents run in your own processes with their own keys, and you always hold the team key.'
+          : 'Each agent is a Tempo access key with a daily OUSD limit and a list of recipients it may pay. Leash can run an agent for you, or you run it yourself with its own key. You always hold the team key.'}
       </PageHead>
       <div className="grid gap-6">
         {adding && catalog.data && (
@@ -484,7 +541,7 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
               <tr>
                 <Th>Agent</Th>
                 <Th>Status</Th>
-                <Th className="text-right">Daily budget (OUSD)</Th>
+                <Th className="text-right">Daily budget ({net.symbol})</Th>
                 <Th className="text-right">Remaining now</Th>
                 <Th>Services in scope on chain</Th>
                 <Th>Authorize tx</Th>

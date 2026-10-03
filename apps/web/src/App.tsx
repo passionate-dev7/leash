@@ -5,7 +5,8 @@ import { ROUTES, VIEW, useRoute } from '@/lib/router'
 import { api } from '@/lib/api'
 import { short } from '@/lib/format'
 import { cn } from '@/components/ui/cn'
-import { Status } from '@/components/ui/status'
+import { NetworkBadge, Status } from '@/components/ui/status'
+import { NetworkProvider, useNetwork } from '@/lib/network'
 import { TeamPage } from '@/pages/team'
 import { AgentsPage } from '@/pages/agents'
 import { VendorsPage } from '@/pages/vendors'
@@ -15,13 +16,14 @@ import { LivePage } from '@/pages/live'
 
 function UtilityBar() {
   const health = usePoll(() => api.health(), 15_000, [])
+  const net = useNetwork()
   return (
     <div className="hidden h-8 items-center bg-surface-1 sm:flex">
       <div className="mx-auto flex w-full max-w-[1584px] items-center justify-between gap-6 px-8 text-caption text-ink-muted">
-        <span>Moderato testnet, chain 42431. Agent payments settle in OUSD.</span>
+        <span>{net.label}, chain {net.chainId}. Agent payments settle in {net.symbol}.</span>
         {health.data?.ok ? (
           <Status tone="ok">
-            API up, block <span className="num">{String(health.data.block)}</span>
+            API up, Moderato block <span className="num">{String(health.data.block)}</span>
           </Status>
         ) : health.error ? (
           <Status tone="bad">API unreachable</Status>
@@ -37,7 +39,7 @@ const NAV = [{ path: 't', label: VIEW.label }, ...ROUTES]
 
 function Shell() {
   const route = useRoute()
-  const { active } = useSession()
+  const { active, network } = useSession()
   const [menu, setMenu] = useState(false)
   useEffect(() => setMenu(false), [route])
   const hereOf = (path: string) => (path === 't' ? 'view' : path) === route.page
@@ -69,6 +71,7 @@ function Shell() {
             {active ? (
               <span>
                 {active.label} <span className="num ml-1 text-ink">{short(active.address, 6, 4)}</span>
+                <span className="ml-2"><NetworkBadge network={network} /></span>
               </span>
             ) : route.page === 'view' ? null : (
               <a href="#/team" className="flex h-full items-center bg-primary px-4 text-body-sm text-on-primary hover:bg-primary-hover">Create your own team</a>
@@ -107,12 +110,16 @@ function Shell() {
         {route.page === 'agents' && <AgentsPage />}
         {route.page === 'vendors' && <VendorsPage />}
         {route.page === 'ledger' && <LedgerPage />}
-        {route.page === 'mainnet' && <MainnetPage />}
+        {route.page === 'mainnet' && (
+          <NetworkProvider network="mainnet">
+            <MainnetPage />
+          </NetworkProvider>
+        )}
       </main>
       <footer className="bg-inverse-canvas px-4 py-12 sm:px-8">
         <div className="mx-auto grid max-w-[1584px] gap-8 text-body-sm text-inverse-ink-muted sm:grid-cols-3">
-          <p>Every write on this site runs on Moderato testnet. The team key signs in this browser. The server holds agent keys only, never the team key.</p>
-          <p>Mainnet (chain 4217) is read-only here: the replay on the Mainnet tab never sends a transaction.</p>
+          <p>The team key signs in this browser and never reaches the server. The server holds agent keys only for agents Leash runs on Moderato testnet.</p>
+          <p>On Tempo mainnet (chain 4217) the server only reads: mainnet teams sign their authorizations here and their agents pay from their own processes.</p>
           <p>
             <a className="text-inverse-ink underline hover:text-inverse-ink-muted" href="https://explore.testnet.tempo.xyz" target="_blank" rel="noreferrer">
               Moderato explorer
