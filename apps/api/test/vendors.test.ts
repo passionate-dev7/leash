@@ -46,12 +46,13 @@ test('evidence: window, newest-first txs, cap of 10, and an empty service has ra
   assert.deepEqual(evidenceOf([]), { window: '24h', paid: 0, paidNotDelivered: 0, failureRate: 0, txs: [] })
 })
 
-test('recommendCut: needs at least 2 failures and a rate of at least 25 percent in the window', () => {
+test('recommendCut: needs at least 3 failures and a rate of at least 15 percent in the window', () => {
   const ev = (paid: number, failed: number) => ({ window: '24h' as const, paid, paidNotDelivered: failed, failureRate: paid === 0 ? 0 : failed / paid, txs: [] })
-  assert.equal(recommendCut(ev(2, 1)), false, 'one failure is not enough even at 50 percent')
-  assert.equal(recommendCut(ev(8, 2)), true, '2 of 8 is exactly 25 percent')
-  assert.equal(recommendCut(ev(9, 2)), false, '2 of 9 is under 25 percent')
-  assert.equal(recommendCut(ev(2, 2)), true)
+  assert.equal(recommendCut(ev(2, 2)), false, 'two failures is not enough even at 100 percent')
+  assert.equal(recommendCut(ev(29, 6)), true, 'the measured scrape route: 6 of 29, 21 percent')
+  assert.equal(recommendCut(ev(20, 3)), true, '3 of 20 is exactly 15 percent')
+  assert.equal(recommendCut(ev(21, 3)), false, '3 of 21 is under 15 percent')
+  assert.equal(recommendCut(ev(23, 0)), false, 'a healthy service')
   assert.equal(recommendCut(ev(0, 0)), false)
 })
 
@@ -60,17 +61,19 @@ test('a failure older than 24 hours does not recommend a cut, a recent one does'
   seed(old, [
     { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered', minutesAgo: 30 * 60 },
     { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered', minutesAgo: 31 * 60 },
+    { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered', minutesAgo: 32 * 60 },
   ])
   const o = scrape(rows(old))
-  assert.equal(o.paidNotDelivered, 2, 'the all-time roll-up still shows them')
+  assert.equal(o.paidNotDelivered, 3, 'the all-time roll-up still shows them')
   assert.equal(o.evidence.paidNotDelivered, 0)
   assert.equal(o.recommendCut, false)
   const fresh = memoryStore()
   seed(fresh, [
     { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered' },
     { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered' },
+    { serviceId: 'atlas-scrape', outcome: 'paid_not_delivered' },
   ])
   const f = scrape(rows(fresh))
   assert.equal(f.recommendCut, true)
-  assert.equal(f.evidence.txs.length, 2)
+  assert.equal(f.evidence.txs.length, 3)
 })

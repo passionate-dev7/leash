@@ -4,9 +4,15 @@ import type { CutoffRow, LedgerRecord } from './store.js'
 
 export const EVIDENCE_WINDOW_MS = 24 * 3_600_000
 const MAX_EVIDENCE_TXS = 10
-/** A vendor is worth cutting when it kept at least this many payments without delivering, and at least this share of what it was paid. */
-export const CUT_MIN_FAILURES = 2
-export const CUT_MIN_RATE = 0.25
+/**
+ * A vendor is worth cutting when it kept at least this many payments without delivering, and at least
+ * this share of what it was paid. Set from measured rates, not picked: on 2026-10-03 the healthy
+ * services sat at 0 percent, the failing scrape route at 21 percent (6 of 29 over five real topics),
+ * and vet402's public mainnet ledger at 36 percent (26 of 72). Three failures keeps one bad url from
+ * tripping it.
+ */
+export const CUT_MIN_FAILURES = 3
+export const CUT_MIN_RATE = 0.15
 
 export type Evidence = {
   window: '24h'
