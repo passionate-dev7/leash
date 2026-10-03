@@ -64,6 +64,8 @@ export type AgentView = {
   keyId: Address
   name: string
   status: 'pending' | 'active' | 'revoked'
+  /** True when the agent runs in its owner's own process: Leash never held its key and cannot run it. */
+  external: boolean
   /** Decimal OUSD per period, as entered ("1.50"). */
   budget: string
   budgetUnits: string
@@ -106,6 +108,8 @@ export type LedgerRecord = {
   outcome: Outcome
   settlement: { tx: Hash; block: number; status: 'success' | 'reverted' } | null
   startedAt: string
+  /** 'external' when the agent's own process reported the record, 'runner' when Leash ran the call. */
+  source: 'runner' | 'external'
 }
 
 export type VendorRow = {
@@ -149,7 +153,7 @@ export const api = {
   upsertTeam: (account: Address, label: string, signer: 'passkey' | 'webcrypto') =>
     request<unknown>('/api/teams', { body: { account, label, signer } }),
   team: (account: Address) => request<TeamView>(`/api/teams/${account}`),
-  createAgent: (account: Address, input: { name: string; budget: string; periodSeconds: number; serviceIds: string[] }) =>
+  createAgent: (account: Address, input: { name: string; budget: string; periodSeconds: number; serviceIds: string[]; external?: boolean; keyId?: Address }) =>
     request<{ keyId: Address; reach: string[]; omitted: { serviceId: string; reason: string }[]; authorize: AuthorizePayload }>(`/api/teams/${account}/agents`, { body: input }),
   confirmAgent: (keyId: Address, tx: Hash) => request<{ status: string }>(`/api/agents/${keyId}/confirm`, { body: { tx } }),
   runAgent: (keyId: Address, topic: string, signal?: AbortSignal) =>

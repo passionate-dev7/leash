@@ -3,12 +3,13 @@ import type { Address } from 'viem'
 import { Actions } from 'viem/tempo'
 import { api } from '@/lib/api'
 import type { AgentView, Catalog, LedgerRecord } from '@/lib/api'
+import { API_BASE } from '@/lib/config'
 import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
 import { money, short } from '@/lib/format'
 import { Button } from '@/components/ui/button'
-import { Check, Field, Input } from '@/components/ui/form'
+import { Check, Field, Input, Radio } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
 import { NeedsTeam, PageHead, Cell, Table, TBody, Th, THead, Tr } from '@/components/page'
 import { RecordTable } from '@/components/records'
@@ -20,6 +21,8 @@ type Step = { label: string; state: 'run' | 'done' | 'fail'; detail?: string }
 function AddAgent({ account, client, catalog, onDone }: { account: Address; client: RootClient; catalog: Catalog; onDone: () => void }) {
   const [name, setName] = useState('')
   const [budget, setBudget] = useState('1.00')
+  const [mode, setMode] = useState<'desk' | 'own'>('desk')
+  const [ownKey, setOwnKey] = useState('')
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [steps, setSteps] = useState<Step[]>([])
   const [busy, setBusy] = useState(false)
@@ -61,6 +64,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     name: name.trim().length >= 2 ? null : 'Enter a name of at least 2 characters.',
     budget: /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0 ? null : budget.trim() === '' ? 'Enter a daily budget in OUSD.' : 'Enter a positive amount with up to 6 decimals.',
     services: picked.size > 0 ? null : 'Select at least one service this key may pay.',
+    ownKey: mode === 'desk' || /^0x[0-9a-fA-F]{40}$/.test(ownKey.trim()) ? null : ownKey.trim() === '' ? 'Paste the key id printed by leash-agent init.' : 'A key id is an address: 0x followed by 40 hex characters.',
   }
   const shown = (key: keyof typeof errors) => (attempted ? errors[key] : null)
 
@@ -69,14 +73,20 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
 
   const submit = async () => {
     setAttempted(true)
-    if (errors.name || errors.budget || errors.services) return
+    if (errors.name || errors.budget || errors.services || errors.ownKey) return
     setBusy(true)
     setSteps([])
     setOmitted([])
-    let stage = 'Create key on the API'
+    let stage = mode === 'own' ? 'Register your key id on the API' : 'Create key on the API'
     try {
       mark(stage, 'run')
-      const created = await api.createAgent(account, { name: name.trim(), budget, periodSeconds: 86400, serviceIds: [...picked] })
+      const created = await api.createAgent(account, {
+        name: name.trim(),
+        budget,
+        periodSeconds: 86400,
+        serviceIds: [...picked],
+        ...(mode === 'own' ? { external: true, keyId: ownKey.trim() as Address } : {}),
+      })
       mark(stage, 'done', short(created.keyId, 8, 6))
       if (created.omitted.length > 0) setOmitted(created.omitted.map((o) => o.serviceId))
       stage = 'Sign authorizeKey with the team key'
@@ -98,6 +108,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
       await api.confirmAgent(created.keyId, tx)
       mark(stage, 'done', 'active')
       setName('')
+      setOwnKey('')
       setPicked(new Set())
       setAttempted(false)
       onDone()
@@ -112,6 +123,35 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
     <Panel title="Add an agent">
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-4">
+          <fieldset>
+            <legend className="text-caption text-ink-muted">Who runs this agent</legend>
+            <div className="mt-1">
+              <Radio name="runs" checked={mode === 'desk'} onChange={() => { touch(); setMode('desk') }}>
+                <span className="font-semibold">Leash runs it</span>
+                <span className="block text-caption text-ink-muted">Leash generates the key, holds it, and runs research tasks for you.</span>
+              </Radio>
+              <Radio name="runs" checked={mode === 'own'} onChange={() => { touch(); setMode('own') }}>
+                <span className="font-semibold">I run it</span>
+                <span className="block text-caption text-ink-muted">Your process holds the key. Leash only learns the key id and the payments your agent reports.</span>
+              </Radio>
+            </div>
+          </fieldset>
+          {mode === 'own' && (
+            <Field label="Agent key id" help={<>Run <span className="num">leash-agent init</span> where the agent runs and paste the key id it prints. The private key never reaches Leash.</>} error={shown('ownKey')}>
+              {(id) => (
+                <Input
+                  id={id}
+                  value={ownKey}
+                  onChange={(e) => { touch(); setOwnKey(e.target.value) }}
+                  placeholder="0x..."
+                  className="num"
+                  spellCheck={false}
+                  aria-invalid={shown('ownKey') ? true : undefined}
+                  aria-describedby={shown('ownKey') ? `${id}-error` : undefined}
+                />
+              )}
+            </Field>
+          )}
           <Field label="Agent name" error={shown('name')}>
             {(id) => (
               <Input
@@ -296,6 +336,26 @@ function RunResearch({ agent, account }: { agent: AgentView; account: Address })
   )
 }
 
+/** The lines an agent's own process needs to pay with its key and report to this desk. */
+function Connect({ agent, account }: { agent: AgentView; account: Address }) {
+  const api = API_BASE || location.origin
+  const snippet = `import { agentAccount, AGENT_NETWORK, createLeashFetch, reportTo } from '@leash/sdk'
+const agent = agentAccount(process.env.LEASH_AGENT_KEY, '${account}') // key id ${agent.keyId}
+const leashFetch = createLeashFetch({ network: AGENT_NETWORK, agent, onRecord: reportTo('${api}', process.env.LEASH_AGENT_KEY) })`
+  const cli = `leash-agent pay <service url> --team ${account} --api ${api}`
+  return (
+    <div className="border-t border-hairline bg-surface-1 p-4">
+      <p className="text-body-sm font-semibold">{agent.name} runs outside Leash</p>
+      <p className="mt-1 text-caption text-ink-muted">
+        Its process holds key <span className="num">{agent.keyId}</span>. Every payment it makes is reported here, signed by that key, and counted once the chain shows the settlement.
+      </p>
+      <pre className="num mt-3 overflow-x-auto bg-surface-2 p-3 text-caption">{snippet}</pre>
+      <p className="mt-3 text-caption text-ink-muted">Or pay one request from the command line:</p>
+      <pre className="num mt-1 overflow-x-auto bg-surface-2 p-3 text-caption">{cli}</pre>
+    </div>
+  )
+}
+
 function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentView; account: Address; client: RootClient; catalog: Catalog; onChange: () => void }) {
   const [open, setOpen] = useState(false)
   const [revoking, setRevoking] = useState(false)
@@ -328,6 +388,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
         <Cell>
           <p className="font-semibold">{agent.name}</p>
           <p className="num text-caption text-ink-muted" title={agent.keyId}>{short(agent.keyId, 8, 6)}</p>
+          {agent.external && <p className="text-caption text-ink-muted">runs outside Leash</p>}
         </Cell>
         <Cell label="Status">
           <Status tone={tone}>{agent.status}</Status>
@@ -350,7 +411,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
         <Cell className="max-md:border-t max-md:border-hairline max-md:pt-3">
           <span className="flex max-md:justify-end">
             <Button size="sm" variant="tertiary" disabled={agent.status !== 'active'} onClick={() => setOpen((v) => !v)}>
-              {open ? 'Close' : 'Run research'}
+              {open ? 'Close' : agent.external ? 'Connect' : 'Run research'}
             </Button>
             <Button size="sm" variant="ghost" disabled={agent.status !== 'active'} busy={revoking} onClick={revoke}>
               Revoke
@@ -368,7 +429,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
       {open && (
         <Tr className="max-md:p-0">
           <td colSpan={7} className="p-0 max-md:block">
-            <RunResearch agent={agent} account={account} />
+            {agent.external ? <Connect agent={agent} account={account} /> : <RunResearch agent={agent} account={account} />}
           </td>
         </Tr>
       )}
@@ -404,7 +465,7 @@ function AgentsBody({ account, client }: { account: Address; client: RootClient 
           </Button>
         }
       >
-        Each agent is a Tempo access key with a daily OUSD limit and a list of recipients it may pay. The runner holds the agent key. You hold the team key.
+        Each agent is a Tempo access key with a daily OUSD limit and a list of recipients it may pay. Leash can run an agent for you, or you run it yourself with its own key. You always hold the team key.
       </PageHead>
       <div className="grid gap-6">
         {adding && catalog.data && (

@@ -21,6 +21,21 @@ const control =
 export const Input = ({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) => <input className={cn(control, className)} {...rest} />
 export const Select = ({ className, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) => <select className={cn(control, 'pr-8', className)} {...rest} />
 
+export function Radio({ checked, onChange, children, name }: { checked: boolean; onChange: () => void; children: ReactNode; name: string }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 py-2 text-body-sm">
+      <input
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="mt-0.5 size-4 shrink-0 appearance-none rounded-full border border-ink bg-canvas checked:border-[5px] checked:border-ink focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+      />
+      <span className="min-w-0 flex-1">{children}</span>
+    </label>
+  )
+}
+
 export function Check({ checked, onChange, children, disabled }: { checked: boolean; onChange: (v: boolean) => void; children: ReactNode; disabled?: boolean }) {
   return (
     <label className={cn('flex items-start gap-3 py-2 text-body-sm', disabled ? 'text-ink-subtle' : 'cursor-pointer')}>

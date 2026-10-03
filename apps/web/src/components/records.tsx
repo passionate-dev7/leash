@@ -35,7 +35,12 @@ export function RecordTable({ records, showAgent = true }: { records: LedgerReco
         {records.map((r) => (
           <Tr key={r.seq} className="odd:bg-canvas even:bg-surface-1/50">
             <Cell label="When" className="whitespace-nowrap text-ink-muted">{ago(r.startedAt)}</Cell>
-            {showAgent && <Cell label="Agent">{r.agentName}</Cell>}
+            {showAgent && (
+              <Cell label="Agent">
+                {r.agentName}
+                {r.source === 'external' && <span className="num ml-2 border border-hairline px-1.5 text-caption text-ink-muted" title="This agent pays from its own process and reported the record">external</span>}
+              </Cell>
+            )}
             <Cell label="Service">
               <span className="num">{r.serviceId}</span>
             </Cell>
