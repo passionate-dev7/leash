@@ -169,7 +169,7 @@ test('H1: only the owner renames; the signer kind and the network stay as create
   assert.equal(store.team(ACCOUNT)!.signer, 'passkey', 'the signer kind is fixed at creation')
 })
 
-test('H1: pending agents hold a slot for an hour, then stop counting and are dropped', async () => {
+test('H1: pending agents older than an hour whose key is not on chain are dropped and free their slots', async () => {
   const team = Account.fromSecp256k1(generatePrivateKey()) as DeskSigner
   const root: TestRoot = { account: team, chainId: 42431 }
   assert.equal((await call('POST', '/api/teams', { account: team.address, label: 'cap', signer: 'webcrypto' }, { as: root })).status, 200)

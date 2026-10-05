@@ -83,7 +83,8 @@ function CutSheet({
     setPhase('signing')
     try {
       setStage('Sign one transaction with the team key')
-      const hash = await client.sendTransaction({ calls: plan.calls } as never)
+      // Only the fields the guard checked are signed: a value or any other field the API added is dropped.
+      const hash = await client.sendTransaction({ calls: plan.calls.map(({ to, data }) => ({ to, data })) } as never)
       setTx(hash)
       setStage('Wait for the chain')
       await waitForSuccess(hash, net)

@@ -103,12 +103,14 @@ export async function fund(address: Address, timeoutMs = 30_000): Promise<{ txs:
 
 export type AuthorizeCheck = { ok: true; block: number } | { ok: false; reason: string }
 
+/** What Leash planned for a key: the chain must hold no more than this. */
+export type KeyPlan = { account: Address; keyId: Address; plannedRecipients: readonly Address[]; plannedLimit: bigint; plannedExpiry: number }
+
 /**
  * An authorize transaction counts only when the chain agrees: it succeeded, it was sent by the
- * team account, it emitted KeyAuthorized for this exact key, the key reads back as live, and the
- * scopes that read back are the ones Leash planned (the browser could have signed anything).
+ * team account, it emitted KeyAuthorized for this exact key, and the key reads back as Leash planned it.
  */
-export async function verifyAuthorize(chain: Chain, args: { tx: Hash; account: Address; keyId: Address; plannedRecipients: readonly Address[] }): Promise<AuthorizeCheck> {
+export async function verifyAuthorize(chain: Chain, args: KeyPlan & { tx: Hash }): Promise<AuthorizeCheck> {
   const rx = await receiptOf(chain, args.tx)
   if (rx.status !== 'success') return { ok: false, reason: `transaction ${args.tx} did not succeed (status ${rx.status})` }
   if (lower(rx.from) !== lower(args.account)) return { ok: false, reason: `transaction was sent by ${rx.from}, not the team account ${args.account}` }
@@ -116,22 +118,34 @@ export async function verifyAuthorize(chain: Chain, args: { tx: Hash; account: A
     (e) => lower(e.args.account) === lower(args.account) && lower(e.args.publicKey) === lower(args.keyId),
   )
   if (!authorized) return { ok: false, reason: `no KeyAuthorized event for key ${args.keyId} on ${args.account} in ${args.tx}` }
+  const live = await verifyLiveKey(chain, args, 10_000)
+  return live.ok ? { ok: true, block: Number(rx.blockNumber) } : live
+}
 
-  const live = await until(() => getKey(chain.reader, args.account, args.keyId), (k) => k.exists, 10_000)
-  if (!live.ok) return { ok: false, reason: `getKey does not return ${args.keyId} for ${args.account}` }
-  if (!live.value.info.enforceLimits) return { ok: false, reason: 'the key was authorized without spending limits' }
+/**
+ * The key reads back as live with what Leash planned and nothing more (the browser could have signed
+ * anything): limits enforced, a remaining limit no larger than the planned one, an expiry no later
+ * than planned, and scopes that pay only the planned recipients in the budget token.
+ */
+export async function verifyLiveKey(chain: Chain, args: KeyPlan, waitMs = 0): Promise<{ ok: true } | { ok: false; reason: string; live: boolean }> {
+  const live = await until(() => getKey(chain.reader, args.account, args.keyId), (k) => k.exists, waitMs)
+  if (!live.ok) return { ok: false, live: false, reason: `getKey does not return ${args.keyId} for ${args.account}` }
+  const fail = (reason: string) => ({ ok: false as const, live: true, reason })
+  if (!live.value.info.enforceLimits) return fail('the key was authorized without spending limits')
+  if (Number(live.value.info.expiry) > args.plannedExpiry + 3600) return fail(`the key expires at ${live.value.info.expiry}, after the planned ${args.plannedExpiry}`)
 
   const allowed = await retryRead(() => getAllowedCalls(chain.reader, args.account, args.keyId))
   const payable = payableRecipients(allowed, chain.token)
   const planned = new Set(args.plannedRecipients.map(lower))
-  if (payable.any) return { ok: false, reason: 'the key was authorized with a rule that allows any recipient' }
+  if (payable.any) return fail('the key was authorized with a rule that allows any recipient')
   if (payable.recipients.length === 0 || payable.recipients.some((r) => !planned.has(lower(r))))
-    return { ok: false, reason: 'the key scopes read back from chain differ from the planned recipients' }
+    return fail('the key scopes read back from chain differ from the planned recipients')
   const extra = allowed.scopes.filter((s) => lower(s.target) !== lower(chain.token))
-  if (extra.length > 0) return { ok: false, reason: `the key can also call ${extra.map((s) => s.target).join(', ')}` }
+  if (extra.length > 0) return fail(`the key can also call ${extra.map((s) => s.target).join(', ')}`)
   const limit = await retryRead(() => getRemainingLimit(chain.reader, args.account, args.keyId, chain.token))
-  if (limit.remaining <= 0n) return { ok: false, reason: 'the key has no spending limit on the budget token' }
-  return { ok: true, block: Number(rx.blockNumber) }
+  if (limit.remaining <= 0n) return fail('the key has no spending limit on the budget token')
+  if (limit.remaining > args.plannedLimit) return fail(`the key can spend ${limit.remaining} units, more than the planned ${args.plannedLimit}`)
+  return { ok: true }
 }
 
 export type CutCheck = { ok: true; gasUsed: bigint; block: number } | { ok: false; reason: string; gasUsed: bigint | null }

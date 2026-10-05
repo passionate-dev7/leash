@@ -99,6 +99,20 @@ async function main() {
     const second = await cli(dir, 'init').then(() => null, (e: { stderr?: string }) => e.stderr ?? 'failed')
     check(second !== null && /already exists/.test(second), 'init must refuse to overwrite a key')
 
+    // 1b. a key the root authorized above its plan (signed outside the Leash page) is never confirmed
+    const overKey = Account.fromSecp256k1(generatePrivateKey()).address
+    const over = (await api('POST', `/api/teams/${root.address}/agents`, { name: 'over-plan', budget: '1.00', periodSeconds: 86400, serviceIds: ['atlas-scrape'], external: true, keyId: overKey })).authorize
+    const overTx = await Actions.accessKey.authorize(client, {
+      accessKey: over.accessKey,
+      expiry: over.expiry,
+      limits: over.limits.map((l: Json) => ({ token: l.token, limit: BigInt(l.limit) * 2n, period: l.period })),
+      scopes: over.scopes,
+    })
+    check((await client.waitForTransactionReceipt({ hash: overTx })).status === 'success', 'over-plan authorize reverted')
+    const overConfirm = await api('POST', `/api/agents/${overKey}/confirm`, { tx: overTx }, 422)
+    check(overConfirm.error === 'authorize_not_confirmed' && /more than the planned/.test(overConfirm.detail), `an over-plan key must not confirm: ${JSON.stringify(overConfirm)}`)
+    log(`over-plan key refused at confirm: ${overTx}`)
+
     // 2. the desk registers the key id and the team root authorizes it
     const created = await api('POST', `/api/teams/${root.address}/agents`, { name: 'outside-researcher', budget: '1.00', periodSeconds: 86400, serviceIds: ['atlas-scrape', 'atlas-search'], external: true, keyId: made.keyId })
     check(created.keyId === made.keyId && JSON.stringify(created).indexOf(agentKey) < 0, 'the desk must answer with the key id and no key material')

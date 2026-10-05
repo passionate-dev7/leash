@@ -9,7 +9,7 @@ import type { ServiceId, VendorRouter } from '@leash/vendors'
 import type { NetworkName } from '@leash/sdk'
 import { requireTeamSignature } from './auth.js'
 import { ALLOWED_ORIGINS, FEATURED_TEAM, KEY_LIFETIME_SECONDS, MODERATO, TRUST_PROXY } from './config.js'
-import { balances, budgetBalance, chains, fund, lower, reader, retryRead, verifyAuthorize, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
+import { balances, budgetBalance, chains, fund, lower, reader, retryRead, verifyAuthorize, verifyLiveKey, verifyCutoff, verifyRevoke, verifySettlement } from './chain.js'
 import { assertNotBeforeSettlement, parseRecord, signerOf } from './external.js'
 import { createRateLimiter } from './limit.js'
 import { HttpError, address, bad, conflict, match, notFound, parseJsonObject, readBody, route, sendJson, str, txHash } from './http.js'
@@ -20,7 +20,6 @@ import { sponsorBalance } from './sponsor.js'
 import { evidenceOf, mainnetVendorRows, vendorRows } from './vendors.js'
 import type { Runner } from './runner.js'
 import { isServiceId, mainnetServicesPaying, payoutGroups, publicCatalog, servicesOn, servicesPaying, serviceOfUrl } from './services.js'
-import { PENDING_TTL_MS } from './store.js'
 import type { AgentRow, Store, TeamRow } from './store.js'
 
 const FAUCET_WINDOW_MS = 10 * 60_000
@@ -33,6 +32,8 @@ const RECORDS_PER_IP = { capacity: 120, perSecond: 2 }
 
 /** The client address a request is limited by. */
 function clientOf(req: IncomingMessage): string {
+  const fly = req.headers['fly-client-ip']
+  if (TRUST_PROXY && typeof fly === 'string') return fly
   const forwarded = req.headers['x-forwarded-for']
   if (TRUST_PROXY && typeof forwarded === 'string') return forwarded.split(',').at(-1)!.trim()
   return req.socket.remoteAddress ?? 'unknown'
@@ -80,6 +81,25 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
   /** The chain a team's reads and verifications go to. */
   const chainOfTeam = (account: Address) => chains[teamOf(account).network]
   const chainOfAgent = (agent: AgentRow) => chainOfTeam(agent.account)
+  /** What Leash planned for an agent's key: the chain must hold no more. */
+  const planOf = (agent: AgentRow) => ({
+    account: agent.account,
+    keyId: agent.key_id,
+    plannedRecipients: servicesOn(chainOfAgent(agent).name).filter((s) => serviceIdsOf(agent).includes(s.serviceId)).map((s) => s.recipient),
+    plannedLimit: parseUnits(agent.budget, DECIMALS),
+    plannedExpiry: agent.expiry,
+  })
+  /**
+   * A pending row older than an hour is deleted only when its key is not on chain. A key that is live as
+   * planned becomes active (its confirm never arrived); one live with other terms stays pending and holds its slot.
+   */
+  const sweepPending = async (account: Address) => {
+    for (const agent of store.expiredPendingAgents(account)) {
+      const live = await verifyLiveKey(chainOfAgent(agent), planOf(agent))
+      if (live.ok) store.setAgentStatus(agent.key_id, 'active')
+      else if (!live.live) store.deletePendingAgent(agent.key_id)
+    }
+  }
   /** Every write that changes a team carries a signature by that team account's root key. */
   const authorize = (ctx: HandlerContext, account: Address, network: NetworkName, body: unknown) =>
     requireTeamSignature(store, ctx.req, { method: ctx.req.method ?? 'POST', path: ctx.path, account, chainId: chains[network].config.chainId, body })
@@ -150,7 +170,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     route('GET', '/api/teams/:account', async ({ params }) => {
       const account = address(params['account'], 'account')
       const team = teamOf(account)
-      store.purgePendingAgents(account)
+      await sweepPending(account)
       const chain = chains[team.network]
       const deposit = await budgetBalance(chain, account).then(
         (b) => ({ token: chain.token, units: String(b.balance), block: Number(b.block), chainId: chain.config.chainId, error: null }),
@@ -233,7 +253,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       const offered = servicesOn(team.network)
       if (!requested.every((id) => offered.some((s) => s.serviceId === id))) throw bad(`serviceIds may only contain ${offered.map((s) => s.serviceId).join(', ')}`)
       if (new Set(requested).size !== requested.length) throw bad('serviceIds must not repeat')
-      store.purgePendingAgents(account)
+      await sweepPending(account)
       const maxAgents = team.network === 'mainnet' ? MAINNET_CAPS.maxOpenAgents : MAX_OPEN_AGENTS
       if (store.openAgentCount(account) >= maxAgents) throw conflict('too_many_agents', `a team can hold at most ${maxAgents} agents`)
 
@@ -270,15 +290,10 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       const b = await body(ctx.req)
       authorize(ctx, agent.account, teamOf(agent.account).network, b)
       const tx = txHash(b['tx'])
-      if (agent.status === 'pending' && Date.parse(agent.created_at) < Date.now() - PENDING_TTL_MS) {
-        store.purgePendingAgents(agent.account)
-        throw conflict('pending_expired', `agent ${agent.key_id} was not authorized within an hour and was dropped: add it again`)
-      }
       if (agent.status === 'revoked') throw conflict('agent_revoked', `agent ${agent.key_id} is revoked`)
       if (agent.status === 'active') return { keyId: agent.key_id, status: 'active', authorizeTx: agent.authorize_tx }
-      const chain = chainOfAgent(agent)
-      const planned = servicesOn(chain.name).filter((s) => serviceIdsOf(agent).includes(s.serviceId)).map((s) => s.recipient)
-      const check = await verifyAuthorize(chain, { tx, account: agent.account, keyId: agent.key_id, plannedRecipients: planned })
+      // The chain is read first: a confirm that arrives late still activates a key that is live as planned.
+      const check = await verifyAuthorize(chainOfAgent(agent), { tx, ...planOf(agent) })
       if (!check.ok) throw new HttpError(422, 'authorize_not_confirmed', check.reason)
       store.setAgentStatus(agent.key_id, 'active', tx)
       return { keyId: agent.key_id, status: 'active', authorizeTx: tx, block: check.block }
@@ -304,10 +319,11 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     }),
 
     route('POST', '/api/agents/:keyId/records', async ({ params, req }) => {
-      if (!ipLimit.take(clientOf(req))) throw new HttpError(429, 'rate_limited', 'too many records from this address: slow down')
       const agent = agentOf(params['keyId']!)
       if (agent.external !== 1) throw conflict('not_external', `agent ${agent.key_id} runs inside Leash: the runner writes its records`)
       if (agent.status !== 'active') throw conflict('agent_not_active', `agent ${agent.key_id} is ${agent.status}`)
+      // Taken only for a live agent, so posts to keys that do not exist cannot drain anyone's allowance.
+      if (!ipLimit.take(clientOf(req))) throw new HttpError(429, 'rate_limited', 'too many records from this address: slow down')
       const b = await body(req)
       const record = parseRecord(b['record'], { keyId: agent.key_id, account: agent.account })
       // The signature covers the record exactly as the agent sent it, so it is checked against the parsed JSON, not a re-shaped copy.

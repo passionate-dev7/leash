@@ -79,9 +79,10 @@ export function createStore(db: Db, cipher: Cipher) {
     setKey: db.prepare('update agent set private_key = ? where key_id = ?'),
     // Only records backed by a settlement the desk read from chain rank a team: a refused or unsettled record is the agent's word.
     mostRecords: db.prepare("select r.account from record r join team t on t.account = r.account where r.settlement_tx is not null and (? = 1 or t.network = 'moderato') group by r.account order by count(*) desc, min(r.seq) limit 1"),
-    // A pending agent holds a slot only while its authorization can still arrive.
-    countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and (status = 'active' or (status = 'pending' and created_at >= ?))"),
-    purgePending: db.prepare("delete from agent where account = ? and status = 'pending' and created_at < ?"),
+    // A pending row holds a slot until the sweep finds its key absent from the chain and deletes it.
+    countOpenAgents: db.prepare("select count(*) as n from agent where account = ? and status in ('active', 'pending')"),
+    expiredPending: db.prepare("select * from agent where account = ? and status = 'pending' and created_at < ?"),
+    deletePending: db.prepare("delete from agent where key_id = ? and status = 'pending'"),
     claimDesk: db.prepare('insert or ignore into desk_seen(digest, expires_at) values (?, ?)'),
     pruneDesk: db.prepare('delete from desk_seen where expires_at < ?'),
     setAgent: db.prepare('update agent set status = ?, authorize_tx = coalesce(?, authorize_tx) where key_id = ?'),
@@ -183,9 +184,10 @@ export function createStore(db: Db, cipher: Cipher) {
     /** The team with the most ledger records, or undefined on an empty ledger. Mainnet teams count only when the desk runs them. */
     busiestTeam: (includeMainnet = true) => (q.mostRecords.get(includeMainnet ? 1 : 0) as { account: Address } | undefined)?.account,
     agents: (account: Address) => rows<AgentRow>(q.agents.all(account)),
-    openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account, new Date(Date.now() - PENDING_TTL_MS).toISOString()) as { n: number }).n),
+    openAgentCount: (account: Address) => Number((q.countOpenAgents.get(account) as { n: number }).n),
     /** Drops the team's pending agents whose authorization window passed. Returns how many it removed. */
-    purgePendingAgents: (account: Address): number => Number(q.purgePending.run(account, new Date(Date.now() - PENDING_TTL_MS).toISOString()).changes),
+    expiredPendingAgents: (account: Address) => rows<AgentRow>(q.expiredPending.all(account, new Date(Date.now() - PENDING_TTL_MS).toISOString())),
+    deletePendingAgent: (keyId: Address) => q.deletePending.run(keyId),
     /** Claims a signed request's digest. False when it was claimed before: a replay. */
     claimDeskDigest(digest: string, expiresAtMs: number): boolean {
       q.pruneDesk.run(Date.now())
