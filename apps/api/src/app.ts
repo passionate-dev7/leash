@@ -25,6 +25,8 @@ import type { AgentRow, Store, TeamRow } from './store.js'
 const FAUCET_WINDOW_MS = 10 * 60_000
 const FAUCET_GLOBAL_PER_HOUR = 60
 const MAX_OPEN_AGENTS = 25
+/** How often one team's stale pending rows are checked against the chain. */
+const SWEEP_INTERVAL_MS = 30_000
 const DECIMALS = 6
 /** Record intake: a burst of 60 per agent key then one a second, and twice that per client address. */
 const RECORDS_PER_KEY = { capacity: 60, perSecond: 1 }
@@ -93,9 +95,22 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
    * A pending row older than an hour is deleted only when its key is not on chain. A key that is live as
    * planned becomes active (its confirm never arrived); one live with other terms stays pending and holds its slot.
    */
-  const sweepPending = async (account: Address) => {
+  // ponytail: in-memory, so it assumes the one machine fly.toml runs (replay protection assumes it too).
+  const lastSweep = new Map<Address, number>()
+  const confirming = new Set<Address>()
+  /** `throttled` for the unauthenticated team read; a signed agent add always sweeps, since its slot count depends on it. */
+  const sweepPending = async (account: Address, throttled = false) => {
+    if (throttled && Date.now() - (lastSweep.get(account) ?? 0) < SWEEP_INTERVAL_MS) return
+    lastSweep.set(account, Date.now())
     for (const agent of store.expiredPendingAgents(account)) {
-      const live = await verifyLiveKey(chainOfAgent(agent), planOf(agent))
+      // A confirm in flight decides this row itself; deleting it under the confirm would orphan a live key.
+      if (confirming.has(agent.key_id)) continue
+      const live = await verifyLiveKey(chainOfAgent(agent), planOf(agent)).catch((e: Error) => {
+        // A read that fails keeps the row: the next sweep tries again, and nothing is deleted on a guess.
+        console.warn(`sweep ${agent.key_id}: ${e.message.split('\n')[0]}`)
+        return null
+      })
+      if (live === null || confirming.has(agent.key_id)) continue
       if (live.ok) store.setAgentStatus(agent.key_id, 'active')
       else if (!live.live) store.deletePendingAgent(agent.key_id)
     }
@@ -170,7 +185,7 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
     route('GET', '/api/teams/:account', async ({ params }) => {
       const account = address(params['account'], 'account')
       const team = teamOf(account)
-      await sweepPending(account)
+      await sweepPending(account, true)
       const chain = chains[team.network]
       const deposit = await budgetBalance(chain, account).then(
         (b) => ({ token: chain.token, units: String(b.balance), block: Number(b.block), chainId: chain.config.chainId, error: null }),
@@ -293,10 +308,15 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       if (agent.status === 'revoked') throw conflict('agent_revoked', `agent ${agent.key_id} is revoked`)
       if (agent.status === 'active') return { keyId: agent.key_id, status: 'active', authorizeTx: agent.authorize_tx }
       // The chain is read first: a confirm that arrives late still activates a key that is live as planned.
-      const check = await verifyAuthorize(chainOfAgent(agent), { tx, ...planOf(agent) })
-      if (!check.ok) throw new HttpError(422, 'authorize_not_confirmed', check.reason)
-      store.setAgentStatus(agent.key_id, 'active', tx)
-      return { keyId: agent.key_id, status: 'active', authorizeTx: tx, block: check.block }
+      confirming.add(agent.key_id)
+      try {
+        const check = await verifyAuthorize(chainOfAgent(agent), { tx, ...planOf(agent) })
+        if (!check.ok) throw new HttpError(422, 'authorize_not_confirmed', check.reason)
+        store.setAgentStatus(agent.key_id, 'active', tx)
+        return { keyId: agent.key_id, status: 'active', authorizeTx: tx, block: check.block }
+      } finally {
+        confirming.delete(agent.key_id)
+      }
     }),
 
     route('POST', '/api/agents/:keyId/run', async (ctx) => {

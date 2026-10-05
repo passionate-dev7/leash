@@ -501,7 +501,7 @@ function AgentRow({ agent, account, client, catalog, onChange }: { agent: AgentV
             <Button size="sm" variant="tertiary" disabled={agent.status !== 'active'} onClick={() => setOpen((v) => !v)}>
               {open ? 'Close' : agent.external ? 'Connect' : 'Run research'}
             </Button>
-            <Button size="sm" variant="ghost" disabled={agent.status !== 'active'} busy={revoking} onClick={revoke}>
+            <Button size="sm" variant="ghost" disabled={agent.status === 'revoked'} busy={revoking} onClick={revoke}>
               Revoke
             </Button>
           </span>
