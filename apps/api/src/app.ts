@@ -1,10 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { encodeFunctionData, parseUnits } from 'viem'
+import { encodeFunctionData, formatUnits, parseUnits } from 'viem'
 import type { Address } from 'viem'
 import { generatePrivateKey, privateKeyToAddress } from 'viem/accounts'
 import { Abis, Addresses } from 'viem/tempo'
 import { getAllowedCalls, getRemainingLimit, planCutoff } from '@leash/sdk'
-import { SELECTOR } from '@leash/policy'
+import { MAINNET_CAPS, SELECTOR } from '@leash/policy'
 import type { ServiceId, VendorRouter } from '@leash/vendors'
 import type { NetworkName } from '@leash/sdk'
 import { requireTeamSignature } from './auth.js'
@@ -226,13 +226,16 @@ export function createApp({ store, runner, vendors, sponsor, mainnet = false }: 
       const unit = team.network === 'mainnet' ? 'USDC.e' : 'OUSD'
       if (!/^\d{1,7}(\.\d{1,6})?$/.test(budget) || parseUnits(budget, DECIMALS) <= 0n) throw bad(`budget must be a positive decimal ${unit} amount such as "1.50"`)
       const periodSeconds = integer(b['periodSeconds'], 'periodSeconds', 60, 365 * 86_400)
+      if (team.network === 'mainnet' && (parseUnits(budget, DECIMALS) > MAINNET_CAPS.maxBudgetUnits || periodSeconds < MAINNET_CAPS.minPeriodSeconds))
+        throw conflict('mainnet_cap', `a mainnet agent spends at most ${formatUnits(MAINNET_CAPS.maxBudgetUnits, DECIMALS)} USDC.e per day`)
       const requested = b['serviceIds']
       if (!Array.isArray(requested) || requested.length === 0 || requested.length > 10) throw bad('serviceIds must be a non-empty list of service ids')
       const offered = servicesOn(team.network)
       if (!requested.every((id) => offered.some((s) => s.serviceId === id))) throw bad(`serviceIds may only contain ${offered.map((s) => s.serviceId).join(', ')}`)
       if (new Set(requested).size !== requested.length) throw bad('serviceIds must not repeat')
       store.purgePendingAgents(account)
-      if (store.openAgentCount(account) >= MAX_OPEN_AGENTS) throw conflict('too_many_agents', `a team can hold at most ${MAX_OPEN_AGENTS} agents`)
+      const maxAgents = team.network === 'mainnet' ? MAINNET_CAPS.maxOpenAgents : MAX_OPEN_AGENTS
+      if (store.openAgentCount(account) >= maxAgents) throw conflict('too_many_agents', `a team can hold at most ${maxAgents} agents`)
 
       const cut = store.blocked(account)
       const catalog = offered

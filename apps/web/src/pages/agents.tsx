@@ -10,13 +10,14 @@ import { waitForSuccess } from '@/lib/chain'
 import type { RootClient } from '@/lib/chain'
 import { usePoll } from '@/lib/session'
 import { money, short, units } from '@/lib/format'
-import { parseUnits } from 'viem'
+import { formatUnits, parseUnits } from 'viem'
 import { Button } from '@/components/ui/button'
 import { Check, Field, Input, Radio } from '@/components/ui/form'
 import { Empty, Notice, Panel, Status, TxLink } from '@/components/ui/status'
 import { NeedsTeam, PageHead, Cell, Table, TBody, Th, THead, Tr } from '@/components/page'
 import { RecordTable } from '@/components/records'
 import { CallReview } from '@/components/review'
+import { MAINNET_CAPS } from '@leash/policy/constants'
 import { assertAuthorize, buildRevokeCall, reviewRevoke } from '@/lib/verifyCalls'
 import type { Review } from '@/lib/verifyCalls'
 import { asRecords } from '@/lib/records'
@@ -110,7 +111,9 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
   const [attempted, setAttempted] = useState(false)
   const errors = {
     name: name.trim().length >= 2 ? null : 'Enter a name of at least 2 characters.',
-    budget: /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0 ? null : budget.trim() === '' ? `Enter a daily budget in ${net.symbol}.` : 'Enter a positive amount with up to 6 decimals.',
+    budget: /^\d{1,6}(\.\d{1,6})?$/.test(budget) && Number(budget) > 0
+      ? net.name === 'mainnet' && parseUnits(budget, 6) > MAINNET_CAPS.maxBudgetUnits ? `A mainnet agent spends at most ${formatUnits(MAINNET_CAPS.maxBudgetUnits, 6)} ${net.symbol} a day.` : null
+      : budget.trim() === '' ? `Enter a daily budget in ${net.symbol}.` : 'Enter a positive amount with up to 6 decimals.',
     services: picked.size > 0 ? null : 'Select at least one service this key may pay.',
     ownKey: mode === 'desk' || /^0x[0-9a-fA-F]{40}$/.test(ownKey.trim()) ? null : ownKey.trim() === '' ? 'Paste the key id printed by leash-agent init.' : 'A key id is an address: 0x followed by 40 hex characters.',
   }
@@ -151,6 +154,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
         budgetUnits: parseUnits(budget, 6),
         periodSeconds: 86400,
         recipients: [...picked].map((id) => byId.get(id)?.recipient).filter((r): r is Address => !!r),
+        ...(net.name === 'mainnet' ? { cap: MAINNET_CAPS } : {}),
       })
       setReview(decoded)
       mark(stage, 'done')

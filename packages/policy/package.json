@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./desk-auth": "./src/desk-auth.ts",
     "./cutoff": "./src/cutoff.ts",
+    "./constants": "./src/constants.ts",
     "./data/*": "./data/*"
   },
   "scripts": {

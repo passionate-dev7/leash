@@ -147,7 +147,7 @@ test('a mainnet record that pays in another token is rejected before any chain r
   // The settlement check comes after the signature check, so the agent must be one whose key this test holds.
   const held = generatePrivateKey()
   const heldId = privateKeyToAccount(held).address
-  await d('POST', `/api/teams/${MAINNET_TEAM}/agents`, { name: 'held', budget: '1', periodSeconds: 3600, serviceIds: ['openai'], external: true, keyId: heldId })
+  await d('POST', `/api/teams/${MAINNET_TEAM}/agents`, { name: 'held', budget: '1', periodSeconds: 86_400, serviceIds: ['openai'], external: true, keyId: heldId })
   on.store.setAgentStatus(heldId, 'active', `0x${'ce'.repeat(32)}`)
   const mine = { ...rec, keyId: heldId }
   const r = await d('POST', `/api/agents/${heldId}/records`, { record: mine, signature: await signRecord(held, mine) })
@@ -199,4 +199,19 @@ test('teams created before mainnet teams existed read back as moderato teams', (
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
+})
+
+test('a mainnet agent is capped at 25 USDC.e a day, and a mainnet team at five open agents', async () => {
+  const d = mcall(on)
+  const AGENT = { name: 'capped', budget: '25', periodSeconds: 86_400, serviceIds: ['openai'], external: true }
+  for (const over of [{ budget: '25.000001' }, { budget: '1', periodSeconds: 86_399 }]) {
+    const r = await d('POST', `/api/teams/${MAINNET_TEAM}/agents`, { ...AGENT, ...over, keyId: privateKeyToAccount(generatePrivateKey()).address })
+    assert.equal(r.status, 409, JSON.stringify(over))
+    assert.equal(r.json['error'], 'mainnet_cap')
+  }
+  const statuses: number[] = []
+  for (let i = 0; i < 6; i++) statuses.push((await d('POST', `/api/teams/${MAINNET_TEAM}/agents`, { ...AGENT, keyId: privateKeyToAccount(generatePrivateKey()).address })).status)
+  assert.ok(statuses.includes(200), 'the cap admits an agent at exactly 25 USDC.e a day')
+  assert.equal(statuses.at(-1), 409)
+  assert.equal(on.store.openAgentCount(MAINNET_TEAM), 5)
 })

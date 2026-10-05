@@ -108,3 +108,12 @@ test('an authorize plan is refused when the key, limit, token, scope, recipients
   // the user pasted a different key id
   authorizeRefused(() => undefined, { keyId: K2 })
 })
+
+test('on mainnet an authorize plan above 25 USDC.e a day is refused, even when it matches what was entered', () => {
+  const cap = { maxBudgetUnits: 25_000_000n, minPeriodSeconds: 86_400 }
+  const atCap = honest()
+  atCap.limits = [{ token: USDCE, limit: '25000000', period: 86_400 }]
+  assertAuthorize(atCap, { ...expected, budgetUnits: 25_000_000n, cap })
+  authorizeRefused((p) => { p.limits = [{ token: USDCE, limit: '25000001', period: 86_400 }] }, { budgetUnits: 25_000_001n, cap })
+  authorizeRefused((p) => { p.limits = [{ token: USDCE, limit: '2500000', period: 3_600 }] }, { periodSeconds: 3_600, cap })
+})

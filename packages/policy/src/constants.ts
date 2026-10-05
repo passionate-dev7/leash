@@ -96,3 +96,14 @@ export const PERIOD = {
   month: 2_592_000,
   never: 0,
 } as const
+
+/**
+ * Mainnet launch caps. One agent key spends at most 25 USDC.e per day, and a mainnet team holds at most
+ * five keys, so a team whose every agent key leaks loses at most 125 USDC.e a day. The API refuses a plan
+ * above them and the browser refuses to sign one.
+ */
+export const MAINNET_CAPS = {
+  maxBudgetUnits: 25_000_000n,
+  minPeriodSeconds: PERIOD.day,
+  maxOpenAgents: 5,
+} as const

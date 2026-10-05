@@ -63,6 +63,8 @@ export function assertAuthorize(
     periodSeconds: number
     /** The payout addresses of the services the user picked. The key may be scoped to some of them, never to another. */
     recipients: readonly Address[]
+    /** Mainnet launch caps: the most one key may spend per period, and the shortest period allowed. */
+    cap?: { maxBudgetUnits: bigint; minPeriodSeconds: number }
     nowSeconds?: number
   },
 ): Review {
@@ -77,6 +79,8 @@ export function assertAuthorize(
   if (!same(limit.token, expected.token)) throw new RefusedToSign(`the limit is on ${limit.token}, not ${expected.token} (${expected.symbol})`)
   if (BigInt(limit.limit) !== expected.budgetUnits) throw new RefusedToSign(`the limit is ${formatUnits(BigInt(limit.limit), DECIMALS)} ${expected.symbol}, not the ${formatUnits(expected.budgetUnits, DECIMALS)} you entered`)
   if (limit.period !== expected.periodSeconds) throw new RefusedToSign(`the limit period is ${limit.period} seconds, not ${expected.periodSeconds}`)
+  if (expected.cap && (BigInt(limit.limit) > expected.cap.maxBudgetUnits || limit.period < expected.cap.minPeriodSeconds))
+    throw new RefusedToSign(`the limit is above the mainnet cap of ${formatUnits(expected.cap.maxBudgetUnits, DECIMALS)} ${expected.symbol} per day`)
 
   if (payload.scopes.length !== 1) throw new RefusedToSign(`the plan has ${payload.scopes.length} call scopes, not one`)
   const scope = payload.scopes[0]!
