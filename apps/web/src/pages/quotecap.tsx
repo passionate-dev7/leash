@@ -217,7 +217,7 @@ function ForJudges() {
   return (
     <Block id="judge-h" title="Check it in two minutes">
       <ol className="grid list-decimal gap-3 pl-5">
-        <li>On this page, keep "No prompt" and press "Let the agent pay this quote". The real $10.00 quote is refused against the $0.039 listing. Pick "With prompt" or "Listed" to see a quote pass.</li>
+        <li>On this page, keep "No prompt" and press "Let the agent pay this quote". The real $10.00 quote is refused against the $0.039 listing. Pick "Listed", or "With prompt" with the allowance at 2x, to see a quote pass.</li>
         <li>Scroll to the fork run: the $10.00 bypass and the payment to another vendor both revert on chain. These hashes exist only on a local anvil fork of Tempo mainnet.</li>
         <li>Open <a className="text-ink underline underline-offset-4" href="#/delivery-cut">Delivery Cut</a> and press "Sign the cut": fal's next charge reverts and stablestudio still gets paid.</li>
         <li>Rerun it yourself from the repo: <span className="hash text-body-sm text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-body-sm text-ink">scripts/fork/run-delivery-cut.sh</span> (needs Foundry, no funds) and <span className="hash text-body-sm text-ink">pnpm -r test</span>.</li>

@@ -2,7 +2,7 @@
 
 **Your agent never pays more than the price on the menu.**
 
-Live: https://leash-eiy.pages.dev/#/quote-cap (Cloudflare Pages; API https://leash-api.fly.dev). Deploy: `pnpm --filter @leash/web run deploy`.
+Live: https://leash-eiy.pages.dev/#/quote-cap and https://leash-eiy.pages.dev/#/delivery-cut (Cloudflare Pages; API https://leash-api.fly.dev). Deploy: `pnpm --filter @leash/web run deploy`.
 
 An MPP vendor names its price in the 402 challenge, and a default mppx client signs whatever it names
 (mppx 0.12 and 0.13.4 have no max-amount check). On Tempo mainnet on 2026-10-10, stablestudio listed
@@ -34,13 +34,48 @@ const { response, record } = await pay('https://stablestudio.dev/api/generate/na
 Demo UI: `pnpm --filter @leash/web dev`, open `#/quote-cap` (the landing page). Republish the fork run to the
 UI with `python3 scripts/fork/to-web.py`.
 
-Tests: `pnpm test` (policy, 73 incl. 11 Quote-Cap/Route), `pnpm --filter @leash/sdk test` (4: real
+Tests: `pnpm test` (policy, 80 incl. Quote-Cap, Route and Delivery Cut), `pnpm --filter @leash/sdk test` (6: real
 stablestudio 402s replayed through the payment path, fetch stubbed, nothing signed on refusal),
 `pnpm test:adversarial` (20, live Moderato), `apps/api` 55, `apps/web` 7, `apps/vendors` 9.
 
+- **Delivery Cut** (`packages/policy` `judgeDelivery` / `decideCuts`, demo `scripts/fork/run-delivery-cut.sh`):
+  a vendor that settled a charge and then failed (fal's real 402, with the 422 failure pattern from
+  [tempoxyz/mpp#1034](https://github.com/tempoxyz/mpp/issues/1034), where 42 of 89 paid calls failed) is removed
+  from the agent key with one signature; its next charge reverts on the fork and stablestudio still gets paid.
+  Caveat: a cut removes a payout address. In our unpaid 402 probes of mpp.tempo.xyz on 2026-10-03
+  (`research/platform/scripts/probe-all402.json` in the cwf workspace), fal's recipient was also the recipient for
+  openai, firecrawl and nine other gateways, so the cut would stop those too. The fork run only charged fal and stablestudio.
+
+## Check it in two minutes (judges)
+
+1. Open https://leash-eiy.pages.dev/#/quote-cap, keep "No prompt", press **Let the agent pay this quote**: the real
+   $10.00 stablestudio quote is refused against its $0.039 listing. "With prompt" ($0.07, 1.8x the listing) is refused
+   at "Exact" and "+50%" and passes at "2x"; "Listed" passes.
+2. Scroll to the fork run: the $10.00 bypass and the payment to another vendor revert on chain (local anvil fork
+   of Tempo mainnet; hashes exist only there, revert reasons inferred).
+3. Open https://leash-eiy.pages.dev/#/delivery-cut, press **Sign the cut**: fal's next charge reverts, stablestudio still settles.
+4. Reproduce: `scripts/fork/setup-foundry.sh`, then `scripts/fork/run-fork-demo.sh` and `scripts/fork/run-delivery-cut.sh`
+   (Foundry, public Tempo RPC, no funds), and `pnpm install && pnpm -r test`.
+
+## Business model (planned; no customers or revenue yet)
+
+The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents
+would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and
+one-signature cuts. Route could later take a small share of the saving it finds on each call.
+
+## Neighbours in the World's Fair
+
+- **Setra402** ([@510Sulove](https://x.com/510Sulove/status/2102234121171079449)): "trust layer for agent payments",
+  for agents that "pay upfront without execution guarantees". Same problem as Delivery Cut. Its chain and mechanism
+  are not public in what we found, so we claim no difference beyond what Leash itself shows: a price check before the
+  key signs, and a cut enforced by the Tempo access key, both run on a Tempo-mainnet fork with real captured 402s.
+- **Rolepay** ([@filipebaleixo](https://x.com/filipebaleixo/status/2108676772212695189)): Discord communities pay human
+  contributors in stablecoins on Tempo, one transaction per payout round, payees on passkeys. Same chain, different job:
+  Rolepay pays people; Leash limits what software agents pay vendors.
+
 ### Built before vs during the World's Fair
 - Before (Sep 2026): the spend desk below: per-agent access keys, delivery ledger, vendor cut-off, API, console.
-- During (Oct 10-13): Quote-Cap guard, price book, Route, Quote-Cap UI, fork proof, gateway-retry fix for the live suite.
+- During (Oct 10-13): Quote-Cap guard, price book, Route, Delivery Cut, Quote-Cap and Delivery Cut UI, fork proofs, gateway-retry fix for the live suite.
 
 ---
 
