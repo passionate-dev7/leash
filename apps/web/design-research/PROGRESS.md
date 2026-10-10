@@ -6,3 +6,4 @@
 - gate: docs/design/review/gate-r6.txt, exit 0. Tests: docs/design/review/tests-r6.txt, all green.
 - Next (non-blocking r6 findings): sticky mobile CTA below md; delivery-cut left gap at 1440 (row-span-2); soften "this one cut stops all three"; red use on delivery-cut.
 - Shots: docs/design/review/shots-r6 via `node design-research/shots.cjs <base> <prefix>` (Playwright; deepsurge was wedged).
+- Deployed r6 to https://leash-eiy.pages.dev (deployment 72c01d60) after gate exit 0; live verification shots in docs/design/review/shots-live-r6; PRODUCTS.md updated.
