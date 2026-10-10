@@ -1,4 +1,48 @@
-# Leash
+# Leash Quote-Cap
+
+**Your agent never pays more than the price on the menu.**
+
+An MPP vendor names its price in the 402 challenge, and a default mppx client signs whatever it names
+(mppx 0.12 and 0.13.4 have no max-amount check). On Tempo mainnet on 2026-10-10, stablestudio listed
+`POST /api/generate/nano-banana/generate` at **$0.039** in the mpp.dev catalog and its 402 asked for
+**$10.00** when the prompt was missing (and $0.07 with a valid prompt). 13 of 273 parsed mainnet challenges
+did not match their listing. Leash checks every quote against the listing *before the agent key signs*.
+
+- **Quote-Cap guard** (`packages/policy/src/quote-cap.ts`, wired into `createLeashFetch` in
+  `packages/sdk/src/mpp.ts`): refuses a quote above listing + tolerance, above a per-call cap, in the wrong
+  currency, or (optionally) for an unlisted endpoint. It throws in mppx `onChallenge`, so no credential is
+  created and no transaction signed. The record carries `refused: "QuoteCapExceeded"` with listed / quoted / ceiling.
+- **Route** (`packages/policy/src/route.ts`): the same upstream API sold by several MPP sellers, cheapest
+  listing first (Hunter email verifier $0.008 vs $0.03, Apollo people search $0.005 vs $0.02, Firecrawl
+  scrape $0.002 vs $0.0126). Output equivalence across sellers is not verified with paid calls.
+- **Chain lock behind the guard**: the agent's Tempo access key is scoped to the vendor payout with a spend
+  limit, so a bypassed guard still cannot overspend. Shown on an anvil fork of Tempo mainnet
+  (`scripts/fork/run-fork-demo.sh`, see `scripts/fork/FORK.md`): two paid calls, guard refusal of the $10.00
+  quote, chain reverts for the bypass ($10.00 > $0.20 limit) and for a different vendor. Fork hashes exist
+  only on the local fork; revert names are inferred. Tenderly does not support Tempo.
+
+```ts
+import { createLeashFetch } from '@leash/sdk'
+import { loadPriceBook, DEFAULT_QUOTE_CAP } from '@leash/policy'
+const pay = createLeashFetch({ network, agent, quoteCap: { book: loadPriceBook(), policy: { ...DEFAULT_QUOTE_CAP, toleranceBps: 10_000 } } })
+const { response, record } = await pay('https://stablestudio.dev/api/generate/nano-banana/generate', { method: 'POST', body: '{}' })
+// record.refused === 'QuoteCapExceeded', record.quote = { listed: '39000', quoted: '10000000', ... }
+```
+
+Demo UI: `pnpm --filter @leash/web dev`, open `#/quote-cap` (the landing page). Republish the fork run to the
+UI with `python3 scripts/fork/to-web.py`.
+
+Tests: `pnpm test` (policy, 73 incl. 11 Quote-Cap/Route), `pnpm --filter @leash/sdk test` (4: real
+stablestudio 402s replayed through the payment path, fetch stubbed, nothing signed on refusal),
+`pnpm test:adversarial` (20, live Moderato), `apps/api` 55, `apps/web` 7, `apps/vendors` 9.
+
+### Built before vs during the World's Fair
+- Before (Sep 2026): the spend desk below: per-agent access keys, delivery ledger, vendor cut-off, API, console.
+- During (Oct 10-13): Quote-Cap guard, price book, Route, Quote-Cap UI, fork proof, gateway-retry fix for the live suite.
+
+---
+
+## The spend desk (built before)
 
 The spend desk for teams whose AI agents pay for APIs over MPP on Tempo.
 
