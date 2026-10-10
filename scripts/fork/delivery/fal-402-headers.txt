@@ -1,0 +1,15 @@
+HTTP/2 402 
+date: Sat, 10 Oct 2026 12:42:51 GMT
+content-type: application/problem+json
+content-length: 421
+access-control-allow-origin: *
+cache-control: no-store
+www-authenticate: Payment id="gQVThVDlOTFQf97-fj_1tI7BR0ayrardlQU7-mYEM4Q", realm="fal.mpp.tempo.xyz", method="tempo", intent="charge", request="eyJhbW91bnQiOiIzMDAwIiwiY3VycmVuY3kiOiIweDIwYzAwMDAwMDAwMDAwMDAwMDAwMDAwMGI5NTM3ZDExYzYwZThiNTAiLCJtZXRob2REZXRhaWxzIjp7ImNoYWluSWQiOjQyMTcsImZlZVBheWVyIjp0cnVlLCJtYWNoaW5lVG9rZW5FbmFibGVkIjp0cnVlfSwicmVjaXBpZW50IjoiMHhjYTRlODM1RjgwM2NCMGI3QzQyODIyMkIzQTNCOTg1MThkNDc3OUZlIn0", description="FLUX.1 [schnell] - Fast text-to-image (1-4 steps)", expires="2026-10-10T12:47:51.161Z", opaque="eyJfbXBweF9zY29wZSI6IlBPU1QgL2ZhbC9mYWwtYWkvZmx1eC9zY2huZWxsIn0", Payment id="VvUfFfuh4Bu3hPrX0_2d9AITvELdsLrXDcJsCtlgtRc", realm="fal.mpp.tempo.xyz", method="tempo", intent="charge", request="eyJhbW91bnQiOiIzMDAwIiwiY3VycmVuY3kiOiIweDIwYzAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJtZXRob2REZXRhaWxzIjp7ImNoYWluSWQiOjQyMTcsImZlZVBheWVyIjp0cnVlLCJtYWNoaW5lVG9rZW5FbmFibGVkIjp0cnVlfSwicmVjaXBpZW50IjoiMHhjYTRlODM1RjgwM2NCMGI3QzQyODIyMkIzQTNCOTg1MThkNDc3OUZlIn0", description="FLUX.1 [schnell] - Fast text-to-image (1-4 steps)", expires="2026-10-10T12:47:51.161Z", opaque="eyJfbXBweF9zY29wZSI6IlBPU1QgL2ZhbC9mYWwtYWkvZmx1eC9zY2huZWxsIn0"
+access-control-expose-headers: WWW-Authenticate
+x-request-id: d3448481-97bf-4f40-97b6-2a6f65bd14fc
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=pXmapDPlb%2B%2B3I2fq702j7XvTYpEcsGfhH7EbIRABa2%2F%2FUVnEu4dRd%2FTW5aVebRYo0t7eY28SFIXQINEdyXDlQUt3LI6B6fE3kNmrQzzuUwh%2FSjGWc6fEG0ATy%2BjHu5cLEuNEGMLJuvJcx3H2OcZ%2B"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+server: cloudflare
+cf-ray: a485b514ecb797f7-DEL
+alt-svc: h3=":443"; ma=86400
+

@@ -11,7 +11,8 @@
     "./constants": "./src/constants.ts",
     "./data/*": "./data/*",
     "./quote-cap": "./src/quote-cap.ts",
-    "./route": "./src/route.ts"
+    "./route": "./src/route.ts",
+    "./delivery-cut": "./src/delivery-cut.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
