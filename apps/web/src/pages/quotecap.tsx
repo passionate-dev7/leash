@@ -33,7 +33,7 @@ const CAPS = [
 const usd = (x: bigint | string) => `$${formatUnits(BigInt(x))}`
 
 type ForkStep = { step: string; label: string; status: string; tx: string | null; amount?: number | null; error?: string | null }
-type ForkProof = { fork?: string; chainId?: number; block?: number; steps: ForkStep[] }
+type ForkProof = { fork?: string; chainId?: number; block?: number; limitBefore?: string; limitAfter?: string; steps: ForkStep[] }
 
 function useForkProof() {
   const [proof, setProof] = useState<ForkProof | null>(null)
@@ -204,6 +204,11 @@ function ForkProofSection() {
       <p className="mt-2 max-w-2xl text-body text-ink-muted">
         The same three stablestudio quotes, paid (or refused) by a scoped agent key on a local fork of Tempo mainnet. No real funds move.
       </p>
+      {proof && (
+        <p className="mt-4 text-caption text-ink-muted">
+          anvil fork of {proof.fork} at block <span className="num">{proof.block?.toLocaleString()}</span>, chain {proof.chainId}. Agent key limit {usd(proof.limitBefore ?? '0')} before, {usd(proof.limitAfter ?? '0')} left after. Revert reasons are inferred: the fork returns no revert data. Tenderly does not support Tempo.
+        </p>
+      )}
       {proof ? (
         <ol className="mt-6 border border-hairline">
           {proof.steps.map((s, i) => (
@@ -211,7 +216,7 @@ function ForkProofSection() {
               <div>
                 <p className="text-body-sm">{s.label}</p>
                 {s.error && <p className="mt-1 font-mono text-caption text-error-ink">{s.error}</p>}
-                {s.tx && <p className="mt-1 truncate font-mono text-caption text-ink-subtle">tx {s.tx}</p>}
+                {s.tx && <p className="mt-1 truncate font-mono text-caption text-ink-subtle">local-fork tx (not on mainnet) {s.tx}</p>}
               </div>
               <span className={cn('self-start px-2 py-0.5 text-caption', /refus|revert/i.test(s.status) ? 'bg-error-tint text-error-ink' : /success|pass|ok/i.test(s.status) ? 'bg-success-tint text-success-ink' : 'bg-surface-1 text-ink-muted')}>{s.status}</span>
             </li>
