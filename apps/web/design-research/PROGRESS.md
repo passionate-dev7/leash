@@ -8,3 +8,4 @@
 - Shots: docs/design/review/shots-r6 via `node design-research/shots.cjs <base> <prefix>` (Playwright; deepsurge was wedged).
 - Deployed r6 to https://leash-eiy.pages.dev (deployment 72c01d60) after gate exit 0; live verification shots in docs/design/review/shots-live-r6; PRODUCTS.md updated.
 - r7 (10-11 Oct 2026): sticky mobile CTA (both pages), delivery-cut gap fixed, amber vendor failure, shared-address caveat sourced to probe-all402.json (3 Oct), business model + Setra402/Rolepay + judge steps on #/quote-cap and README. design-review r7 B+/A- 8.2/7.5; gate-r7.txt; tests-r7.txt.
+- r8 (11 Oct): rivals vet402/Fermata/Cursus, layout fixes; design-review r8 B+/A- 8.3/7.5; gate-r8.txt; tests-r8.txt.

@@ -1,0 +1,18 @@
+"claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
+[claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
+Design Score: **B+** (8.3). AI Slop Score: **A-**.
+
+Axes: hierarchy 8.5, primary action 8.5, typography 8.5, density 7.5, color 8.0, consistency 8.5, AI-slop absence 8.5, mobile 8.0. Average 8.3, min 7.5.
+
+Top 5 findings:
+1. **High, evidence:** the payout-address figure on delivery-cut has no block number and no link (`deliverycut.tsx:109`).
+2. **Medium, density:** quote-cap is 3,573px tall at 1440 and 6,480px at 390. Move "Check it in two minutes" above the rivals block.
+3. **Medium, mobile:** the delivery-cut fixed bar covers the first lines of the mechanism sentence on the first phone screen (`deliverycut.tsx:78`). The failed-call row itself is now clear.
+4. **Low to Medium, color:** the signed cut is green (`deliverycut.tsx:81-82`), outside the "green only for an allow" rule.
+5. **Low, consistency:** the two pages show different fork blocks without saying they are separate runs. The mpp.dev price line has a date but no link.
+
+Round 7 status: the honesty finding is reversed by you, so the caveats stay and are not counted. The quote-cap fork section now balances. The quote-cap layout is fixed but the page is longer. The phone failed-row overlap is fixed, but the bar still covers part of the sentence beneath it. The payout-address evidence is still open.
+
+The report path already had a file, and this write replaced it. I did not read it first, so if it held work you wanted, tell me and I'll check.
+
+Several MCP servers need OAuth in claude.ai connector settings or `/mcp`, and gbrain and morph-mcp failed to connect. None were needed for this audit.

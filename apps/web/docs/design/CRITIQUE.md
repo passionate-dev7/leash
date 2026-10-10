@@ -48,4 +48,14 @@ report: /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/desig
 Kept on purpose (owner asked for honest claims): the "no revenue yet", "not seen its chain", fork-only hashes and "did not test the other gateways" caveats that the critic flagged as volunteered gaps.
 Open: delivery-cut fixed bar covers the "fal answered" row on the first 390 screen; quote-cap bottom blocks add ~1,070px at 1440 with lone H2s; fork column ~210px short; probe file has no block number.
 
-FINAL: 8.2 min=7.5 round=7 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r7.md
+r7 FINAL (superseded): 8.2 min=7.5 round=7 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r7.md
+
+## Round 8
+Design Score: B+
+AI Slop Score: A-
+average: 8.3
+min: 7.5
+report: /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r8.md
+Open: probe evidence has no block/link; quote-cap long (3,573px at 1440); mobile bar covers part of the delivery-cut mechanism sentence; signed cut is green; two fork runs at different blocks not labelled.
+
+FINAL: 8.3 min=7.5 round=8 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r8.md
