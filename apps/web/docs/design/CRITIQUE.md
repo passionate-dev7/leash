@@ -37,4 +37,15 @@ report: /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/desig
 
 Round 6 open items (not blocking): sticky mobile CTA, delivery-cut left-column gap at 1440, 'stops all three' claim wording, fork column height, red for vendor failure.
 
-FINAL: 8.3 min=7.0 round=6 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r6.md
+r6 FINAL (superseded): 8.3 min=7.0 round=6 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r6.md
+
+## Round 7
+Design Score: B+
+AI Slop Score: A-
+average: 8.2
+min: 7.5
+report: /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r7.md
+Kept on purpose (owner asked for honest claims): the "no revenue yet", "not seen its chain", fork-only hashes and "did not test the other gateways" caveats that the critic flagged as volunteered gaps.
+Open: delivery-cut fixed bar covers the "fal answered" row on the first 390 screen; quote-cap bottom blocks add ~1,070px at 1440 with lone H2s; fork column ~210px short; probe file has no block number.
+
+FINAL: 8.2 min=7.5 round=7 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r7.md
