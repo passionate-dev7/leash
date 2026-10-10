@@ -17,7 +17,7 @@ type Proof = {
 }
 
 const usd = (x: string | number | bigint) => `$${formatUnits(BigInt(x))}`
-const short = (h: string | null) => (h ? `${h.slice(0, 8)}…${h.slice(-6)}` : '—')
+const short = (h: string | null) => (h ? `${h.slice(0, 8)}…${h.slice(-6)}` : '-')
 
 function useProof() {
   const [p, setP] = useState<Proof | null | undefined>(undefined)
