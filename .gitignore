@@ -23,3 +23,4 @@ scripts/fork/out/anvil.log
 .deploy-web/
 .wrangler/
 scripts/fork/out/dc/anvil.log
+!apps/web/docs/

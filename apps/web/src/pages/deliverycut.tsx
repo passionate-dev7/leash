@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
-import { decideCuts, formatUnits } from '@leash/policy'
-import type { PaidCallOutcome } from '@leash/policy'
-import { cn } from '@/components/ui/cn'
+import { decideCuts } from '@leash/policy/delivery-cut'
+import type { PaidCallOutcome } from '@leash/policy/delivery-cut'
+import { formatUnits } from '@leash/policy/quote-cap'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/shadcn/button'
 
 /**
  * Delivery Cut: a vendor took payment and did not deliver; one signature removes it from the agent key,
@@ -41,7 +43,7 @@ export function DeliveryCutPage() {
 
   return (
     <div className="mx-auto max-w-[880px] py-10">
-      <p className="text-caption text-ink-muted">Delivery Cut</p>
+      <p className="text-body-sm text-ink-muted">Delivery Cut</p>
       <h1 className="mt-2 text-headline">fal took $0.003 and answered 422. One signature, and its next charge fails on chain.</h1>
       <p className="mt-4 max-w-[640px] text-body text-ink-muted">
         On MPP the charge settles before the service checks the request. vet402 paid 89 directory calls on Tempo; 42 settled and then answered 400 or 422.{' '}
@@ -51,15 +53,15 @@ export function DeliveryCutPage() {
       <section aria-label="The paid call" className="mt-10 grid gap-6 md:grid-cols-2">
         <div className="border border-hairline bg-paper p-5">
           <h2 className="text-body-sm">What fal asked</h2>
-          <p className="num mt-3 text-caption text-ink-muted">{proof.vendor.endpoint} · body {'{}'}</p>
+          <p className="num mt-3 text-body-sm text-ink-muted">{proof.vendor.endpoint} · body {'{}'}</p>
           <p className="num mt-2 text-card-title">{usd(proof.vendor.quoted)}</p>
-          <p className="mt-2 text-caption text-ink-muted">Real 402 from {proof.vendor.origin}, captured unpaid by LEASH.</p>
+          <p className="mt-2 text-body-sm text-ink-muted">Real 402 from {proof.vendor.origin}, captured unpaid by LEASH.</p>
         </div>
         <div className="border border-hairline bg-paper p-5">
           <h2 className="text-body-sm">What fal sent back after settling</h2>
           <p className="num mt-3 text-card-title text-error-ink">HTTP {proof.failure.status}</p>
           <pre className="num mt-2 overflow-x-auto bg-surface-1 p-3 text-caption">{proof.failure.body}</pre>
-          <p className="mt-2 text-caption text-ink-muted">Replayed from vet402's report. {proof.failure.note}</p>
+          <p className="mt-2 text-body-sm text-ink-muted">Replayed from vet402's report. {proof.failure.note}</p>
         </div>
       </section>
 
@@ -68,10 +70,9 @@ export function DeliveryCutPage() {
           <p className="text-body">
             {decision?.cut ? <>Paid, not delivered: <span className="num">{usd(decision.lost)}</span> lost to <span className="num">{short(proof.vendor.recipient)}</span>.</> : 'Delivered.'}
           </p>
-          <button type="button" onClick={() => setSigned(true)} disabled={signed}
-            className={cn('min-h-12 cursor-pointer px-6 text-body-sm', signed ? 'border border-ink bg-paper text-ink' : 'bg-ink text-on-primary hover:opacity-90')}>
+          <Button size="lg" variant={signed ? 'outline' : 'default'} onClick={() => setSigned(true)} disabled={signed}>
             {signed ? 'Cut signed' : 'Sign the cut'}
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -81,16 +82,16 @@ export function DeliveryCutPage() {
           {[...before, ...(signed ? after : [])].map((s) => (
             <li key={s.step} className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 py-3">
               <span className="text-body-sm">{s.label}</span>
-              <span className={cn('text-caption', s.status === 'success' ? 'text-success-ink' : 'text-error-ink')}>{s.status}</span>
+              <span className={cn('text-body-sm', s.status === 'success' ? 'text-success-ink' : 'text-error-ink')}>{s.status}</span>
               <span className="num text-caption text-ink-muted">{short(s.tx)}</span>
-              {s.error && <span className="text-caption text-ink-muted">{s.error}</span>}
+              {s.error && <span className="text-body-sm text-ink-muted">{s.error}</span>}
             </li>
           ))}
         </ol>
-        {!signed && <p className="mt-3 text-caption text-ink-muted">Sign the cut to replay the rest of the fork run.</p>}
+        {!signed && <p className="mt-3 text-body-sm text-ink-muted">Sign the cut to replay the rest of the fork run.</p>}
       </section>
 
-      <footer className="mt-10 border-t border-hairline pt-4 text-caption text-ink-muted">
+      <footer className="mt-10 border-t border-hairline pt-4 text-body-sm text-ink-muted">
         <p className="font-semibold text-ink">{proof.label}.</p>
         <p className="mt-1">Anvil fork of Tempo mainnet (chain {proof.chainId}) at block <span className="num">{proof.block}</span>. {proof.caveat}</p>
       </footer>

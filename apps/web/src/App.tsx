@@ -52,7 +52,7 @@ function Shell() {
       <header className="sticky top-0 z-40 border-b border-hairline bg-canvas">
         <div className="mx-auto flex h-12 max-w-[1584px] items-stretch px-4 sm:px-8">
           <a href="#/" className="flex items-center gap-3 pr-8 text-body-sm font-semibold">
-            <span className="font-mono text-body-sm font-semibold">LEASH</span>
+            <span className="text-body font-semibold tracking-tight">Leash</span>
             <span className="hidden text-caption text-ink-subtle lg:inline">spend terminal for paying agents</span>
           </a>
           <nav aria-label="Primary" className="hidden min-w-0 flex-1 items-stretch md:flex">
@@ -75,7 +75,7 @@ function Shell() {
                 <span className="ml-2"><NetworkBadge network={network} /></span>
               </span>
             ) : route.page === 'view' ? null : (
-              <a href="#/team" className="flex items-center border border-ink px-3 py-1.5 text-body-sm text-ink hover:bg-ink hover:text-on-primary">Create a team</a>
+              <a href="#/team" className="flex items-center px-3 py-1.5 text-body-sm text-ink underline underline-offset-4 hover:text-ink-muted">Create a team</a>
             )}
           </div>
           <button
