@@ -77,6 +77,30 @@ export type CreateLeashClientOptions = {
 }
 
 /** The viem chain for a network, with the TIP-20 that pays gas. */
+/**
+ * fetch for JSON-RPC that retries only gateway failures (502/503/504, connection reset), up to
+ * 3 times. viem's own retry stays off (retryCount 0) because it also retries -32603, which is
+ * how the node names a refused access key. A gateway 503 never reached the node, and resending
+ * a signed transaction is idempotent (same hash), so this cannot double-pay. Added after the
+ * live adversarial suite flaked on Moderato "upstream connect error" 503s (2026-10-10).
+ */
+export const gatewayRetryFetch: typeof fetch = async (input, init) => {
+  let last: unknown
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 400 * 2 ** (attempt - 1)))
+    try {
+      const res = await fetch(input, init)
+      if (res.status !== 502 && res.status !== 503 && res.status !== 504) return res
+      last = res
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') throw e
+      last = e
+    }
+  }
+  if (last instanceof Response) return last
+  throw last
+}
+
 export function chainFor(network: NetworkConfig, feeToken: Address = network.feeToken) {
   return (network.name === 'mainnet' ? tempo : tempoModerato).extend({ feeToken })
 }
@@ -108,7 +132,7 @@ export function createLeashClient(options: CreateLeashClientOptions) {
    * For a spend-control product, never silently retrying a payment is also the right
    * default on its own merits.
    */
-  const rpc = http(options.rpcUrl ?? network.rpcUrl, { retryCount: 0 })
+  const rpc = http(options.rpcUrl ?? network.rpcUrl, { retryCount: 0, fetchFn: gatewayRetryFetch })
   const transport =
     sponsored && network.sponsorUrl
       ? Transport.withRelay(rpc, http(network.sponsorUrl))

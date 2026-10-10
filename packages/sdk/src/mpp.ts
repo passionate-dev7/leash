@@ -4,7 +4,9 @@ import { Abis, Transaction } from 'viem/tempo'
 import { Credential } from 'mppx'
 import { Mppx, tempo as tempoMethod } from 'mppx/client'
 import type { NetworkConfig } from './client.js'
-import { chainFor } from './client.js'
+import { chainFor, gatewayRetryFetch } from './client.js'
+import { checkQuote, routeFor } from '@leash/policy'
+import type { PriceBook, QuoteCapPolicy, QuoteVerdict } from '@leash/policy'
 
 /**
  * Paying an MPP service with an agent's access key, and recording what came back.
@@ -52,6 +54,10 @@ export type DeliveryRecord = {
   memo: Hex | null
   status: number | null
   refused: string | null
+  /** Quote-Cap: the catalog listing and the ceiling this quote was checked against. */
+  quote: { listed: string | null; quoted: string; ceiling: string | null; ok: boolean; reason: string | null; message: string | null } | null
+  /** Route: a cheaper seller of the same API, by listed price, if one exists. */
+  cheaper: { url: string; service: string; amount: string; savingPerCall: string } | null
   settlement: Settlement | null
   outcome: Outcome
   startedAt: string
@@ -67,14 +73,26 @@ export type LeashFetchOptions = {
   blocked?: () => ReadonlySet<string>
   /** Called once per request with the finished record. */
   onRecord?: (record: DeliveryRecord) => void | Promise<void>
+  /**
+   * Quote-Cap: refuse, before a credential is signed, any 402 quote above the catalog listing
+   * (plus tolerance) or the per-call cap. Omit to sign whatever the vendor asks (mppx default).
+   */
+  quoteCap?: { book: PriceBook; policy: QuoteCapPolicy }
   /** How long to look for the settlement after the response. Default 20 s. */
   settleTimeoutMs?: number
 }
 
-const CHAIN_ERRORS = /\b(CallNotAllowed|SpendingLimitExceeded|KeyAlreadyRevoked|KeyExpired|KeyNotFound|InvalidCallScope|LeashBlocked)\b/
+const CHAIN_ERRORS = /\b(CallNotAllowed|SpendingLimitExceeded|KeyAlreadyRevoked|KeyExpired|KeyNotFound|InvalidCallScope|LeashBlocked|QuoteCapExceeded)\b/
 
 export class LeashBlocked extends Error {
   override name = 'LeashBlocked'
+}
+
+export class QuoteCapExceeded extends Error {
+  override name = 'QuoteCapExceeded'
+  constructor(readonly verdict: Extract<QuoteVerdict, { ok: false }>) {
+    super(verdict.message)
+  }
 }
 
 export function requestHash(method: string, url: string, body: string | null): Hex {
@@ -137,8 +155,8 @@ export function createLeashFetch(options: LeashFetchOptions) {
   const chain = chainFor(network)
   // retryCount 0: a refused key surfaces as -32603, which viem would otherwise retry until the
   // transaction expires (49 s measured) and then misreport. See createLeashClient.
-  const rpc = () => createClient({ chain, transport: http(network.rpcUrl, { retryCount: 0 }) })
-  const pub = createClient({ chain, transport: http(network.rpcUrl) }).extend(publicActions) as unknown as PublicClient
+  const rpc = () => createClient({ chain, transport: http(network.rpcUrl, { retryCount: 0, fetchFn: gatewayRetryFetch }) })
+  const pub = createClient({ chain, transport: http(network.rpcUrl, { fetchFn: gatewayRetryFetch }) }).extend(publicActions) as unknown as PublicClient
   const settleTimeoutMs = options.settleTimeoutMs ?? 20_000
 
   return async function leashFetch(
@@ -150,13 +168,26 @@ export function createLeashFetch(options: LeashFetchOptions) {
     const startedAt = new Date().toISOString()
     let credential: string | undefined
     let challenge: { id: string; realm?: string; request: Record<string, unknown> } | undefined
+    let verdict: QuoteVerdict | null = null
 
     const mppx = Mppx.create({
       // mppx swallows anything an onChallengeReceived handler throws, so a block list enforced
       // there never blocks. onChallenge errors propagate and abort before a credential is signed.
       onChallenge: async (c) => {
-        const recipient = String((c as { request: Record<string, unknown> }).request['recipient'] ?? '').toLowerCase()
+        challenge ??= c as unknown as typeof challenge
+        const req = (c as { request: Record<string, unknown> }).request
+        const recipient = String(req['recipient'] ?? '').toLowerCase()
         if (recipient && options.blocked?.().has(recipient)) throw new LeashBlocked(`LeashBlocked: ${recipient} is cut for this team`)
+        if (options.quoteCap) {
+          verdict = checkQuote(options.quoteCap.book, options.quoteCap.policy, {
+            method,
+            url: input,
+            amount: String(req['amount'] ?? ''),
+            currency: (req['currency'] as string | undefined) ?? null,
+            recipient,
+          })
+          if (!verdict.ok) throw new QuoteCapExceeded(verdict)
+        }
         return undefined
       },
       methods: [
@@ -209,6 +240,12 @@ export function createLeashFetch(options: LeashFetchOptions) {
     }
 
     const status = response?.status ?? null
+    const v = verdict as QuoteVerdict | null
+    const plan = options.quoteCap ? routeFor(options.quoteCap.book, method, input) : null
+    const cheaper =
+      plan && plan.cheapest.url !== input.split('?')[0]
+        ? { url: plan.cheapest.url, service: plan.cheapest.service, amount: String(plan.cheapest.amount), savingPerCall: String((v?.listed ?? plan.priciest.amount) - plan.cheapest.amount) }
+        : null
     const outcome: Outcome = refused
       ? 'refused'
       : !credential
@@ -233,6 +270,17 @@ export function createLeashFetch(options: LeashFetchOptions) {
       memo,
       status,
       refused,
+      quote: v
+        ? {
+            listed: v.listed === null ? null : String(v.listed),
+            quoted: String(v.quoted),
+            ceiling: v.ceiling === null ? null : String(v.ceiling),
+            ok: v.ok,
+            reason: v.ok ? null : v.reason,
+            message: v.ok ? null : v.message,
+          }
+        : null,
+      cheaper,
       settlement,
       outcome,
       startedAt,
