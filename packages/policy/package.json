@@ -9,7 +9,9 @@
     "./desk-auth": "./src/desk-auth.ts",
     "./cutoff": "./src/cutoff.ts",
     "./constants": "./src/constants.ts",
-    "./data/*": "./data/*"
+    "./data/*": "./data/*",
+    "./quote-cap": "./src/quote-cap.ts",
+    "./route": "./src/route.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

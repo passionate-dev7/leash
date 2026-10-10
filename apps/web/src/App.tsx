@@ -13,6 +13,7 @@ import { VendorsPage } from '@/pages/vendors'
 import { LedgerPage } from '@/pages/ledger'
 import { MainnetPage } from '@/pages/mainnet'
 import { LivePage } from '@/pages/live'
+import { QuoteCapPage } from '@/pages/quotecap'
 
 function UtilityBar() {
   const health = usePoll(() => api.health(), 15_000, [])
@@ -106,6 +107,7 @@ function Shell() {
       </header>
       <main className="mx-auto w-full max-w-[1584px] flex-1 px-4 py-8 sm:px-8 sm:py-12">
         {route.page === 'view' && <LivePage account={route.account} />}
+        {route.page === 'quote-cap' && <QuoteCapPage />}
         {route.page === 'team' && <TeamPage />}
         {route.page === 'agents' && <AgentsPage />}
         {route.page === 'vendors' && <VendorsPage />}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getActive } from './signer'
 
 export const ROUTES = [
+  { path: 'quote-cap', label: 'Quote-Cap', title: 'Leash Quote-Cap: agents never pay above the listed price' },
   { path: 'team', label: 'Team', title: 'Leash: team account and funding' },
   { path: 'agents', label: 'Agents', title: 'Leash: agents, budgets and runs' },
   { path: 'vendors', label: 'Vendors', title: 'Leash: vendor delivery and cut-off' },
@@ -21,8 +21,8 @@ const read = (): Route => {
   if (head === 't') return { page: 'view', account: arg || null }
   const found = ROUTES.find((r) => r.path === head)
   if (found) return { page: found.path }
-  // A browser holding a team key lands on vendor cut-off; a fresh visitor lands on mainnet paid-vs-delivered replay.
-  return getActive() ? { page: 'vendors' } : { page: 'mainnet' }
+  // Everyone lands on the Quote-Cap demo: the 15-second story.
+  return { page: 'quote-cap' }
 }
 
 export function useRoute(): Route {
