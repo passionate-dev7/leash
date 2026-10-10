@@ -73,7 +73,7 @@ export function DeliveryCutPage() {
               <Separator />
               <Row k="fal answered" v={`HTTP ${proof.failure.status}, no image`} tone="bad" />
             </div>
-            <p className="mt-2 text-body-sm text-ink-muted">The request had an empty body. The 402 is real, captured unpaid by Leash; the 422 is replayed from vet402's report.</p>
+            <p className="mt-2 text-body-sm text-ink-muted">The request had an empty body. The 402 was captured live by Leash. Status and error from vet402's report.</p>
           </div>
           <div className="border-t border-hairline bg-canvas p-6 sm:p-8">
             <div aria-live="polite">
@@ -99,8 +99,8 @@ export function DeliveryCutPage() {
       <section aria-labelledby="tx-h" className="grid gap-8 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
         <div>
           <h2 id="tx-h" className="text-headline">The run, on a fork of Tempo mainnet</h2>
-          <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. These hashes exist only on that fork, and no real money moved.</p>
-          <p className="mt-4 text-body-sm text-ink-muted">{proof.caveat}</p>
+          <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. Hashes resolve only on that fork.</p>
+          <p className="mt-4 text-body-sm text-ink-muted"><span className="hash">{short(proof.vendor.recipient)}</span> is also the payout address in the 402s of openai and firecrawl on mpp.tempo.xyz, so this one cut stops all three.</p>
         </div>
         <div>
           <ol className="border-t border-ink">

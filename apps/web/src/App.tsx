@@ -119,7 +119,7 @@ function Shell() {
           </NetworkProvider>
         )}
       </main>
-      <footer className="border-t border-hairline px-4 py-12 sm:px-8">
+      {route.page !== 'quote-cap' && route.page !== 'delivery-cut' && <footer className="border-t border-hairline px-4 py-12 sm:px-8">
         <div className="mx-auto grid max-w-[1584px] gap-8 text-body-sm text-ink-muted sm:grid-cols-3">
           <p>The team key signs in this browser and never reaches the server. The server holds agent keys only for agents Leash runs on Moderato testnet.</p>
           <p>On Tempo mainnet (chain 4217) the server only reads: mainnet teams sign their authorizations here and their agents pay from their own processes.</p>
@@ -129,7 +129,7 @@ function Shell() {
             </a>
           </p>
         </div>
-      </footer>
+      </footer>}
     </div>
   )
 }

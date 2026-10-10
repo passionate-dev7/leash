@@ -110,7 +110,7 @@ function QuoteCheck() {
             ) : (
               <div className="border-l-4 border-error pl-4">
                 <p className="text-subhead text-error-ink">Refused before signing</p>
-                <p className="mt-1 text-body text-ink-muted">Leash threw QuoteCapExceeded inside the payment hook. No credential was made and no money moved, so there is nothing to refund.</p>
+                <p className="mt-1 text-body text-ink-muted">The quote asked for <span className="num">{usd(q.amount)}</span> against a <span className="num">{v.listed === null ? 'missing' : usd(v.listed)}</span> listing. Leash stopped it before the agent key signed, so nothing needs a refund.</p>
               </div>
             )
           ) : (
@@ -130,7 +130,7 @@ function ForkSteps() {
       <div>
         <h2 id="fork-h" className="text-headline">The same quotes, run on a fork of Tempo mainnet</h2>
         <p className="mt-4 text-body-lg text-ink-muted">
-          A local anvil fork at block {proof.block?.toLocaleString()}. The agent key's daily limit went from {usd(proof.limitBefore ?? '0')} to {usd(proof.limitAfter ?? '0')}. These hashes exist only on that fork, and no real money moved.
+          A local anvil fork at block {proof.block?.toLocaleString()}. The agent key's daily limit went from {usd(proof.limitBefore ?? '0')} to {usd(proof.limitAfter ?? '0')}. Hashes resolve only on that fork.
         </p>
       </div>
       <ol className="border-t border-ink">
@@ -187,7 +187,7 @@ export function QuoteCapPage() {
     <div className="mx-auto max-w-[1120px]">
       <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
         <header className="lg:pt-6">
-          <h1 className="text-display-md">Your agent never pays more than the listed price.</h1>
+          <h1 className="text-display-md">Your agent pays only the price you allow.</h1>
           <p className="mt-6 text-body-lg text-ink-muted">
             stablestudio lists one image call at <span className="num text-ink">$0.039</span>. When we asked without a prompt, its 402 asked for <span className="num text-ink">$10.00</span>. A default MPP client signs whatever the 402 names.
           </p>
@@ -197,7 +197,7 @@ export function QuoteCapPage() {
       </div>
       <div className="space-y-24 py-16 lg:space-y-32">
         <section aria-labelledby="locks-h" className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
-          <h2 id="locks-h" className="text-headline">Two locks, in order</h2>
+          <div><h2 id="locks-h" className="text-headline">Two locks, in order</h2><p className="mt-4 text-body-lg text-ink-muted">The listing is the default ceiling. You choose how far above it an agent may go, and the chain backs that up.</p></div>
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
               <p className="text-body font-semibold">1. Before signing</p>
