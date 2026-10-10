@@ -9,8 +9,8 @@ We checked. On October 10, stablestudio listed an image call at 3.9 cents. When 
 **Product (0:55-1:30)**
 LEASH is a leash for an agent's wallet. First, Quote-Cap: before the agent signs anything, LEASH compares the asking price with the listed price and refuses anything above your limit. Second, Route: when several sellers offer the same API, LEASH picks the cheapest. Third, Delivery Cut: when a vendor takes payment and fails to deliver, one signature from the owner cuts that vendor off, and the chain itself refuses its next charge while healthy vendors keep getting paid. Behind the check sits an on-chain spending limit, so even a bypassed check cannot overspend. We showed all of this on a fork of Tempo mainnet.
 
-**Why now (1:30-1:45)**
-Agent payments on Tempo are new, the default tools have no price ceiling, and the complaints are already public. This is the moment to set the safe default.
+**Why now (1:30-1:40)**
+Agent payments on Tempo are new, the default tools have no price ceiling, and the complaints are already public.
 
-**Positioning (1:45-2:00)**
-Setra402 also pitches trust for agent payments, but we could not confirm its chain or show its proof. Rolepay pays human contributors in Discord. LEASH is built on Tempo's own spending keys, and its proof is a real ten-dollar quote, refused.
+**Positioning (1:40-2:00)**
+Other teams here see the same problem. vet402 buys from sellers with its own money and publishes who delivered; its report is part of our evidence. Fermata holds each payment in escrow until a delivery proof. Cursus gives organizations roles and budgets for agents. LEASH is the piece on the agent's own wallet: it needs nothing from the vendor, refuses a wrong price before signing, and cuts a bad vendor with one signature that the chain enforces.
