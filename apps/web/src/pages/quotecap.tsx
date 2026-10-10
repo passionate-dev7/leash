@@ -74,7 +74,7 @@ function QuoteCheck() {
         <div className="mt-6">
           <Row k="Listed price" v={v.listed === null ? 'unlisted' : usd(v.listed)} />
           <Separator />
-          <Row k="The 402 asks" v={usd(q.amount)} big tone={v.ok ? undefined : 'bad'} />
+          <Row k="The 402 asks" v={usd(q.amount)} big tone={shown && !v.ok ? 'bad' : undefined} />
           <Separator />
           <Row k="Most this agent will pay" v={v.ceiling === null ? 'no limit' : usd(v.ceiling)} />
         </div>
@@ -110,11 +110,11 @@ function QuoteCheck() {
             ) : (
               <div className="border-l-4 border-error pl-4">
                 <p className="text-subhead text-error-ink">Refused before signing</p>
-                <p className="mt-1 text-body text-ink-muted">The quote asked for <span className="num">{usd(q.amount)}</span> against a <span className="num">{v.listed === null ? 'missing' : usd(v.listed)}</span> listing. Leash stopped it before the agent key signed, so nothing needs a refund.</p>
+                <p className="mt-1 text-body text-ink-muted">The quote asked for <span className="num">{usd(q.amount)}</span> against a <span className="num">{v.listed === null ? 'missing' : usd(v.listed)}</span> listing. Leash stopped it before the agent key signed.</p>
               </div>
             )
           ) : (
-            <p className="text-body text-ink-muted">Pick a quote, set the policy, then press the button to see what the agent does.</p>
+            <p className="text-body text-ink-muted">{v.ok ? 'This quote is inside the policy.' : 'This quote is above the policy.'}</p>
           )}
         </div>
       </div>
@@ -192,23 +192,21 @@ export function QuoteCapPage() {
             stablestudio lists one image call at <span className="num text-ink">$0.039</span>. When we asked without a prompt, its 402 asked for <span className="num text-ink">$10.00</span>. A default MPP client signs whatever the 402 names.
           </p>
           <p className="mt-4 text-body-lg text-ink-muted">Leash checks every quote against the listing before the agent key signs. If the price is wrong, the payment never starts.</p>
+          <div className="mt-12 grid gap-6 border-t border-hairline pt-8">
+            <h2 className="text-body font-semibold">Two locks, in order</h2>
+            <div>
+              <p className="text-body font-semibold">1. Before signing</p>
+              <p className="mt-1 text-body text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing is signed, so nothing needs a refund.</p>
+            </div>
+            <div>
+              <p className="text-body font-semibold">2. If the check is bypassed</p>
+              <p className="mt-1 text-body text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. The fork run below shows the chain refusing both.</p>
+            </div>
+          </div>
         </header>
         <QuoteCheck />
       </div>
       <div className="space-y-24 py-16 lg:space-y-32">
-        <section aria-labelledby="locks-h" className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
-          <div><h2 id="locks-h" className="text-headline">Two locks, in order</h2><p className="mt-4 text-body-lg text-ink-muted">The listing is the default ceiling. You choose how far above it an agent may go, and the chain backs that up.</p></div>
-          <div className="grid gap-8 sm:grid-cols-2">
-            <div>
-              <p className="text-body font-semibold">1. Before signing</p>
-              <p className="mt-2 text-body text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing is signed, so nothing needs a refund.</p>
-            </div>
-            <div>
-              <p className="text-body font-semibold">2. If the check is bypassed</p>
-              <p className="mt-2 text-body text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. The fork run below shows the chain refusing both.</p>
-            </div>
-          </div>
-        </section>
         <ForkSteps />
         <Routes />
       </div>

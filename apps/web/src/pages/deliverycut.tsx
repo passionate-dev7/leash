@@ -117,7 +117,6 @@ export function DeliveryCutPage() {
               )
             })}
           </ol>
-          {!signed && <p className="mt-4 text-body text-ink-muted">Sign the cut to play the rest of the run.</p>}
         </div>
       </section>
     </div>
