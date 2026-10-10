@@ -18,3 +18,5 @@ apps/web/.uicraft-read.json
 
 # internal status board, never shipped to judges
 .progress/
+scripts/fork/.foundry-bin/
+scripts/fork/out/anvil.log

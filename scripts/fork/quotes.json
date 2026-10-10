@@ -1,0 +1,4 @@
+{"source":"../stablestudio-quote.txt + ../challenge-vs-catalog.json (real mainnet 402s captured 2026-10-10 ~09:45-09:50 IST)","catalog_amount":39000,"tolerance_pct":100,
+ "quotes":[{"name":"nano_banana_valid_prompt_0.07","amount":70000,"request_b64":"eyJhbW91bnQiOiI3MDAwMCIsImN1cnJlbmN5IjoiMHgyMGMwMDAwMDAwMDAwMDAwMDAwMDAwMDBiOTUzN2QxMWM2MGU4YjUwIiwibWV0aG9kRGV0YWlscyI6eyJjaGFpbklkIjo0MjE3fSwicmVjaXBpZW50IjoiMHgwN0YwNjc5NTkyOTc3NjdjODg3ZGJmQTNDNzIzNzljNjZFODJhMDQ1In0"},
+  {"name":"catalog_listed_0.039","amount":39000,"request_b64":null},
+  {"name":"nano_banana_missing_field_10.00","amount":10000000,"request_b64":"eyJhbW91bnQiOiIxMDAwMDAwMCIsImN1cnJlbmN5IjoiMHgyMGMwMDAwMDAwMDAwMDAwMDAwMDAwMDBiOTUzN2QxMWM2MGU4YjUwIiwibWV0aG9kRGV0YWlscyI6eyJjaGFpbklkIjo0MjE3fSwicmVjaXBpZW50IjoiMHgwN0YwNjc5NTkyOTc3NjdjODg3ZGJmQTNDNzIzNzljNjZFODJhMDQ1In0"}]}

@@ -1,0 +1,3 @@
+.foundry-bin/
+out/anvil.log
+out/raw-*.txt
