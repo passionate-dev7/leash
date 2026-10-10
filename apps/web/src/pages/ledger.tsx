@@ -18,14 +18,14 @@ const FILTERS: { key: 'all' | Outcome; label: string }[] = [
 
 function LedgerBody({ account }: { account: Address }) {
   const ledger = usePoll(() => api.ledger(account, 100), 5000, [account])
-  const [filter, setFilter] = useState<'all' | Outcome>('all')
+  const [filter, setFilter] = useState<'all' | Outcome>('paid_not_delivered')
   const all = ledger.data ? asRecords(ledger.data) : []
   const rows = filter === 'all' ? all : all.filter((r) => r.outcome === filter)
 
   return (
     <>
-      <PageHead title="Ledger">
-        Every payment an agent attempted, newest first. Settlement links open the transaction on the team's chain explorer. Refused calls never reach the vendor and move nothing.
+      <PageHead title="Paid, not delivered">
+        An agent paid a vendor, the HTTP call failed, one signature removes that payout, and the next payment reverts with CallNotAllowed. This ledger opens on paid-but-not-delivered calls; switch tabs to see every outcome.
       </PageHead>
       {ledger.error && <Notice tone="error" title="Could not load the ledger">{ledger.error}</Notice>}
       {ledger.data && all.length === 0 && (

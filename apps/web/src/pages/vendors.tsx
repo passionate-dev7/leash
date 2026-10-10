@@ -325,7 +325,14 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
   const [trying, setTrying] = useState<VendorRow | null>(null)
 
   const svcById = useMemo(() => new Map((catalog.data?.services ?? []).map((s) => [s.serviceId, s])), [catalog.data])
-  const rows = vendors.data?.services ?? []
+  const rows = useMemo(() => {
+    const raw = vendors.data?.services ?? []
+    return [...raw].sort((a, b) => {
+      const gap = b.paidNotDelivered - a.paidNotDelivered
+      if (gap !== 0) return gap
+      return b.evidence.paidNotDelivered - a.evidence.paidNotDelivered
+    })
+  }, [vendors.data?.services])
   const agents = team.data?.agents ?? []
   const refresh = () => {
     vendors.reload()
@@ -334,8 +341,8 @@ function VendorsBody({ account, client }: { account: Address; client: RootClient
 
   return (
     <>
-      <PageHead title="Vendors">
-        A charge settles before the vendor runs your request, so paid and delivered are different facts. Cut a failing service and the next payment to it is refused by the chain.
+      <PageHead title="Paid, not delivered">
+        An agent paid a vendor, the HTTP call failed, one signature removes that payout, and the next payment reverts with CallNotAllowed. Rows with undelivered charges are listed first; use Cut to rescope every agent key in one transaction.
       </PageHead>
       {vendors.error && <Notice tone="error" title="Could not load vendors">{vendors.error}</Notice>}
       {vendors.data && rows.length === 0 && (

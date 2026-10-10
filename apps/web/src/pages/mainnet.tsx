@@ -141,6 +141,16 @@ function blocks(replay: MainnetReplay, evidence: MainnetEvidence | null): Block[
   }))
 }
 
+
+function sortBlocks(list: Block[]): Block[] {
+  return [...list].sort((a, b) => {
+    const an = a.vet402?.paidNotDelivered ?? 0
+    const bn = b.vet402?.paidNotDelivered ?? 0
+    if (bn !== an) return bn - an
+    return (b.vet402?.paid ?? 0) - (a.vet402?.paid ?? 0)
+  })
+}
+
 export function MainnetPage() {
   const [span, setSpan] = useState(20_000)
   const replay = usePoll(() => api.mainnet(span), 0, [span])
@@ -148,13 +158,16 @@ export function MainnetPage() {
   const data = replay.data && replay.data.blocks === span ? replay.data : null
   const stale = replay.loading || !data
   const [all, setAll] = useState(false)
-  const list = useMemo(() => (replay.data ? blocks(replay.data, evidence.data) : []), [replay.data, evidence.data])
-  const shown = all ? list : list.slice(0, FIRST)
+  const list = useMemo(() => (replay.data ? sortBlocks(blocks(replay.data, evidence.data)) : []), [replay.data, evidence.data])
+  const undelivered = useMemo(() => list.filter((b) => (b.vet402?.paidNotDelivered ?? 0) > 0), [list])
+  const other = useMemo(() => list.filter((b) => (b.vet402?.paidNotDelivered ?? 0) === 0), [list])
+  const otherShown = all ? other : other.slice(0, FIRST)
 
   return (
     <>
-      <PageHead title="Mainnet replay">
-        What agents already pay for on Tempo mainnet. Leash reads TransferWithMemo logs to every catalogued MPP payout address, then sets vet402's verified delivery record beside them. Read-only: nothing here signs or sends.
+      <PageHead title="Paid, not delivered">
+        An agent paid a vendor, the HTTP call failed, one signature removes that payout, and the next payment reverts with CallNotAllowed. vet402 verifies delivery beside on-chain MPP charges; team owners cut a payout on the{' '}
+        <a href="#/vendors" className="text-primary hover:underline">Vendors</a> tab.
       </PageHead>
       <div role="tablist" aria-label="Window" className="mb-6 flex overflow-x-auto border-b border-hairline">
         {WINDOWS.map((w) => (
@@ -174,21 +187,34 @@ export function MainnetPage() {
       {replay.loading && <p className="mb-4 text-body-sm text-ink-muted" aria-live="polite">Reading mainnet logs in pages of 5,000 blocks. A fresh window can take a few seconds, then it is cached for ten minutes.</p>}
       {replay.data && (
         <div className={cn('grid gap-6', stale && 'opacity-60')}>
-          <Tiles replay={replay.data} />
           {evidence.error && <Notice tone="warning" title="vet402 evidence is unavailable">{evidence.error}</Notice>}
+          {undelivered.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-body-sm font-semibold">vet402: paid, not delivered</h2>
+              <div className="grid gap-6 lg:grid-cols-2">
+                {undelivered.map((b) => (
+                  <PayoutBlock key={b.payout} b={b} />
+                ))}
+              </div>
+            </section>
+          )}
+          <Tiles replay={replay.data} />
           {list.length === 0 ? (
             <Empty title="No MPP charge landed in this window">Pick a larger window above. {replay.data.silentPayouts} catalogued payout addresses were silent in these blocks.</Empty>
-          ) : (
-            <div className="grid gap-6 lg:grid-cols-2">
-              {shown.map((b) => (
-                <PayoutBlock key={b.payout} b={b} />
-              ))}
-            </div>
-          )}
-          {list.length > FIRST && (
+          ) : other.length > 0 ? (
+            <section>
+              {undelivered.length > 0 && <h2 className="mb-3 text-body-sm font-semibold">Other catalogued payouts</h2>}
+              <div className="grid gap-6 lg:grid-cols-2">
+                {otherShown.map((b) => (
+                  <PayoutBlock key={b.payout} b={b} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {other.length > FIRST && (
             <div>
               <Button variant="tertiary" onClick={() => setAll((v) => !v)}>
-                {all ? `Show the first ${FIRST} payouts` : `Show all ${list.length} payouts`}
+                {all ? `Show the first ${FIRST} other payouts` : `Show all ${other.length} other payouts`}
               </Button>
             </div>
           )}

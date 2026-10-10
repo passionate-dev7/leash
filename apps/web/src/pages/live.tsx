@@ -32,7 +32,10 @@ export function LivePage({ account: param }: { account: string | null }) {
 
   const label = data.team.data?.team.label
   const network = data.team.data?.team.network ?? 'moderato'
-  const rows = data.vendors.data?.services.filter((s) => s.paid > 0 || s.refused > 0 || s.cut) ?? []
+  const rows = useMemo(() => {
+    const raw = data.vendors.data?.services.filter((s) => s.paid > 0 || s.refused > 0 || s.cut) ?? []
+    return [...raw].sort((a, b) => b.paidNotDelivered - a.paidNotDelivered || b.evidence.paidNotDelivered - a.evidence.paidNotDelivered)
+  }, [data.vendors.data?.services])
   const latest = (data.ledger.data?.records ?? []).slice(0, LATEST)
 
   const create = (
@@ -48,10 +51,12 @@ export function LivePage({ account: param }: { account: string | null }) {
 
   return (
     <NetworkProvider network={network}>
-      <PageHead title={label ? `${label}` : 'Live team'} actions={<span className="flex items-center gap-4"><NetworkBadge network={network} />{create}</span>}>
+      <PageHead title="Paid, not delivered" actions={<span className="flex items-center gap-4"><NetworkBadge network={network} />{create}</span>}>
         {account ? (
           <>
-            Read-only view of a team that is paying vendors right now. Spend limits are read from {NETWORKS[network].label} and every payment links to its settlement transaction. Account{' '}
+            An agent paid a vendor, the HTTP call failed, one signature removes that payout, and the next payment reverts with CallNotAllowed. Read-only team{' '}
+            {label ? <span className="font-semibold text-ink">{label}</span> : null}
+            {label ? ' on ' : ''}{NETWORKS[network].label}. Account{' '}
             <a href={addressUrl(account, network)} target="_blank" rel="noreferrer" className="num text-primary hover:underline">{account.slice(0, 10)}...{account.slice(-6)}</a>.
           </>
         ) : (
@@ -69,7 +74,7 @@ export function LivePage({ account: param }: { account: string | null }) {
           />
           {rows.length > 0 && (
             <section>
-              <h2 className="mb-3 text-body-sm font-semibold">Vendors this team has paid</h2>
+              <h2 className="mb-3 text-body-sm font-semibold">Vendors: paid vs delivered</h2>
               <VendorTable rows={rows} svcById={svcById} />
             </section>
           )}

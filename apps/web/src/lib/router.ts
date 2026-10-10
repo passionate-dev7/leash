@@ -21,8 +21,8 @@ const read = (): Route => {
   if (head === 't') return { page: 'view', account: arg || null }
   const found = ROUTES.find((r) => r.path === head)
   if (found) return { page: found.path }
-  // A browser holding a team key lands on its team; a fresh visitor lands on the featured team, read-only.
-  return getActive() ? { page: 'team' } : { page: 'view', account: null }
+  // A browser holding a team key lands on vendor cut-off; a fresh visitor lands on mainnet paid-vs-delivered replay.
+  return getActive() ? { page: 'vendors' } : { page: 'mainnet' }
 }
 
 export function useRoute(): Route {
