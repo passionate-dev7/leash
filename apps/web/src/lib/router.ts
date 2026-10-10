@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 export const ROUTES = [
   { path: 'quote-cap', label: 'Quote-Cap', title: 'Leash Quote-Cap: agents never pay above the listed price' },
+  { path: 'delivery-cut', label: 'Delivery Cut', title: 'Leash Delivery Cut: one signature cuts a vendor that took payment and did not deliver' },
   { path: 'team', label: 'Team', title: 'Leash: team account and funding' },
   { path: 'agents', label: 'Agents', title: 'Leash: agents, budgets and runs' },
   { path: 'vendors', label: 'Vendors', title: 'Leash: vendor delivery and cut-off' },
