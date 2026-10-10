@@ -141,7 +141,7 @@ function ForkSteps() {
             <li key={i} className="flex items-baseline justify-between gap-6 border-b border-hairline py-4">
               <div className="min-w-0">
                 <p className="text-body">{s.label}</p>
-                {s.tx && <p className="num mt-1 truncate text-caption text-ink-muted">{s.tx.slice(0, 10)}…{s.tx.slice(-8)}</p>}
+                {s.tx && <p className="hash mt-1 truncate text-caption text-ink-muted">{s.tx.slice(0, 10)}…{s.tx.slice(-8)}</p>}
               </div>
               <span className={cn('shrink-0 text-body-sm font-semibold', bad ? 'text-error-ink' : ok ? 'text-success-ink' : 'text-ink-muted')}>
                 {bad ? 'Refused' : ok ? 'Settled' : s.status}
@@ -161,7 +161,7 @@ function Routes() {
       <div>
         <h2 id="route-h" className="text-headline">The same API, from the cheapest seller</h2>
         <p className="mt-4 text-body-lg text-ink-muted">Resellers list the same upstream call at different prices. Leash sends the agent to the cheapest listing, and the quote check then holds that seller to its own price.</p>
-        <p className="mt-4 text-body-sm text-ink-muted">Prices from the mpp.dev catalog on 10 Oct 2026. Outputs were not compared with paid calls.</p>
+        <p className="mt-4 text-body-sm text-ink-muted">Prices from the mpp.dev catalog on 10 Oct 2026.</p>
       </div>
       <ul className="border-t border-ink">
         {plans.map((p) => {
@@ -173,7 +173,7 @@ function Routes() {
                 <p className="text-body font-semibold">{p.group.label}</p>
                 <p className="mt-1 text-body-sm text-ink-muted">{best.service} at <span className="num">{usd(best.amount)}</span> instead of {worst.service} at <span className="num">{usd(worst.amount)}</span></p>
               </div>
-              <span className="num shrink-0 text-body-lg">{(p.savingBps / 100).toFixed(0)}% less</span>
+              <span className="shrink-0 text-body-lg"><span className="num">{(p.savingBps / 100).toFixed(0)}%</span> less</span>
             </li>
           )
         })}

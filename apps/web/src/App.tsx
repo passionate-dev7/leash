@@ -48,7 +48,7 @@ function Shell() {
   const item = 'flex items-center whitespace-nowrap text-body-sm'
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
-      <UtilityBar />
+      {route.page !== 'quote-cap' && route.page !== 'delivery-cut' && <UtilityBar />}
       <header className="sticky top-0 z-40 border-b border-hairline bg-canvas">
         <div className="mx-auto flex h-12 max-w-[1584px] items-stretch px-4 sm:px-8">
           <a href="#/" className="flex items-center gap-3 pr-8 text-body-sm font-semibold">

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { decideCuts } from '@leash/policy/delivery-cut'
 import type { PaidCallOutcome } from '@leash/policy/delivery-cut'
 import { formatUnits } from '@leash/policy/quote-cap'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/shadcn/button'
+import { Separator } from '@/components/shadcn/separator'
+import { cn } from '@/lib/utils'
 
 /**
  * Delivery Cut: a vendor took payment and did not deliver; one signature removes it from the agent key,
@@ -19,7 +20,7 @@ type Proof = {
 }
 
 const usd = (x: string | number | bigint) => `$${formatUnits(BigInt(x))}`
-const short = (h: string | null) => (h ? `${h.slice(0, 8)}…${h.slice(-6)}` : '-')
+const short = (h: string | null) => (h ? `${h.slice(0, 8)}…${h.slice(-6)}` : '')
 
 function useProof() {
   const [p, setP] = useState<Proof | null | undefined>(undefined)
@@ -29,72 +30,96 @@ function useProof() {
   return p
 }
 
+function Row({ k, v, tone }: { k: string; v: string; tone?: 'bad' }) {
+  return (
+    <div className="flex items-baseline justify-between gap-6 py-3">
+      <span className="text-body text-ink-muted">{k}</span>
+      <span className={cn('num text-right text-body-lg', tone === 'bad' && 'text-error-ink')}>{v}</span>
+    </div>
+  )
+}
+
 export function DeliveryCutPage() {
   const proof = useProof()
   const [signed, setSigned] = useState(false)
-  if (proof === undefined) return <p className="py-16 text-body-sm text-ink-muted">Loading the fork proof…</p>
-  if (proof === null) return <p className="py-16 text-body-sm text-ink-muted">Fork proof not found. Run scripts/fork/run-delivery-cut.sh.</p>
+  if (proof === undefined) return <p className="py-16 text-body text-ink-muted">Loading the fork run…</p>
+  if (proof === null) return <p className="py-16 text-body text-ink-muted">Fork run not found. Run scripts/fork/run-delivery-cut.sh.</p>
 
   const pay = proof.steps.find((s) => s.step === 'pay_fal')
   const outcomes: PaidCallOutcome[] = [{ vendor: 'fal', recipient: proof.vendor.recipient, amount: BigInt(proof.vendor.quoted), settlementTx: pay?.tx ?? null, status: proof.failure.status, body: proof.failure.body }]
   const decision = decideCuts(outcomes)[0]
   const before = proof.steps.filter((s) => ['pay_fal', 'pay_ss'].includes(s.step))
   const after = proof.steps.filter((s) => ['cut', 'fal_next_charge', 'ss_after_cut'].includes(s.step))
+  const steps = [...before, ...(signed ? after : [])]
 
   return (
-    <div className="mx-auto max-w-[880px] py-10">
-      <p className="text-body-sm text-ink-muted">Delivery Cut</p>
-      <h1 className="mt-2 text-headline">fal took $0.003 and answered 422. One signature, and its next charge fails on chain.</h1>
-      <p className="mt-4 max-w-[640px] text-body text-ink-muted">
-        On MPP the charge settles before the service checks the request. vet402 paid 89 directory calls on Tempo; 42 settled and then answered 400 or 422.{' '}
-        <a className="underline" href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">tempoxyz/mpp#1034</a>
-      </p>
-
-      <section aria-label="The paid call" className="mt-10 grid gap-6 md:grid-cols-2">
-        <div className="border border-hairline bg-paper p-5">
-          <h2 className="text-body-sm">What fal asked</h2>
-          <p className="num mt-3 text-body-sm text-ink-muted">{proof.vendor.endpoint} · body {'{}'}</p>
-          <p className="num mt-2 text-card-title">{usd(proof.vendor.quoted)}</p>
-          <p className="mt-2 text-body-sm text-ink-muted">Real 402 from {proof.vendor.origin}, captured unpaid by LEASH.</p>
-        </div>
-        <div className="border border-hairline bg-paper p-5">
-          <h2 className="text-body-sm">What fal sent back after settling</h2>
-          <p className="num mt-3 text-card-title text-error-ink">HTTP {proof.failure.status}</p>
-          <pre className="num mt-2 overflow-x-auto bg-surface-1 p-3 text-caption">{proof.failure.body}</pre>
-          <p className="mt-2 text-body-sm text-ink-muted">Replayed from vet402's report. {proof.failure.note}</p>
-        </div>
-      </section>
-
-      <section aria-label="Decision" className="mt-8 border-t border-ink pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-body">
-            {decision?.cut ? <>Paid, not delivered: <span className="num">{usd(decision.lost)}</span> lost to <span className="num">{short(proof.vendor.recipient)}</span>.</> : 'Delivered.'}
+    <div className="mx-auto max-w-[1120px]">
+      <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
+        <header className="lg:pt-6">
+          <h1 className="text-display-md">When a vendor takes the money and fails, cut it off.</h1>
+          <p className="mt-6 text-body-lg text-ink-muted">
+            On MPP the charge settles before the service checks the request. vet402 paid 89 directory calls on Tempo, and 42 settled and then answered 400 or 422 (<a className="text-ink underline underline-offset-4" href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">tempoxyz/mpp#1034</a>).
           </p>
-          <Button size="lg" variant={signed ? 'outline' : 'default'} onClick={() => setSigned(true)} disabled={signed}>
-            {signed ? 'Cut signed' : 'Sign the cut'}
-          </Button>
+          <p className="mt-4 text-body-lg text-ink-muted">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
+        </header>
+
+        <section aria-label="The failed call" className="min-w-0 border border-ink bg-paper">
+          <div className="p-6 sm:p-8">
+            <p className="text-body-sm text-ink-muted">fal · FLUX schnell · {proof.vendor.origin.replace('https://', '')}</p>
+            <div className="mt-4">
+              <Row k="fal's 402 asked" v={usd(proof.vendor.quoted)} />
+              <Separator />
+              <Row k="The agent paid" v={usd(proof.vendor.quoted)} />
+              <Separator />
+              <Row k="fal answered" v={`HTTP ${proof.failure.status}, no image`} tone="bad" />
+            </div>
+            <p className="mt-2 text-body-sm text-ink-muted">The request had an empty body. The 402 is real, captured unpaid by Leash; the 422 is replayed from vet402's report.</p>
+          </div>
+          <div className="border-t border-hairline bg-canvas p-6 sm:p-8">
+            <div aria-live="polite">
+              {signed ? (
+                <div className="border-l-4 border-success pl-4">
+                  <p className="text-subhead text-success-ink">fal is cut from the agent key</p>
+                  <p className="mt-1 text-body text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. See the transactions below.</p>
+                </div>
+              ) : (
+                <div className="border-l-4 border-error pl-4">
+                  <p className="text-subhead text-error-ink">Paid, not delivered: <span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span></p>
+                  <p className="mt-1 text-body text-ink-muted">Cutting removes fal's payout address <span className="hash text-body-sm">{short(proof.vendor.recipient)}</span> from what the agent key may pay.</p>
+                </div>
+              )}
+            </div>
+            <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-8 w-full" onClick={() => setSigned(true)} disabled={signed}>
+              {signed ? 'Cut signed' : 'Sign the cut'}
+            </Button>
+          </div>
+        </section>
+      </div>
+
+      <section aria-labelledby="tx-h" className="grid gap-8 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+        <div>
+          <h2 id="tx-h" className="text-headline">The run, on a fork of Tempo mainnet</h2>
+          <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. These hashes exist only on that fork, and no real money moved.</p>
+          <p className="mt-4 text-body-sm text-ink-muted">{proof.caveat}</p>
+        </div>
+        <div>
+          <ol className="border-t border-ink">
+            {steps.map((s) => {
+              const ok = s.status === 'success'
+              return (
+                <li key={s.step} className="flex items-baseline justify-between gap-6 border-b border-hairline py-4">
+                  <div className="min-w-0">
+                    <p className="text-body">{s.label}</p>
+                    {s.tx && <p className="hash mt-1 truncate text-caption text-ink-muted">{short(s.tx)}</p>}
+                  </div>
+                  <span className={cn('shrink-0 text-body-sm font-semibold', ok ? 'text-success-ink' : 'text-error-ink')}>{ok ? 'Settled' : 'Reverted'}</span>
+                </li>
+              )
+            })}
+          </ol>
+          {!signed && <p className="mt-4 text-body text-ink-muted">Sign the cut to play the rest of the run.</p>}
         </div>
       </section>
-
-      <section aria-label="Fork transactions" className="mt-8">
-        <h2 className="text-body-sm">Transactions</h2>
-        <ol className="mt-3 divide-y divide-hairline border-y border-hairline">
-          {[...before, ...(signed ? after : [])].map((s) => (
-            <li key={s.step} className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 py-3">
-              <span className="text-body-sm">{s.label}</span>
-              <span className={cn('text-body-sm', s.status === 'success' ? 'text-success-ink' : 'text-error-ink')}>{s.status}</span>
-              <span className="num text-caption text-ink-muted">{short(s.tx)}</span>
-              {s.error && <span className="text-body-sm text-ink-muted">{s.error}</span>}
-            </li>
-          ))}
-        </ol>
-        {!signed && <p className="mt-3 text-body-sm text-ink-muted">Sign the cut to replay the rest of the fork run.</p>}
-      </section>
-
-      <footer className="mt-10 border-t border-hairline pt-4 text-body-sm text-ink-muted">
-        <p className="font-semibold text-ink">{proof.label}.</p>
-        <p className="mt-1">Anvil fork of Tempo mainnet (chain {proof.chainId}) at block <span className="num">{proof.block}</span>. {proof.caveat}</p>
-      </footer>
     </div>
   )
 }
