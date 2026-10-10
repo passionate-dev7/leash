@@ -134,9 +134,12 @@ function ForkSteps() {
       <div>
         <h2 id="fork-h" className="text-headline">The same quotes, run on a fork of Tempo mainnet</h2>
         <p className="mt-4 text-body-lg text-ink-muted">
-          A local anvil fork at block {proof.block?.toLocaleString()}. The agent key's daily limit went from {usd(proof.limitBefore ?? '0')} to {usd(proof.limitAfter ?? '0')}. Hashes resolve on that fork.
+          Run on a local anvil fork. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork.
         </p>
         <dl className="mt-8 border-t border-hairline">
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Forked at block</dt><dd className="num text-body-lg">{proof.block?.toLocaleString()}</dd></div>
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Settled</dt><dd className="num text-body-lg text-success-ink">{proof.steps.filter((s) => /success/i.test(s.status)).length}</dd></div>
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Refused</dt><dd className="num text-body-lg text-error-ink">{proof.steps.filter((s) => /refus|revert/i.test(s.status)).length}</dd></div>
           <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Daily limit before</dt><dd className="num text-body-lg">{usd(proof.limitBefore ?? '0')}</dd></div>
           <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Daily limit after</dt><dd className="num text-body-lg">{usd(proof.limitAfter ?? '0')}</dd></div>
         </dl>
@@ -194,21 +197,44 @@ function Routes() {
   )
 }
 
-function Block({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+function Block({ id, title, intro, children }: { id: string; title: string; intro?: string; children: React.ReactNode }) {
   return (
-    <section aria-labelledby={id} className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
-      <h2 id={id} className="text-headline">{title}</h2>
-      <div className="grid gap-4 text-body-lg text-ink-muted">{children}</div>
+    <section aria-labelledby={id} className="grid gap-8">
+      <div className="max-w-[720px]">
+        <h2 id={id} className="text-headline">{title}</h2>
+        {intro && <p className="mt-4 text-body-lg text-ink-muted">{intro}</p>}
+      </div>
+      {children}
     </section>
+  )
+}
+
+function Rival({ name, href, what, diff }: { name: string; href: string; what: React.ReactNode; diff: React.ReactNode }) {
+  return (
+    <div className="border-t border-ink pt-4">
+      <p className="text-subhead"><a className="underline underline-offset-4" href={href} target="_blank" rel="noreferrer">{name}</a></p>
+      <p className="mt-3 text-body text-ink-muted">{what}</p>
+      <p className="mt-3 text-body">{diff}</p>
+    </div>
   )
 }
 
 function Positioning() {
   return (
-    <Block id="pos-h" title="Business model and neighbours">
-      <p><span className="font-semibold text-ink">Business model (planned, no revenue yet).</span> The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.</p>
-      <p><span className="font-semibold text-ink">Setra402</span> describes itself as a "trust layer for agent payments" for agents that "pay upfront without execution guarantees" (<a className="text-ink underline underline-offset-4" href="https://x.com/510Sulove/status/2102234121171079449" target="_blank" rel="noreferrer">@510Sulove</a>). That is the problem Delivery Cut works on. We have not seen its chain or mechanism, so we compare only what Leash shows: a price check before the key signs, and a cut enforced by the Tempo access key, both run on a fork of Tempo mainnet.</p>
-      <p><span className="font-semibold text-ink">Rolepay</span> lets Discord communities pay human contributors in stablecoins on Tempo, one transaction per payout round (<a className="text-ink underline underline-offset-4" href="https://x.com/filipebaleixo/status/2108676772212695189" target="_blank" rel="noreferrer">@filipebaleixo</a>). It shares the chain, not the job: Rolepay pays people, Leash limits what software agents pay vendors.</p>
+    <Block id="pos-h" title="How Leash differs from its closest rivals" intro="Three World's Fair projects work on the same risk: an agent's money leaving before anyone checks the price or the delivery. Each summary below comes from the project's own repo or Arena page, read on 11 Oct 2026.">
+      <div className="grid gap-10 md:grid-cols-3 md:gap-8">
+        <Rival name="vet402" href="https://github.com/kzmttkc/vet402-delivery"
+          what="Buys x402 and MPP APIs with its own wallet on Solana, Tempo and Base, and publishes what each seller delivered next to the payment tx. Its Tempo run is the source for the 42 of 89 paid-then-failed calls in mpp#1034."
+          diff="vet402 grades sellers; it does not control an agent's key. Leash acts on the agent's own payments: it refuses a wrong price before signing and cuts a failing vendor on chain. vet402's grades could feed a Leash cut." />
+        <Rival name="Fermata" href="https://github.com/bilgin-kocak/fermata"
+          what="Holds each MPP call's payment in escrow on Tempo, records the vendor's HTTPS answer with TLSNotary, and refunds the agent on a proven failure or timeout. Live on Tempo testnet; vendors are reached through Fermata's gateway."
+          diff="Fermata recovers a failed payment; Leash does not refund. Leash needs no gateway, pays vendors directly, and checks the quoted price against the vendor's listing, which Fermata's README does not describe. After a failure Leash stops all later charges with one signature." />
+        <Rival name="Cursus" href="https://colosseum.com/arena/projects/cursus"
+          what="An accountability layer: organisations give humans and agents roles with limits on authority and budget, and results need evidence and human sign-off. Its first agent payment was x402 on Solana devnet."
+          diff="Cursus records who acted under whose authority. Leash limits one thing, payments, and enforces it on Tempo: the agent key's vendor scope and daily limit are chain rules, and each quote is checked before the key signs." />
+      </div>
+      <p className="max-w-[720px] text-body-sm text-ink-muted">Also nearby: Setra402 ("trust layer for agent payments", mechanism not public) and Rolepay (Discord communities paying people on Tempo, a different job).</p>
+      <p className="max-w-[720px] text-body text-ink-muted"><span className="font-semibold text-ink">Business model (planned, no revenue yet).</span> The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.</p>
     </Block>
   )
 }
@@ -216,7 +242,7 @@ function Positioning() {
 function ForJudges() {
   return (
     <Block id="judge-h" title="Check it in two minutes">
-      <ol className="grid list-decimal gap-3 pl-5">
+      <ol className="grid max-w-[720px] list-decimal gap-3 pl-5 text-body-lg text-ink-muted">
         <li>On this page, keep "No prompt" and press "Let the agent pay this quote". The real $10.00 quote is refused against the $0.039 listing. Pick "Listed", or "With prompt" with the allowance at 2x, to see a quote pass.</li>
         <li>Scroll to the fork run: the $10.00 bypass and the payment to another vendor both revert on chain. These hashes exist only on a local anvil fork of Tempo mainnet.</li>
         <li>Open <a className="text-ink underline underline-offset-4" href="#/delivery-cut">Delivery Cut</a> and press "Sign the cut": fal's next charge reverts and stablestudio still gets paid.</li>

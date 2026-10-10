@@ -60,7 +60,7 @@ export function DeliveryCutPage() {
           <p className="mt-6 text-body-lg text-ink-muted">
             On MPP the charge settles before the service checks the request. vet402 paid 89 directory calls on Tempo, and 42 settled and then answered 400 or 422 (<a className="text-ink underline underline-offset-4" href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">tempoxyz/mpp#1034</a>).
           </p>
-          <p className="mt-4 text-body-lg text-ink-muted">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
+          <p className="mt-4 text-body-lg text-ink-muted max-md:hidden">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
         </header>
 
         <section aria-label="The failed call" className="min-w-0 border border-ink bg-paper">
@@ -75,7 +75,8 @@ export function DeliveryCutPage() {
             </div>
             <p className="mt-2 text-body-sm text-ink-muted">The request had an empty body. The 402 was captured live by Leash. Status and error from vet402's report.</p>
           </div>
-          <div className="border-t border-hairline bg-canvas p-6 sm:p-8">
+          <p className="border-t border-hairline px-6 pt-6 text-body text-ink-muted md:hidden">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
+          <div className="border-t border-hairline bg-canvas p-6 sm:p-8 max-md:border-t-0">
             <div id="dc-verdict" aria-live="polite">
               {signed ? (
                 <div className="border-l-4 border-success pl-4">
