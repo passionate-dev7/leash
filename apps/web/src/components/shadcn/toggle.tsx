@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 // shadcn/ui toggle (installed with `uicraft add shadcn/toggle-group`), restyled to LEASH tokens.
 const toggleVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap text-body-sm transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-ink data-[state=on]:text-on-primary',
+  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap text-body-sm transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-surface-1 data-[state=on]:font-semibold data-[state=on]:text-ink data-[state=on]:ring-2 data-[state=on]:ring-inset data-[state=on]:ring-ink',
   {
     variants: {
       variant: {

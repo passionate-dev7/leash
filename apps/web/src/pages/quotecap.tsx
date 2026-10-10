@@ -86,13 +86,13 @@ function QuoteCheck() {
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <div>
             <p id="tol-l" className="text-body-sm text-ink-muted">Allowed above the listing</p>
-            <ToggleGroup type="single" value={tol} onValueChange={(x) => x && setTol(x)} aria-labelledby="tol-l" size="sm" className="mt-2 w-full">
+            <ToggleGroup type="single" value={tol} onValueChange={(x) => x && setTol(x)} aria-labelledby="tol-l" className="mt-2 w-full">
               {TOLERANCES.map((t) => <ToggleGroupItem key={t.v} value={t.v}>{t.label}</ToggleGroupItem>)}
             </ToggleGroup>
           </div>
           <div>
             <p id="cap-l" className="text-body-sm text-ink-muted">Hard cap per call</p>
-            <ToggleGroup type="single" value={cap} onValueChange={(x) => x && setCap(x)} aria-labelledby="cap-l" size="sm" className="mt-2 w-full">
+            <ToggleGroup type="single" value={cap} onValueChange={(x) => x && setCap(x)} aria-labelledby="cap-l" className="mt-2 w-full">
               <ToggleGroupItem value="100000">$0.10</ToggleGroupItem>
               <ToggleGroupItem value="1000000">$1.00</ToggleGroupItem>
               <ToggleGroupItem value="none">None</ToggleGroupItem>
@@ -130,8 +130,12 @@ function ForkSteps() {
       <div>
         <h2 id="fork-h" className="text-headline">The same quotes, run on a fork of Tempo mainnet</h2>
         <p className="mt-4 text-body-lg text-ink-muted">
-          A local anvil fork at block {proof.block?.toLocaleString()}. The agent key's daily limit went from {usd(proof.limitBefore ?? '0')} to {usd(proof.limitAfter ?? '0')}. Hashes resolve only on that fork.
+          A local anvil fork at block {proof.block?.toLocaleString()}. The agent key's daily limit went from {usd(proof.limitBefore ?? '0')} to {usd(proof.limitAfter ?? '0')}. Hashes resolve on that fork.
         </p>
+        <dl className="mt-8 border-t border-hairline">
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Daily limit before</dt><dd className="num text-body-lg">{usd(proof.limitBefore ?? '0')}</dd></div>
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Daily limit after</dt><dd className="num text-body-lg">{usd(proof.limitAfter ?? '0')}</dd></div>
+        </dl>
       </div>
       <ol className="border-t border-ink">
         {proof.steps.map((s, i) => {
@@ -162,6 +166,10 @@ function Routes() {
         <h2 id="route-h" className="text-headline">The same API, from the cheapest seller</h2>
         <p className="mt-4 text-body-lg text-ink-muted">Resellers list the same upstream call at different prices. Leash sends the agent to the cheapest listing, and the quote check then holds that seller to its own price.</p>
         <p className="mt-4 text-body-sm text-ink-muted">Prices from the mpp.dev catalog on 10 Oct 2026.</p>
+        <dl className="mt-8 border-t border-hairline">
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Largest saving</dt><dd className="text-body-lg"><span className="num">{Math.max(...plans.map((p) => p.savingBps / 100)).toFixed(0)}%</span></dd></div>
+          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">APIs compared</dt><dd className="num text-body-lg">{plans.length}</dd></div>
+        </dl>
       </div>
       <ul className="border-t border-ink">
         {plans.map((p) => {
@@ -187,12 +195,16 @@ export function QuoteCapPage() {
     <div className="mx-auto max-w-[1120px]">
       <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
         <header className="lg:pt-6">
-          <h1 className="text-display-md">Your agent pays only the price you allow.</h1>
+          <h1 className="text-display-sm sm:text-display-md">Your agent pays only the price you allow.</h1>
           <p className="mt-6 text-body-lg text-ink-muted">
             stablestudio lists one image call at <span className="num text-ink">$0.039</span>. When we asked without a prompt, its 402 asked for <span className="num text-ink">$10.00</span>. A default MPP client signs whatever the 402 names.
           </p>
           <p className="mt-4 text-body-lg text-ink-muted">Leash checks every quote against the listing before the agent key signs. If the price is wrong, the payment never starts.</p>
-          <div className="mt-12 grid gap-6 border-t border-hairline pt-8">
+        </header>
+        <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <QuoteCheck />
+        </div>
+        <div className="grid gap-6 border-t border-hairline pt-8 lg:col-start-1">
             <h2 className="text-body font-semibold">Two locks, in order</h2>
             <div>
               <p className="text-body font-semibold">1. Before signing</p>
@@ -202,9 +214,7 @@ export function QuoteCapPage() {
               <p className="text-body font-semibold">2. If the check is bypassed</p>
               <p className="mt-1 text-body text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. The fork run below shows the chain refusing both.</p>
             </div>
-          </div>
-        </header>
-        <QuoteCheck />
+        </div>
       </div>
       <div className="space-y-24 py-16 lg:space-y-32">
         <ForkSteps />

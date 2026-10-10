@@ -56,14 +56,13 @@ export function DeliveryCutPage() {
     <div className="mx-auto max-w-[1120px]">
       <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
         <header className="lg:pt-6">
-          <h1 className="text-display-md">When a vendor takes the money and fails, cut it off.</h1>
+          <h1 className="text-display-sm sm:text-display-md">When a vendor takes the money and fails, cut it off.</h1>
           <p className="mt-6 text-body-lg text-ink-muted">
             On MPP the charge settles before the service checks the request. vet402 paid 89 directory calls on Tempo, and 42 settled and then answered 400 or 422 (<a className="text-ink underline underline-offset-4" href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">tempoxyz/mpp#1034</a>).
           </p>
-          <p className="mt-4 text-body-lg text-ink-muted">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
         </header>
 
-        <section aria-label="The failed call" className="min-w-0 border border-ink bg-paper">
+        <section aria-label="The failed call" className="min-w-0 border border-ink bg-paper lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <div className="p-6 sm:p-8">
             <p className="text-body-sm text-ink-muted">fal · FLUX schnell · {proof.vendor.origin.replace('https://', '')}</p>
             <div className="mt-4">
@@ -94,12 +93,13 @@ export function DeliveryCutPage() {
             </Button>
           </div>
         </section>
+        <p className="text-body-lg text-ink-muted lg:col-start-1">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
       </div>
 
       <section aria-labelledby="tx-h" className="grid gap-8 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
         <div>
           <h2 id="tx-h" className="text-headline">The run, on a fork of Tempo mainnet</h2>
-          <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. Hashes resolve only on that fork.</p>
+          <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. Hashes resolve on that fork.</p>
           <p className="mt-4 text-body-sm text-ink-muted"><span className="hash">{short(proof.vendor.recipient)}</span> is also the payout address in the 402s of openai and firecrawl on mpp.tempo.xyz, so this one cut stops all three.</p>
         </div>
         <div>
