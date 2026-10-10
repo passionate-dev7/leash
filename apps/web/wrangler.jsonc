@@ -1,0 +1,7 @@
+{
+  // Static Quote-Cap UI on Cloudflare Workers (same pattern as sealed-call). Build first:
+  //   VITE_LEASH_API=https://leash-api.fly.dev pnpm --filter @leash/web build && npx wrangler deploy
+  "name": "leash",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" }
+}
