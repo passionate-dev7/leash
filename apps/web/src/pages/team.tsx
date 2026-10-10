@@ -178,7 +178,7 @@ function Funding({ address }: { address: `0x${string}` }) {
               ))}
             </span>
             <span className="mt-2 block">
-              Next: <a className="text-primary hover:underline" href="#/agents" onClick={() => go('agents')}>add an agent</a>.
+              Next: <a className="text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink" href="#/agents" onClick={() => go('agents')}>add an agent</a>.
             </span>
           </Notice>
         </div>
@@ -225,7 +225,7 @@ export function TeamPage() {
               <dl className="grid gap-4 text-body-sm sm:grid-cols-[160px_minmax(0,1fr)]">
                 <dt className="text-ink-muted">Account address</dt>
                 <dd className="num break-all">
-                  <a href={addressUrl(active.address, net.name)} target="_blank" rel="noreferrer" className="text-primary hover:underline">{active.address}</a>
+                  <a href={addressUrl(active.address, net.name)} target="_blank" rel="noreferrer" className="text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink">{active.address}</a>
                 </dd>
                 <dt className="text-ink-muted">Network</dt>
                 <dd>{NETWORKS[net.name].label}, chain <span className="num">{NETWORKS[net.name].chainId}</span>{net.name === 'mainnet' ? ', budget and gas in USDC.e' : ''}</dd>

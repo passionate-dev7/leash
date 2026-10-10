@@ -1,64 +1,66 @@
-@import "@fontsource/ibm-plex-sans/300.css";
-@import "@fontsource/ibm-plex-sans/400.css";
-@import "@fontsource/ibm-plex-sans/600.css";
-@import "@fontsource/ibm-plex-mono/400.css";
-@import "@fontsource/ibm-plex-mono/600.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "tailwindcss";
 
 /* Tokens from DESIGN.md (IBM Carbon). Components read these, never raw hex. */
+/* Tokens: DESIGN-DIRECTIONS.md "Receipt printer / spend terminal". Components read these, never raw hex.
+   Off-white paper, ink, hairline. Red only for a refusal, green only for an allow. One radius: 0. */
 @theme {
   --color-*: initial;
-  --color-primary: #0f62fe;
-  --color-primary-hover: #0050e6;
-  --color-primary-pressed: #002d9c;
-  --color-link-hover: #0043ce;
-  --color-on-primary: #ffffff;
-  --color-ink: #161616;
-  --color-ink-muted: #525252;
-  --color-ink-subtle: #6f6f6f;
-  --color-canvas: #ffffff;
-  --color-surface-1: #f4f4f4;
-  --color-surface-2: #e0e0e0;
-  --color-surface-3: #c6c6c6;
-  --color-hairline: #e0e0e0;
-  --color-hairline-strong: #161616;
-  --color-inverse-canvas: #161616;
-  --color-inverse-surface: #262626;
-  --color-inverse-ink: #ffffff;
-  --color-inverse-ink-muted: #c6c6c6;
-  --color-success: #24a148;
-  --color-success-ink: #0e6027;
-  --color-warning: #f1c21b;
-  --color-warning-ink: #684e00;
-  --color-error: #da1e28;
-  --color-error-ink: #a2191f;
-  --color-error-tint: #fff1f1;
-  --color-success-tint: #defbe6;
-  --color-warning-tint: #fcf4d6;
-  --color-info-tint: #edf5ff;
+  --color-primary: #111111;
+  --color-primary-hover: #2b2b29;
+  --color-primary-pressed: #000000;
+  --color-link-hover: #2b2b29;
+  --color-on-primary: #f7f7f5;
+  --color-ink: #111111;
+  --color-ink-muted: #55554f;
+  --color-ink-subtle: #6b6b65;
+  --color-canvas: #f7f7f5;
+  --color-paper: #ffffff;
+  --color-surface-1: #efefeb;
+  --color-surface-2: #e4e4e0;
+  --color-surface-3: #cfcfc9;
+  --color-hairline: #e4e4e0;
+  --color-hairline-strong: #111111;
+  --color-inverse-canvas: #111111;
+  --color-inverse-surface: #2b2b29;
+  --color-inverse-ink: #f7f7f5;
+  --color-inverse-ink-muted: #cfcfc9;
+  --color-success: #12b76a;
+  --color-success-ink: #067647;
+  --color-warning: #b54708;
+  --color-warning-ink: #93370d;
+  --color-error: #d92d20;
+  --color-error-ink: #b42318;
+  --color-error-tint: #fef3f2;
+  --color-success-tint: #ecfdf3;
+  --color-warning-tint: #fffaeb;
+  --color-info-tint: #efefeb;
 
-  --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-sans: "Geist Variable", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, Menlo, monospace;
 
-  --text-display-md: 42px;
-  --text-display-md--line-height: 1.2;
+  /* Five sizes: 32 / 20 / 16 / 14 / 12. Legacy names alias onto them. */
+  --text-display-md: 32px;
+  --text-display-md--line-height: 1.15;
+  --text-display-md--letter-spacing: -0.64px;
   --text-headline: 32px;
-  --text-headline--line-height: 1.25;
-  --text-card-title: 24px;
-  --text-card-title--line-height: 1.33;
+  --text-headline--line-height: 1.15;
+  --text-headline--letter-spacing: -0.64px;
+  --text-card-title: 20px;
+  --text-card-title--line-height: 1.3;
+  --text-card-title--letter-spacing: -0.2px;
   --text-subhead: 20px;
-  --text-subhead--line-height: 1.4;
-  --text-body-lg: 18px;
-  --text-body-lg--line-height: 1.5;
+  --text-subhead--line-height: 1.3;
+  --text-subhead--letter-spacing: -0.2px;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 1.6;
   --text-body: 16px;
-  --text-body--line-height: 1.5;
-  --text-body--letter-spacing: 0.16px;
+  --text-body--line-height: 1.6;
   --text-body-sm: 14px;
-  --text-body-sm--line-height: 1.29;
-  --text-body-sm--letter-spacing: 0.16px;
+  --text-body-sm--line-height: 1.45;
   --text-caption: 12px;
-  --text-caption--line-height: 1.33;
-  --text-caption--letter-spacing: 0.32px;
+  --text-caption--line-height: 1.4;
 
   --breakpoint-sm: 672px;
   --breakpoint-md: 1056px;
@@ -67,20 +69,23 @@
 }
 
 @layer base {
-  html { color-scheme: light; }
+  html { color-scheme: light; overflow-x: clip; }
+  * { border-radius: 0; }
+  h1, h2, h3 { text-wrap: balance; font-weight: 600; }
   body {
     margin: 0;
     background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 14px;
-    line-height: 1.29;
-    letter-spacing: 0.16px;
+    line-height: 1.45;
+    font-feature-settings: "ss01";
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
   }
   :focus-visible {
     outline: 2px solid var(--color-primary);
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
   ::selection { background: var(--color-primary); color: var(--color-on-primary); }
   table { border-collapse: collapse; }
@@ -91,4 +96,16 @@
 
 @layer components {
   .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+}
+
+/* The receipt: the signature component. */
+@layer components {
+  .receipt { background: var(--color-paper); font-family: var(--font-mono); font-variant-numeric: tabular-nums; position: relative; }
+  .perf { display: block; height: 8px; width: 100%; color: var(--color-canvas); }
+  .stamp {
+    display: inline-block; border: 2px solid currentColor; padding: 2px 10px; font-family: var(--font-mono);
+    font-weight: 600; font-size: 20px; letter-spacing: 0.08em; transform: rotate(-6deg);
+    animation: stamp 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes stamp { from { opacity: 0; transform: rotate(-6deg) scale(1.25); } to { opacity: 1; transform: rotate(-6deg) scale(1); } }
 }

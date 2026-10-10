@@ -12,7 +12,7 @@ function Figure({ label, value, tone, note }: { label: string; value: ReactNode;
   return (
     <div className="bg-canvas px-4 py-4">
       <p className="text-caption text-ink-muted">{label}</p>
-      <p className={cn('num mt-1 text-card-title font-light', tone === 'bad' && 'text-error-ink')}>{value}</p>
+      <p className={cn('num mt-1 text-card-title', tone === 'bad' && 'text-error-ink')}>{value}</p>
       {note && <p className="mt-1 text-caption text-ink-subtle">{note}</p>}
     </div>
   )

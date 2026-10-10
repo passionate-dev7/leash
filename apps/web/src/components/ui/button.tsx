@@ -7,7 +7,7 @@ type Size = 'sm' | 'md'
 const variants: Record<Variant, string> = {
   primary: 'bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-pressed',
   secondary: 'bg-ink text-inverse-ink hover:bg-inverse-surface active:bg-ink-muted',
-  tertiary: 'border border-primary text-primary hover:bg-primary hover:text-on-primary active:bg-primary-pressed',
+  tertiary: 'border border-primary text-ink underline decoration-surface-3 underline-offset-2 hover:bg-primary hover:text-on-primary active:bg-primary-pressed',
   ghost: 'text-primary hover:bg-surface-1 active:bg-surface-2',
   'danger-outline': 'border border-error text-error-ink hover:bg-error hover:text-on-primary active:bg-error-ink',
   danger: 'bg-error text-on-primary hover:bg-error-ink active:bg-error-ink',

@@ -23,7 +23,7 @@ function Tile({ label, children, note }: { label: string; children: ReactNode; n
   return (
     <div className="bg-surface-1 p-4">
       <p className="text-caption text-ink-muted">{label}</p>
-      <div className="num mt-2 text-card-title font-light">{children}</div>
+      <div className="num mt-2 text-card-title">{children}</div>
       {note && <p className="mt-1 text-caption text-ink-subtle">{note}</p>}
     </div>
   )
@@ -64,7 +64,7 @@ function PayoutBlock({ b }: { b: Block }) {
     <article className="border border-hairline">
       <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-hairline bg-surface-1 px-4 py-3">
         <h3 className="text-body-sm font-semibold">{b.names.length === 0 ? 'Service not listed' : b.names.length > 3 ? `${b.names.slice(0, 3).join(', ')} and ${b.names.length - 3} more` : b.names.join(', ')}</h3>
-        <a href={mainnetAddressUrl(b.payout)} target="_blank" rel="noreferrer" className="num text-caption text-primary hover:underline" title={b.payout}>
+        <a href={mainnetAddressUrl(b.payout)} target="_blank" rel="noreferrer" className="num text-caption text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink" title={b.payout}>
           {short(b.payout, 8, 6)}
         </a>
       </header>
@@ -73,7 +73,7 @@ function PayoutBlock({ b }: { b: Block }) {
           <p className="text-caption font-semibold text-ink-muted">Charges seen on chain</p>
           {b.replay ? (
             <p className="mt-2 text-body-sm">
-              <span className="num text-card-title font-light">{b.replay.charges.toLocaleString()}</span> charges from <span className="num">{b.replay.payers.toLocaleString()}</span> payers
+              <span className="num text-card-title">{b.replay.charges.toLocaleString()}</span> charges from <span className="num">{b.replay.payers.toLocaleString()}</span> payers
               <span className="text-ink-muted">, last {b.replay.blocks.toLocaleString()} blocks</span>
             </p>
           ) : (
@@ -167,9 +167,9 @@ export function MainnetPage() {
     <>
       <PageHead title="Paid, not delivered">
         An agent paid a vendor, the HTTP call failed, one signature removes that payout, and the next payment reverts with CallNotAllowed. vet402 verifies delivery beside on-chain MPP charges; team owners cut a payout on the{' '}
-        <a href="#/vendors" className="text-primary hover:underline">Vendors</a> tab.
+        <a href="#/vendors" className="text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink">Vendors</a> tab.
       </PageHead>
-      <div role="tablist" aria-label="Window" className="mb-6 flex overflow-x-auto border-b border-hairline">
+      <div role="tablist" aria-label="Window" className="mb-6 inline-flex max-w-full overflow-x-auto border border-ink">
         {WINDOWS.map((w) => (
           <button
             key={w.blocks}
@@ -177,7 +177,7 @@ export function MainnetPage() {
             role="tab"
             aria-selected={span === w.blocks}
             onClick={() => setSpan(w.blocks)}
-            className={cn('whitespace-nowrap border-b-2 px-5 py-3 text-body-sm', span === w.blocks ? 'border-primary font-semibold text-ink' : 'border-transparent text-ink-muted hover:bg-surface-1')}
+            className={cn('min-h-10 whitespace-nowrap border-r border-hairline px-4 text-body-sm last:border-r-0', span === w.blocks ? 'bg-ink text-on-primary' : 'bg-paper text-ink-muted hover:text-ink')}
           >
             Last {w.label}
           </button>

@@ -19,7 +19,7 @@ function UtilityBar() {
   const health = usePoll(() => api.health(), 15_000, [])
   const net = useNetwork()
   return (
-    <div className="hidden h-8 items-center bg-surface-1 sm:flex">
+    <div className="hidden h-8 items-center border-b border-hairline sm:flex">
       <div className="mx-auto flex w-full max-w-[1584px] items-center justify-between gap-6 px-8 text-caption text-ink-muted">
         <span>{net.label}, chain {net.chainId}. Agent payments settle in {net.symbol}.</span>
         {health.data?.ok ? (
@@ -51,10 +51,8 @@ function Shell() {
       <header className="sticky top-0 z-40 border-b border-hairline bg-canvas">
         <div className="mx-auto flex h-12 max-w-[1584px] items-stretch px-4 sm:px-8">
           <a href="#/" className="flex items-center gap-3 pr-8 text-body-sm font-semibold">
-            <span aria-hidden className="grid size-6 place-items-center bg-ink">
-              <svg viewBox="0 0 24 24" className="size-4"><path d="M5 4h4v11h10v4H5z" className="fill-primary" /></svg>
-            </span>
-            Leash
+            <span className="font-mono text-body-sm font-semibold">LEASH</span>
+            <span className="hidden text-caption text-ink-subtle lg:inline">spend terminal for paying agents</span>
           </a>
           <nav aria-label="Primary" className="hidden min-w-0 flex-1 items-stretch md:flex">
             {NAV.map((r) => (
@@ -62,8 +60,9 @@ function Shell() {
                 key={r.path}
                 href={`#/${r.path}`}
                 aria-current={hereOf(r.path) ? 'page' : undefined}
-                className={cn(item, 'border-b-2 px-4', hereOf(r.path) ? 'border-primary font-semibold text-ink' : 'border-transparent text-ink-muted hover:bg-surface-1 hover:text-ink')}
+                className={cn(item, 'gap-2 px-3', hereOf(r.path) ? 'text-ink' : 'text-ink-muted hover:text-ink')}
               >
+                <span aria-hidden className={cn('size-1.5', hereOf(r.path) ? 'bg-ink' : 'bg-transparent')} />
                 {r.label}
               </a>
             ))}
@@ -75,7 +74,7 @@ function Shell() {
                 <span className="ml-2"><NetworkBadge network={network} /></span>
               </span>
             ) : route.page === 'view' ? null : (
-              <a href="#/team" className="flex h-full items-center bg-primary px-4 text-body-sm text-on-primary hover:bg-primary-hover">Create your own team</a>
+              <a href="#/team" className="flex items-center border border-ink px-3 py-1.5 text-body-sm text-ink hover:bg-ink hover:text-on-primary">Create a team</a>
             )}
           </div>
           <button
@@ -96,7 +95,7 @@ function Shell() {
                 key={r.path}
                 href={`#/${r.path}`}
                 aria-current={hereOf(r.path) ? 'page' : undefined}
-                className={cn(item, 'h-12 border-b border-l-4 border-b-hairline px-4', hereOf(r.path) ? 'border-l-primary font-semibold text-ink' : 'border-l-transparent text-ink-muted')}
+                className={cn(item, 'h-12 border-b border-hairline px-4', hereOf(r.path) ? 'font-semibold text-ink' : 'text-ink-muted')}
               >
                 {r.label}
               </a>
@@ -118,12 +117,12 @@ function Shell() {
           </NetworkProvider>
         )}
       </main>
-      <footer className="bg-inverse-canvas px-4 py-12 sm:px-8">
-        <div className="mx-auto grid max-w-[1584px] gap-8 text-body-sm text-inverse-ink-muted sm:grid-cols-3">
+      <footer className="border-t border-hairline px-4 py-12 sm:px-8">
+        <div className="mx-auto grid max-w-[1584px] gap-8 text-body-sm text-ink-muted sm:grid-cols-3">
           <p>The team key signs in this browser and never reaches the server. The server holds agent keys only for agents Leash runs on Moderato testnet.</p>
           <p>On Tempo mainnet (chain 4217) the server only reads: mainnet teams sign their authorizations here and their agents pay from their own processes.</p>
           <p>
-            <a className="text-inverse-ink underline hover:text-inverse-ink-muted" href="https://explore.testnet.tempo.xyz" target="_blank" rel="noreferrer">
+            <a className="text-ink underline hover:text-ink-muted" href="https://explore.testnet.tempo.xyz" target="_blank" rel="noreferrer">
               Moderato explorer
             </a>
           </p>

@@ -9,7 +9,7 @@ export function PageHead({ title, children, actions }: { title: string; children
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
       <div>
-        <h1 className="text-headline font-light">{title}</h1>
+        <h1 className="text-headline">{title}</h1>
         {children && <p className="mt-2 max-w-2xl text-body text-ink-muted">{children}</p>}
       </div>
       {actions}

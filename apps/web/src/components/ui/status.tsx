@@ -26,13 +26,13 @@ export function Status({ tone, children }: { tone: Tone; children: ReactNode }) 
 
 export function Notice({ tone, title, children }: { tone: 'error' | 'success' | 'info' | 'warning'; title?: string; children?: ReactNode }) {
   const style = {
-    error: 'border-error bg-error-tint',
-    success: 'border-success bg-success-tint',
-    info: 'border-primary bg-info-tint',
-    warning: 'border-warning bg-warning-tint',
+    error: 'border-error/40 bg-error-tint',
+    success: 'border-success/40 bg-success-tint',
+    info: 'border-hairline bg-paper',
+    warning: 'border-warning/40 bg-warning-tint',
   }[tone]
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('border-l-4 px-4 py-3 text-body-sm', style)}>
+    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('border px-4 py-3 text-body-sm', style)}>
       {title && <p className="font-semibold">{title}</p>}
       {children && <div className={cn('text-ink-muted', title && 'mt-1')}>{children}</div>}
     </div>
@@ -43,7 +43,7 @@ export function TxLink({ hash }: { hash: string | null | undefined }) {
   const { name } = useNetwork()
   if (!hash) return <span className="text-ink-subtle">none</span>
   return (
-    <a href={txUrl(hash, name)} target="_blank" rel="noreferrer" className="num text-primary hover:text-link-hover hover:underline" title={hash}>
+    <a href={txUrl(hash, name)} target="_blank" rel="noreferrer" className="num text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink" title={hash}>
       {short(hash, 8, 6)}
     </a>
   )
@@ -58,7 +58,7 @@ export function NetworkBadge({ network }: { network: 'moderato' | 'mainnet' }) {
 export function AddressLink({ address, full }: { address: string; full?: boolean }) {
   const { name } = useNetwork()
   return (
-    <a href={addressUrl(address, name)} target="_blank" rel="noreferrer" className="num text-primary hover:text-link-hover hover:underline" title={address}>
+    <a href={addressUrl(address, name)} target="_blank" rel="noreferrer" className="num text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink" title={address}>
       {full ? address : short(address, 8, 6)}
     </a>
   )
@@ -67,7 +67,7 @@ export function AddressLink({ address, full }: { address: string; full?: boolean
 export function Empty({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
     <div className="border border-hairline bg-surface-1 p-8">
-      <h3 className="text-card-title font-light">{title}</h3>
+      <h3 className="text-card-title">{title}</h3>
       <p className="mt-2 max-w-xl text-body text-ink-muted">{children}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>

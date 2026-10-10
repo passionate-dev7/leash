@@ -1,44 +1,46 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { checkQuote, formatUnits } from '@leash/policy/quote-cap'
-import type { PriceBook, QuoteCapPolicy } from '@leash/policy/quote-cap'
+import type { PriceBook, QuoteCapPolicy, QuoteVerdict } from '@leash/policy/quote-cap'
 import { allRoutes } from '@leash/policy/route'
 import bookJson from '@leash/policy/data/price-book.4217.json'
 import { cn } from '@/components/ui/cn'
 
 const book = bookJson as PriceBook
-const NB = 'https://stablestudio.dev/api/generate/nano-banana/generate'
+const HOST = 'stablestudio.dev'
+const PATH = '/api/generate/nano-banana/generate'
+const NB = `https://${HOST}${PATH}`
 const RECIPIENT = '0x07F067959297767c887dbfA3C72379c66E82a045'
 const USDCE = '0x20c000000000000000000000b9537d11c60e8b50'
 
-/** Real 402 challenges from stablestudio on Tempo mainnet, captured unpaid on 2026-10-10 09:45 IST. */
-const SCENARIOS = [
-  { id: 'missing', label: 'Body without a prompt', body: '{}', amount: '10000000', note: 'A field is missing. The vendor asks 256x the listing.' },
-  { id: 'valid', label: 'Valid prompt', body: '{"prompt":"a red apple"}', amount: '70000', note: 'A normal call. Still 1.8x the listing.' },
-  { id: 'listed', label: 'At the listing', body: '{"prompt":"a red apple"}', amount: '39000', note: 'What the mpp.dev catalog says this call costs.' },
+/** Real 402 challenges from stablestudio on Tempo mainnet (chain 4217), captured unpaid 2026-10-10 09:45 IST. */
+const QUOTES = [
+  { id: 'missing', time: '10 Oct 09:45', body: '{}', amount: '10000000', why: 'Prompt missing from the body.' },
+  { id: 'valid', time: '10 Oct 09:45–50', body: '{"prompt":"a red apple"}', amount: '70000', why: 'Valid prompt.' },
+  { id: 'catalog', time: 'catalog', body: '{"prompt":"a red apple"}', amount: '39000', why: 'The mpp.dev catalog price.' },
 ] as const
 
 const TOLERANCES = [
-  { bps: 0, label: 'Exact' },
-  { bps: 5_000, label: '+50%' },
-  { bps: 10_000, label: '2x' },
-  { bps: 30_000, label: '4x' },
+  { v: 0, label: 'Exact' },
+  { v: 5_000, label: '+50%' },
+  { v: 10_000, label: '2x' },
+  { v: 30_000, label: '4x' },
 ]
 const CAPS = [
-  { v: 100_000n, label: '$0.10' },
-  { v: 1_000_000n, label: '$1.00' },
-  { v: undefined, label: 'None' },
+  { v: 0, cap: 100_000n, label: '$0.10' },
+  { v: 1, cap: 1_000_000n, label: '$1.00' },
+  { v: 2, cap: undefined, label: 'None' },
 ]
 
 const usd = (x: bigint | string) => `$${formatUnits(BigInt(x))}`
 
-type ForkStep = { step: string; label: string; status: string; tx: string | null; amount?: number | null; error?: string | null }
+type ForkStep = { step: string; label: string; status: string; tx: string | null; error?: string | null }
 type ForkProof = { fork?: string; chainId?: number; block?: number; limitBefore?: string; limitAfter?: string; steps: ForkStep[] }
 
 function useForkProof() {
-  const [proof, setProof] = useState<ForkProof | null>(null)
+  const [proof, setProof] = useState<ForkProof | null | undefined>(undefined)
   useEffect(() => {
-    fetch('/fork-proof.json')
+    fetch('./fork-proof.json')
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => setProof(j && Array.isArray(j.steps) ? j : null))
       .catch(() => setProof(null))
@@ -46,90 +48,23 @@ function useForkProof() {
   return proof
 }
 
-function Stage({ n, title, state, children }: { n: number; title: string; state: 'done' | 'stop' | 'skip' | 'go'; children?: ReactNode }) {
+/* ---------- rail: the agent's policy, as a settings sheet ---------- */
+
+function Segmented<T extends number>({ label, value, options, onChange }: { label: string; value: T; options: { v: T; label: string }[]; onChange: (v: T) => void }) {
   return (
-    <li className={cn('relative border-l-4 py-3 pl-4', state === 'stop' ? 'border-error' : state === 'skip' ? 'border-surface-3' : state === 'go' ? 'border-success' : 'border-primary')}>
-      <p className={cn('text-caption uppercase tracking-wider', state === 'skip' ? 'text-ink-subtle' : 'text-ink-muted')}>Step {n}</p>
-      <p className={cn('text-body-sm font-semibold', state === 'skip' && 'text-ink-subtle line-through')}>{title}</p>
-      {children && <div className={cn('mt-1 text-caption', state === 'skip' ? 'text-ink-subtle' : 'text-ink-muted')}>{children}</div>}
-    </li>
-  )
-}
-
-function Intercept({ policy, scenario }: { policy: QuoteCapPolicy; scenario: (typeof SCENARIOS)[number] }) {
-  const v = checkQuote(book, policy, { method: 'POST', url: NB, amount: scenario.amount, currency: USDCE })
-  const listed = v.listed ?? 0n
-  const ratio = listed > 0n ? Number((BigInt(scenario.amount) * 100n) / listed) / 100 : 0
-  const widthQuoted = Math.min(100, Math.max(4, (Math.log10(Number(scenario.amount)) - 3.5) * 30))
-  const widthListed = Math.min(100, Math.max(4, (Math.log10(Number(listed)) - 3.5) * 30))
-  const widthCeil = v.ceiling ? Math.min(100, Math.max(4, (Math.log10(Number(v.ceiling)) - 3.5) * 30)) : 100
-  return (
-    <div className="grid gap-px bg-inverse-surface lg:grid-cols-[1.4fr_1fr]">
-      <div className="bg-inverse-canvas p-6 text-inverse-ink sm:p-8">
-        <p className="font-mono text-caption text-inverse-ink-muted">POST {NB.replace('https://', '')}</p>
-        <p className="font-mono text-caption text-inverse-ink-muted">body {scenario.body}</p>
-        <p className="mt-1 font-mono text-caption text-warning">← 402 Payment Required · tempo charge · to {RECIPIENT.slice(0, 8)}…{RECIPIENT.slice(-4)}</p>
-
-        <div className="mt-8 grid grid-cols-2 gap-6">
-          <div>
-            <p className="text-caption uppercase tracking-wider text-inverse-ink-muted">Listed on mpp.dev</p>
-            <p className="num mt-1 text-display-md font-light">{usd(listed)}</p>
-          </div>
-          <div>
-            <p className="text-caption uppercase tracking-wider text-inverse-ink-muted">Vendor asks</p>
-            <p className={cn('num mt-1 text-display-md font-light', v.ok ? 'text-inverse-ink' : 'text-[#ff8389]')}>{usd(scenario.amount)}</p>
-          </div>
-        </div>
-
-        <div className="mt-8 space-y-2" aria-hidden>
-          <Bar label="listed" width={widthListed} className="bg-inverse-ink-muted" />
-          <Bar label="ceiling" width={widthCeil} className="bg-primary" />
-          <Bar label="asked" width={widthQuoted} className={v.ok ? 'bg-success' : 'bg-error'} />
-          <p className="pt-1 text-caption text-inverse-ink-muted">log scale · {ratio}x the listing</p>
-        </div>
-      </div>
-
-      <div className={cn('flex flex-col justify-between p-6 sm:p-8', v.ok ? 'bg-success-tint' : 'bg-error')}>
-        <div>
-          <p className={cn('text-caption uppercase tracking-[0.2em]', v.ok ? 'text-success-ink' : 'text-inverse-ink')}>Quote-Cap verdict</p>
-          <p className={cn('mt-3 text-display-md font-light leading-none', v.ok ? 'text-success-ink' : 'text-inverse-ink')}>{v.ok ? 'Signed' : 'Refused'}</p>
-          <p className={cn('mt-4 text-body', v.ok ? 'text-ink' : 'text-inverse-ink')}>
-            {v.ok
-              ? `${usd(scenario.amount)} is within the ceiling of ${v.ceiling ? usd(v.ceiling) : 'none'}. The agent key signs and the charge settles.`
-              : `${usd(scenario.amount)} is above the ceiling of ${v.ceiling ? usd(v.ceiling) : 'the listing'}. No credential was created, no transaction signed, nothing left the wallet.`}
-          </p>
-        </div>
-        <p className={cn('mt-6 font-mono text-caption', v.ok ? 'text-success-ink' : 'text-inverse-ink')}>
-          {v.ok ? 'record.outcome = "delivered"' : `record.refused = "QuoteCapExceeded" · reason = "${v.reason}"`}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function Bar({ label, width, className }: { label: string; width: number; className: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-14 font-mono text-caption text-inverse-ink-muted">{label}</span>
-      <div className="h-3 flex-1 bg-inverse-surface">
-        <div className={cn('h-3 transition-all duration-500', className)} style={{ width: `${width}%` }} />
-      </div>
-    </div>
-  )
-}
-
-function Segmented<T extends string | number>({ label, value, options, onChange }: { label: string; value: T; options: { v: T; label: string }[]; onChange: (v: T) => void }) {
-  return (
-    <fieldset>
-      <legend className="mb-2 text-caption text-ink-muted">{label}</legend>
-      <div className="flex flex-wrap border border-hairline-strong">
+    <fieldset className="border-b border-hairline py-4">
+      <legend className="float-left mb-2 w-full text-caption text-ink-muted">{label}</legend>
+      <div className="clear-both flex border border-ink">
         {options.map((o) => (
           <button
-            key={String(o.v)}
+            key={o.v}
             type="button"
             aria-pressed={o.v === value}
             onClick={() => onChange(o.v)}
-            className={cn('h-10 flex-1 whitespace-nowrap px-4 text-body-sm', o.v === value ? 'bg-ink text-inverse-ink' : 'bg-canvas hover:bg-surface-1')}
+            className={cn(
+              'min-h-10 flex-1 cursor-pointer border-r border-hairline px-2 text-body-sm transition-colors duration-150 last:border-r-0',
+              o.v === value ? 'bg-ink text-on-primary' : 'bg-paper text-ink hover:bg-surface-1',
+            )}
           >
             {o.label}
           </button>
@@ -139,151 +74,230 @@ function Segmented<T extends string | number>({ label, value, options, onChange 
   )
 }
 
-function RouteTable() {
-  const [calls, setCalls] = useState(10_000)
-  const plans = useMemo(() => allRoutes(book), [])
+function Rail({ tol, setTol, cap, setCap, strict, setStrict }: { tol: number; setTol: (v: number) => void; cap: number; setCap: (v: number) => void; strict: boolean; setStrict: (v: boolean) => void }) {
+  const capV = CAPS[cap]!.cap
   return (
-    <section className="mt-16">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <p className="text-caption uppercase tracking-[0.2em] text-primary">Route</p>
-          <h2 className="mt-1 text-headline font-light">Same API, cheaper seller</h2>
-          <p className="mt-2 max-w-2xl text-body text-ink-muted">
-            Several MPP sellers resell the same upstream API at different listed prices. Leash points the agent at the cheapest listing and the Quote-Cap then holds that seller to it.
-          </p>
+    <aside className="order-2 lg:order-1 lg:sticky lg:top-20 lg:self-start">
+      <div className="border border-hairline bg-paper px-5 pb-5">
+        <div className="flex items-baseline justify-between border-b border-hairline py-4">
+          <h2 className="text-body-sm">Agent policy</h2>
+          <span className="text-caption text-ink-subtle">example</span>
         </div>
-        <label className="text-caption text-ink-muted">
-          Calls per month
-          <select value={calls} onChange={(e) => setCalls(Number(e.target.value))} className="mt-2 block h-10 border-b border-hairline-strong bg-surface-1 px-3 text-body-sm text-ink">
-            {[1_000, 10_000, 100_000].map((n) => <option key={n} value={n}>{n.toLocaleString()}</option>)}
-          </select>
+        <Segmented label="Tolerance above the listed price" value={tol} options={TOLERANCES} onChange={setTol} />
+        <Segmented label="Hard cap per call" value={cap} options={CAPS.map((c) => ({ v: c.v, label: c.label }))} onChange={setCap} />
+        <label className="flex cursor-pointer items-start justify-between gap-4 border-b border-hairline py-4">
+          <span>
+            <span className="block text-body-sm">Refuse unlisted endpoints</span>
+            <span className="block text-caption text-ink-muted">Otherwise they are held to the hard cap.</span>
+          </span>
+          <input type="checkbox" checked={strict} onChange={(e) => setStrict(e.target.checked)} className="mt-1 size-4 cursor-pointer accent-ink" />
         </label>
+        <dl className="num grid grid-cols-[1fr_auto] gap-y-1 pt-4 text-caption">
+          <dt className="text-ink-muted">Chain limit on key</dt><dd>$0.20 / day</dd>
+          <dt className="text-ink-muted">Key scope</dt><dd>stablestudio only</dd>
+          <dt className="text-ink-muted">Settles in</dt><dd>USDC.e</dd>
+        </dl>
+        <pre className="mt-4 overflow-x-auto bg-surface-1 p-3 font-mono text-caption leading-relaxed text-ink">{`createLeashFetch({
+  network, agent,
+  quoteCap: { book, policy: {
+    toleranceBps: ${tol},
+    maxPerCall: ${capV === undefined ? 'undefined' : `${capV}n`},
+    unlisted: '${strict ? 'refuse' : 'cap'}',
+  } },
+})`}</pre>
       </div>
-      <div className="mt-6 grid gap-px border border-hairline bg-hairline md:grid-cols-3">
-        {plans.map((p) => {
-          const max = Number(p.priciest.amount)
-          return (
-            <article key={p.group.id} className="flex flex-col bg-canvas p-6">
-              <h3 className="text-subhead">{p.group.label}</h3>
-              <ul className="mt-4 space-y-3">
-                {p.options.map((o, i) => (
-                  <li key={o.url}>
-                    <div className="flex items-baseline justify-between gap-3 text-body-sm">
-                      <span className={cn(i === 0 && 'font-semibold')}>{o.service}{i === 0 && <span className="ml-2 bg-primary px-1.5 py-0.5 text-caption text-on-primary">route here</span>}</span>
-                      <span className="num">{usd(o.amount)}</span>
-                    </div>
-                    <div className="mt-1 h-2 bg-surface-1">
-                      <div className={cn('h-2', i === 0 ? 'bg-primary' : 'bg-surface-3')} style={{ width: `${(Number(o.amount) / max) * 100}%` }} />
-                    </div>
-                    <p className="mt-1 truncate font-mono text-caption text-ink-subtle">{o.url.replace('https://', '')}</p>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto pt-6">
-                <p className="text-caption text-ink-muted">Saved at {calls.toLocaleString()} calls</p>
-                <p className="num text-card-title font-light text-primary">{usd(p.savingPerCall * BigInt(calls))}</p>
-                <p className="text-caption text-ink-subtle">{(p.savingBps / 100).toFixed(0)}% off per call</p>
-              </div>
-            </article>
-          )
-        })}
+    </aside>
+  )
+}
+
+/* ---------- the receipt: one 402 quote, printed ---------- */
+
+function Perforation({ flip }: { flip?: boolean }) {
+  // A row of punched holes: the torn edge of thermal paper.
+  return (
+    <svg className={cn('perf', flip && 'rotate-180')} viewBox="0 0 240 8" preserveAspectRatio="none" aria-hidden>
+      <path fill="currentColor" d={Array.from({ length: 24 }, (_, i) => `M${i * 10} 0 L${i * 10 + 5} 6 L${i * 10 + 10} 0 Z`).join(' ')} />
+    </svg>
+  )
+}
+
+function Line({ k, v, strong, tone }: { k: string; v: ReactNode; strong?: boolean; tone?: 'bad' | 'ok' }) {
+  return (
+    <div className={cn('flex items-baseline justify-between gap-4 py-0.5', strong && 'font-semibold')}>
+      <span className="text-ink-muted">{k}</span>
+      <span className={cn('text-right', tone === 'bad' && 'text-error-ink', tone === 'ok' && 'text-success-ink')}>{v}</span>
+    </div>
+  )
+}
+
+function Receipt({ q, v }: { q: (typeof QUOTES)[number]; v: QuoteVerdict }) {
+  const ratio = v.listed && v.listed > 0n ? Number((v.quoted * 100n) / v.listed) / 100 : null
+  const ratioLabel = ratio === null ? '' : ratio >= 10 ? `${Math.round(ratio)}x` : `${ratio.toFixed(2)}x`
+  return (
+    <article aria-label={`402 quote ${usd(q.amount)}: ${v.ok ? 'paid' : 'refused'}`} className="receipt w-full max-w-[340px] shrink-0 text-caption">
+      <Perforation flip />
+      <div className="px-5 pb-5 pt-3">
+        <div className="flex items-baseline justify-between border-b border-dashed border-surface-3 pb-2">
+          <span className="font-semibold">402 PAYMENT REQUIRED</span>
+          <span className="text-ink-subtle">{q.time}</span>
+        </div>
+        <div className="border-b border-dashed border-surface-3 py-2 text-ink-muted">
+          <p className="truncate">POST {HOST}</p>
+          <p className="truncate">{PATH}</p>
+          <p className="truncate">body {q.body}</p>
+        </div>
+        <div className="border-b border-dashed border-surface-3 py-2">
+          <Line k="listed" v={v.listed === null ? 'unlisted' : usd(v.listed)} />
+          <Line k="ceiling" v={v.ceiling === null ? 'none' : usd(v.ceiling)} />
+          <Line k="asked" v={usd(q.amount)} strong tone={v.ok ? undefined : 'bad'} />
+          {ratio !== null && ratio !== 1 && <Line k="vs listing" v={ratioLabel} />}
+        </div>
+        <div className="flex items-center justify-between gap-4 pt-4">
+          <span key={`${v.ok}`} className={cn('stamp', v.ok ? 'text-success-ink' : 'text-error')}>{v.ok ? 'PAID' : 'REFUSED'}</span>
+          <span className="max-w-[150px] text-right text-ink-muted">{v.ok ? 'key signs, tx settles' : 'nothing signed, nothing sent'}</span>
+        </div>
+        <p className="mt-3 text-ink-subtle">to {RECIPIENT.slice(0, 6)}…{RECIPIENT.slice(-4)} · chain 4217</p>
       </div>
-      <p className="mt-3 text-caption text-ink-subtle">
-        Listed prices: mpp.dev catalog, 2026-10-10. Live 402s matched the listing where the seller answered. Output equivalence between sellers was not checked with paid calls.
+      <Perforation />
+    </article>
+  )
+}
+
+/* ---------- stream sections ---------- */
+
+function ForkFeed() {
+  const proof = useForkProof()
+  if (proof === undefined) return null
+  return (
+    <section aria-labelledby="fork-h" className="mt-16">
+      <h2 id="fork-h" className="text-card-title">The same quotes on a fork of Tempo mainnet</h2>
+      <p className="mt-2 max-w-2xl text-body-sm text-ink-muted">
+        {proof
+          ? `anvil fork of ${proof.fork?.replace('https://', '')} at block ${proof.block?.toLocaleString()}. The agent key's chain limit went from ${usd(proof.limitBefore ?? '0')} to ${usd(proof.limitAfter ?? '0')}. Hashes exist only on the local fork. Revert reasons are inferred; the fork returns no revert data.`
+          : 'The fork run is not published yet: run scripts/fork/run-fork-demo.sh, then scripts/fork/to-web.py.'}
       </p>
+      {proof && (
+        <ol className="mt-6 border-t border-hairline">
+          {proof.steps.map((s, i) => {
+            const bad = /refus|revert/i.test(s.status)
+            const ok = /success/i.test(s.status)
+            return (
+              <li key={i} className="grid grid-cols-[2.5rem_1fr] gap-x-4 border-b border-hairline py-3 md:grid-cols-[2.5rem_1fr_12rem]">
+                <span className="num pt-0.5 text-caption text-ink-subtle">{String(i + 1).padStart(2, '0')}</span>
+                <div className="min-w-0">
+                  <p className="text-body-sm">{s.label}</p>
+                  {s.error && <p className="num mt-0.5 text-caption text-ink-muted">{s.error}</p>}
+                  {s.tx && <p className="num mt-0.5 truncate text-caption text-ink-subtle">fork tx {s.tx}</p>}
+                </div>
+                <span className={cn('num col-start-2 text-caption md:col-start-3 md:text-right', bad ? 'text-error-ink' : ok ? 'text-success-ink' : 'text-ink-muted')}>{s.status}</span>
+              </li>
+            )
+          })}
+        </ol>
+      )}
     </section>
   )
 }
 
-function ForkProofSection() {
-  const proof = useForkProof()
+function RouteRows() {
+  const [calls, setCalls] = useState(10_000)
+  const plans = useMemo(() => allRoutes(book), [])
   return (
-    <section className="mt-16">
-      <p className="text-caption uppercase tracking-[0.2em] text-primary">Chain proof</p>
-      <h2 className="mt-1 text-headline font-light">Replayed on a fork of Tempo mainnet</h2>
-      <p className="mt-2 max-w-2xl text-body text-ink-muted">
-        The same three stablestudio quotes, paid (or refused) by a scoped agent key on a local fork of Tempo mainnet. No real funds move.
-      </p>
-      {proof && (
-        <p className="mt-4 text-caption text-ink-muted">
-          anvil fork of {proof.fork} at block <span className="num">{proof.block?.toLocaleString()}</span>, chain {proof.chainId}. Agent key limit {usd(proof.limitBefore ?? '0')} before, {usd(proof.limitAfter ?? '0')} left after. Revert reasons are inferred: the fork returns no revert data. Tenderly does not support Tempo.
-        </p>
-      )}
-      {proof ? (
-        <ol className="mt-6 border border-hairline">
-          {proof.steps.map((s, i) => (
-            <li key={i} className="grid gap-2 border-b border-hairline p-4 last:border-b-0 md:grid-cols-[1fr_auto]">
-              <div>
-                <p className="text-body-sm">{s.label}</p>
-                {s.error && <p className="mt-1 font-mono text-caption text-error-ink">{s.error}</p>}
-                {s.tx && <p className="mt-1 truncate font-mono text-caption text-ink-subtle">local-fork tx (not on mainnet) {s.tx}</p>}
-              </div>
-              <span className={cn('self-start px-2 py-0.5 text-caption', /refus|revert/i.test(s.status) ? 'bg-error-tint text-error-ink' : /success|pass|ok/i.test(s.status) ? 'bg-success-tint text-success-ink' : 'bg-surface-1 text-ink-muted')}>{s.status}</span>
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="mt-6 border border-dashed border-hairline p-6 text-body-sm text-ink-muted">Fork run not published yet. Run <span className="font-mono">scripts/fork/run-fork-demo.sh</span>.</p>
-      )}
+    <section aria-labelledby="route-h" className="mt-16">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 id="route-h" className="text-card-title">Route: the same API from a cheaper seller</h2>
+          <p className="mt-2 max-w-2xl text-body-sm text-ink-muted">Resellers list the same upstream call at different prices. Leash points the agent at the cheapest listing, and Quote-Cap then holds that seller to it.</p>
+        </div>
+        <label className="text-caption text-ink-muted">
+          Calls per month
+          <select value={calls} onChange={(e) => setCalls(Number(e.target.value))} className="num mt-1 block min-h-10 cursor-pointer border border-ink bg-paper px-3 text-body-sm text-ink">
+            {[1_000, 10_000, 100_000].map((n) => <option key={n} value={n}>{n.toLocaleString()}</option>)}
+          </select>
+        </label>
+      </div>
+      <div className="mt-6 border-t border-hairline">
+        {plans.map((p) => (
+          <div key={p.group.id} className="grid gap-3 border-b border-hairline py-4 md:grid-cols-[12rem_1fr_9rem] md:items-center">
+            <p className="text-body-sm font-semibold">{p.group.label}</p>
+            <div className="num space-y-1 text-caption">
+              {p.options.map((o, i) => (
+                <div key={o.url} className="flex items-baseline gap-3">
+                  <span className={cn('w-4 shrink-0', i === 0 ? 'text-ink' : 'text-ink-subtle')}>{i === 0 ? '→' : ''}</span>
+                  <span className={cn('w-28 shrink-0 truncate', i === 0 ? 'text-ink' : 'text-ink-subtle line-through')}>{o.service}</span>
+                  <span className={cn('w-16 shrink-0 text-right', i === 0 ? 'text-ink' : 'text-ink-subtle')}>{usd(o.amount)}</span>
+                  <span className="hidden truncate text-ink-subtle sm:inline">{o.url.replace('https://', '')}</span>
+                </div>
+              ))}
+            </div>
+            <div className="md:text-right">
+              <p className="num text-body">{usd(p.savingPerCall * BigInt(calls))}</p>
+              <p className="text-caption text-ink-muted">saved, {(p.savingBps / 100).toFixed(0)}% per call</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-caption text-ink-subtle">Listed prices from the mpp.dev catalog, 2026-10-10. Live 402s matched the listing where the seller answered. Sellers' outputs were not compared with paid calls.</p>
     </section>
   )
 }
 
 export function QuoteCapPage() {
-  const [sid, setSid] = useState<(typeof SCENARIOS)[number]['id']>('missing')
   const [tol, setTol] = useState(0)
-  const [capIdx, setCapIdx] = useState(1)
-  const scenario = SCENARIOS.find((s) => s.id === sid)!
-  const policy: QuoteCapPolicy = { toleranceBps: tol, maxPerCall: CAPS[capIdx]!.v, unlisted: 'cap' }
-  const v = checkQuote(book, policy, { method: 'POST', url: NB, amount: scenario.amount, currency: USDCE })
+  const [cap, setCap] = useState(1)
+  const [strict, setStrict] = useState(false)
+  const policy: QuoteCapPolicy = { toleranceBps: tol, maxPerCall: CAPS[cap]!.cap, unlisted: strict ? 'refuse' : 'cap' }
+  const verdicts = QUOTES.map((q) => checkQuote(book, policy, { method: 'POST', url: NB, amount: q.amount, currency: USDCE }))
+  const refused = verdicts.filter((v) => !v.ok).length
 
   return (
-    <div>
-      <header className="mb-10 max-w-4xl">
-        <p className="text-caption uppercase tracking-[0.2em] text-primary">Leash Quote-Cap · Tempo MPP</p>
-        <h1 className="mt-2 text-display-md font-light">Your agent never pays more than the price on the menu.</h1>
-        <p className="mt-4 text-body-lg text-ink-muted">
-          An MPP vendor names its price in the 402 challenge, and a default client signs whatever it names. On Tempo mainnet, stablestudio lists an image call at $0.039 and asked for $10.00 when the prompt was missing. Leash checks every quote against the listing before the agent key signs.
-        </p>
-      </header>
+    <div className="grid gap-10 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-12">
+      <Rail tol={tol} setTol={setTol} cap={cap} setCap={setCap} strict={strict} setStrict={setStrict} />
+      <div className="order-1 min-w-0 lg:order-2">
+        <header className="max-w-3xl">
+          <h1 className="text-headline">stablestudio lists this image call at $0.039. Its 402 asked for $10.00.</h1>
+          <p className="mt-3 text-body text-ink-muted">
+            A default MPP client signs whatever amount the 402 names. Leash checks each quote against the listed price before the agent key signs. Below are the three real quotes from Tempo mainnet, run through the agent policy.
+          </p>
+        </header>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-3">
-        <Segmented label="Replay a real stablestudio 402" value={sid} options={SCENARIOS.map((s) => ({ v: s.id, label: s.label }))} onChange={setSid} />
-        <Segmented label="Tolerance above listing" value={tol} options={TOLERANCES.map((t) => ({ v: t.bps, label: t.label }))} onChange={setTol} />
-        <Segmented label="Hard cap per call" value={capIdx} options={CAPS.map((c, i) => ({ v: i, label: c.label }))} onChange={setCapIdx} />
-      </div>
-
-      <Intercept policy={policy} scenario={scenario} />
-      <p className="mt-3 text-caption text-ink-subtle">{scenario.note} Captured unpaid from Tempo mainnet (chain 4217), 2026-10-10 09:45 IST.</p>
-
-      <section className="mt-12 grid gap-10 lg:grid-cols-[1fr_1fr]">
-        <div>
-          <h2 className="text-subhead">Where the check sits</h2>
-          <ol className="mt-4 space-y-1">
-            <Stage n={1} title="Agent calls the API" state="done">mppx fetch, no payment yet</Stage>
-            <Stage n={2} title="Vendor answers 402 with a quote" state="done">amount {usd(scenario.amount)} in USDC.e</Stage>
-            <Stage n={3} title="Quote-Cap compares quote to listing" state={v.ok ? 'go' : 'stop'}>
-              listed {usd(v.listed ?? 0n)}, ceiling {v.ceiling ? usd(v.ceiling) : 'none'}{v.ok ? '' : ' · throws QuoteCapExceeded in onChallenge'}
-            </Stage>
-            <Stage n={4} title="Agent access key signs the charge" state={v.ok ? 'done' : 'skip'}>Tempo 0x76 tx, scoped key</Stage>
-            <Stage n={5} title="Settles on chain, vendor delivers" state={v.ok ? 'done' : 'skip'}>joined to the ledger by memo</Stage>
-          </ol>
+        <div className="mt-6 flex items-baseline justify-between border-b border-hairline pb-2">
+          <h2 className="text-body-sm font-semibold">402 quotes</h2>
+          <span className="num text-caption text-ink-muted" aria-live="polite">{refused} refused · {QUOTES.length - refused} paid</span>
         </div>
-        <div>
-          <h2 className="text-subhead">Two locks, not one</h2>
-          <div className="mt-4 space-y-4 text-body-sm text-ink-muted">
-            <p><span className="font-semibold text-ink">Before signing:</span> the Quote-Cap guard in the payment path refuses a quote above the listing plus tolerance, or above the per-call cap. Nothing is signed, so there is nothing to refund.</p>
-            <p><span className="font-semibold text-ink">If the guard is bypassed:</span> the agent's Tempo access key is scoped to the vendor's payout and a spend limit the chain enforces, so a compromised agent still cannot overspend.</p>
-            <pre className="overflow-x-auto bg-surface-1 p-4 font-mono text-caption text-ink">{`createLeashFetch({
-  network, agent,
-  quoteCap: { book, policy: { toleranceBps: ${tol}, maxPerCall: ${CAPS[capIdx]!.v ?? 'undefined'}n, unlisted: 'cap' } },
-})`}</pre>
+        <div className="mt-6 flex snap-x gap-6 overflow-x-auto pb-2">
+          {QUOTES.map((q, i) => (
+            <div key={q.id} className="snap-start">
+              <Receipt q={q} v={verdicts[i]!} />
+              <p className="mt-2 max-w-[340px] text-caption text-ink-muted">{q.why}</p>
+            </div>
+          ))}
+        </div>
+
+        <section aria-labelledby="how-h" className="mt-16 grid gap-8 md:grid-cols-2">
+          <div>
+            <h2 id="how-h" className="text-card-title">Two locks</h2>
+            <p className="mt-2 text-body-sm text-ink-muted">
+              <span className="text-ink">Before signing.</span> The guard runs in mppx's onChallenge hook. A quote above the listed price plus tolerance, or above the hard cap, throws QuoteCapExceeded. No credential is created, so there is nothing to refund.
+            </p>
+            <p className="mt-3 text-body-sm text-ink-muted">
+              <span className="text-ink">If the guard is bypassed.</span> The agent's Tempo access key is scoped to the vendor's payout address with a daily limit the chain enforces. The fork run below shows the chain reverting both.
+            </p>
           </div>
-        </div>
-      </section>
+          <div className="num border-l border-hairline pl-6 text-caption leading-relaxed text-ink-muted">
+            <p className="text-ink">record (refused)</p>
+            <p>outcome: "refused"</p>
+            <p>refused: "QuoteCapExceeded"</p>
+            <p>quote.listed: "39000"</p>
+            <p>quote.quoted: "10000000"</p>
+            <p>quote.reason: "above_listing"</p>
+            <p>settlement: null</p>
+          </div>
+        </section>
 
-      <RouteTable />
-      <ForkProofSection />
+        <ForkFeed />
+        <RouteRows />
+      </div>
     </div>
   )
 }

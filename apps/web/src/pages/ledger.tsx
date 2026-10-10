@@ -33,7 +33,7 @@ function LedgerBody({ account }: { account: Address }) {
       )}
       {all.length > 0 && (
         <>
-          <div role="tablist" aria-label="Filter by outcome" className="mb-4 flex overflow-x-auto border-b border-hairline">
+          <div role="tablist" aria-label="Filter by outcome" className="mb-4 inline-flex max-w-full overflow-x-auto border border-ink">
             {FILTERS.map((f) => {
               const n = f.key === 'all' ? all.length : all.filter((r) => r.outcome === f.key).length
               return (
@@ -44,8 +44,8 @@ function LedgerBody({ account }: { account: Address }) {
                   aria-selected={filter === f.key}
                   onClick={() => setFilter(f.key)}
                   className={cn(
-                    'whitespace-nowrap border-b-2 px-5 py-3 text-body-sm',
-                    filter === f.key ? 'border-primary font-semibold text-ink' : 'border-transparent text-ink-muted hover:bg-surface-1',
+                    'min-h-10 whitespace-nowrap border-r border-hairline px-4 text-body-sm last:border-r-0',
+                    filter === f.key ? 'bg-ink text-on-primary' : 'bg-paper text-ink-muted hover:text-ink',
                   )}
                 >
                   {f.label} <span className="num text-ink-subtle">{n}</span>
