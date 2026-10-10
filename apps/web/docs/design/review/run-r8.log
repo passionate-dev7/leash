@@ -1,18 +1,20 @@
 "claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
 [claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
-Design Score: **B+** (8.3). AI Slop Score: **A-**.
+Audit written to `apps/web/docs/design/review/design-audit-leash-r8.md`. Report only: no source edits, no commits, no deploys.
 
-Axes: hierarchy 8.5, primary action 8.5, typography 8.5, density 7.5, color 8.0, consistency 8.5, AI-slop absence 8.5, mobile 8.0. Average 8.3, min 7.5.
+**Scores:** Design B+ (8.1), AI slop A-.
 
-Top 5 findings:
-1. **High, evidence:** the payout-address figure on delivery-cut has no block number and no link (`deliverycut.tsx:109`).
-2. **Medium, density:** quote-cap is 3,573px tall at 1440 and 6,480px at 390. Move "Check it in two minutes" above the rivals block.
-3. **Medium, mobile:** the delivery-cut fixed bar covers the first lines of the mechanism sentence on the first phone screen (`deliverycut.tsx:78`). The failed-call row itself is now clear.
-4. **Low to Medium, color:** the signed cut is green (`deliverycut.tsx:81-82`), outside the "green only for an allow" rule.
-5. **Low, consistency:** the two pages show different fork blocks without saying they are separate runs. The mpp.dev price line has a date but no link.
+**Top findings:**
+1. **Density regressed.** Quote-cap is 3,573px tall at 1440 (r7: 3,280) and 6,480px at 390 (r7: 5,483). The Positioning block adds about 300 words of rival copy.
+2. **Mobile order.** On the 390 first screen, the "Sign the cut" bar sits above the verdict it signs.
+3. **Color rule.** The signed cut state uses green, but the rule in `index.css` says green means allow only.
+4. **Nav.** The eight-item nav plus "Create a team" still shows on both judge routes.
+5. **Hierarchy.** "Two locks, in order" is set at body size, so it reads as a step label.
 
-Round 7 status: the honesty finding is reversed by you, so the caveats stay and are not counted. The quote-cap fork section now balances. The quote-cap layout is fixed but the page is longer. The phone failed-row overlap is fixed, but the bar still covers part of the sentence beneath it. The payout-address evidence is still open.
+**r7 status:** the phone failure row is now visible above the bar, and the fork's left column is fixed. One honesty sentence is gone. The other caveats stay by your decision.
 
-The report path already had a file, and this write replaced it. I did not read it first, so if it held work you wanted, tell me and I'll check.
-
-Several MCP servers need OAuth in claude.ai connector settings or `/mcp`, and gbrain and morph-mcp failed to connect. None were needed for this audit.
+**Caveats:**
+- **I overwrote an existing `design-audit-leash-r8.md`.** `git status` at session start listed it as untracked, and it is not in git or the transcript, so I can't restore it. The Write tool reported "created," so it may not have existed at write time. If you have a copy (editor history, Time Machine), restore it.
+- **No browser this round.** Hover, focus, and widths 672 to 1055px are untested. Heights come from the capture file dimensions.
+- **Checked:** line references against source, no em dashes in the report, and the "$0.003" figure against `delivery-cut-proof.json` (quoted 3000 at 6 decimals).
+nnect. None were needed for this audit.
