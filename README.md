@@ -2,6 +2,8 @@
 
 **Your agent never pays more than the price on the menu.**
 
+Live: https://leash-eiy.pages.dev/#/quote-cap (Cloudflare Pages; API https://leash-api.fly.dev). Deploy: `pnpm --filter @leash/web run deploy`.
+
 An MPP vendor names its price in the 402 challenge, and a default mppx client signs whatever it names
 (mppx 0.12 and 0.13.4 have no max-amount check). On Tempo mainnet on 2026-10-10, stablestudio listed
 `POST /api/generate/nano-banana/generate` at **$0.039** in the mpp.dev catalog and its 402 asked for
