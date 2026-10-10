@@ -20,3 +20,4 @@ apps/web/.uicraft-read.json
 .progress/
 scripts/fork/.foundry-bin/
 scripts/fork/out/anvil.log
+.deploy-web/
