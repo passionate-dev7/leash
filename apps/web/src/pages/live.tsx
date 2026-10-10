@@ -57,7 +57,7 @@ export function LivePage({ account: param }: { account: string | null }) {
             An agent paid a vendor, the HTTP call failed, one signature removes that payout, and the next payment reverts with CallNotAllowed. Read-only team{' '}
             {label ? <span className="font-semibold text-ink">{label}</span> : null}
             {label ? ' on ' : ''}{NETWORKS[network].label}. Account{' '}
-            <a href={addressUrl(account, network)} target="_blank" rel="noreferrer" className="num text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink">{account.slice(0, 10)}...{account.slice(-6)}</a>.
+            <a href={addressUrl(account, network)} target="_blank" rel="noreferrer" className="num text-ink underline decoration-surface-3 underline-offset-2 hover:decoration-ink">{account.slice(0, 10)}…{account.slice(-6)}</a>.
           </>
         ) : (
           'Loading the featured team.'

@@ -19,7 +19,7 @@ export function money(value: string | bigint | null | undefined): string {
 }
 
 export const short = (value: string | null | undefined, head = 6, tail = 4) =>
-  !value ? '' : value.length <= head + tail + 1 ? value : `${value.slice(0, head)}...${value.slice(-tail)}`
+  !value ? '' : value.length <= head + tail + 1 ? value : `${value.slice(0, head)}…${value.slice(-tail)}`
 
 export function ago(iso: string | number | null | undefined): string {
   if (!iso) return ''

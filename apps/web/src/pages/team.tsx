@@ -110,7 +110,7 @@ function Deposit({ address }: { address: `0x${string}` }) {
         <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
           <h2 className="text-body-sm font-semibold max-md:w-full">Deposit</h2>
           <p className="text-body-sm text-ink-muted">
-            USDC.e <span className="num ml-1 text-ink" data-testid="deposit-balance">{bal.data ? units(bal.data.budget) : '...'}</span>
+            USDC.e <span className="num ml-1 text-ink" data-testid="deposit-balance">{bal.data ? units(bal.data.budget) : '…'}</span>
           </p>
           {bal.data && <span className="text-caption text-ink-subtle">read from chain 4217 at block <span className="num">{bal.data.block.toString()}</span></span>}
         </div>
@@ -156,10 +156,10 @@ function Funding({ address }: { address: `0x${string}` }) {
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border border-hairline bg-surface-1 px-4 py-3">
         <h2 className="text-body-sm font-semibold max-md:w-full">Balances</h2>
         <p className="text-body-sm text-ink-muted">
-          OUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.budget) : '...'}</span>
+          OUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.budget) : '…'}</span>
         </p>
         <p className="text-body-sm text-ink-muted">
-          PathUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.fee) : '...'}</span>
+          PathUSD <span className="num ml-1 text-ink">{bal.data ? units(bal.data.fee) : '…'}</span>
         </p>
         {bal.data && <span className="text-caption text-ink-subtle">read at block <span className="num">{bal.data.block.toString()}</span></span>}
         <Button className="md:ml-auto" size="sm" variant={empty ? 'primary' : 'ghost'} busy={busy} onClick={fund}>

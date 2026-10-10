@@ -319,7 +319,7 @@ function AddAgent({ account, client, catalog, onDone }: { account: Address; clie
             <li key={s.label} className="text-body-sm">
               <Status tone={s.state === 'done' ? 'ok' : s.state === 'fail' ? 'bad' : 'info'}>
                 {s.label}
-                {s.state === 'run' && '...'}
+                {s.state === 'run' && '…'}
                 {s.detail && <span className={s.state === 'fail' ? 'ml-2' : 'num ml-2 text-ink-muted'}>{s.detail}</span>}
               </Status>
             </li>
