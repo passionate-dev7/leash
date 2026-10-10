@@ -1,3 +1,4 @@
+import type * as React from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { checkQuote, formatUnits } from '@leash/policy/quote-cap'
 import type { PriceBook, QuoteCapPolicy } from '@leash/policy/quote-cap'
@@ -99,8 +100,11 @@ function QuoteCheck() {
             </ToggleGroup>
           </div>
         </div>
-        <Button size="lg" className="mt-8 w-full" onClick={() => setRan(key)}>Let the agent pay this quote</Button>
-        <div aria-live="polite" className="min-h-24 pt-6">
+        <Button size="lg" className="mt-8 w-full max-md:hidden" onClick={() => setRan(key)}>Let the agent pay this quote</Button>
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-ink bg-paper p-4 md:hidden">
+          <Button size="lg" className="w-full" onClick={() => { setRan(key); document.getElementById('qc-verdict')?.scrollIntoView({ block: 'center' }) }}>Let the agent pay this quote</Button>
+        </div>
+        <div id="qc-verdict" aria-live="polite" className="min-h-24 pt-6">
           {shown ? (
             v.ok ? (
               <div className="border-l-4 border-success pl-4">
@@ -190,9 +194,41 @@ function Routes() {
   )
 }
 
+function Block({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+      <h2 id={id} className="text-headline">{title}</h2>
+      <div className="grid gap-4 text-body-lg text-ink-muted">{children}</div>
+    </section>
+  )
+}
+
+function Positioning() {
+  return (
+    <Block id="pos-h" title="Business model and neighbours">
+      <p><span className="font-semibold text-ink">Business model (planned, no revenue yet).</span> The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.</p>
+      <p><span className="font-semibold text-ink">Setra402</span> describes itself as a "trust layer for agent payments" for agents that "pay upfront without execution guarantees" (<a className="text-ink underline underline-offset-4" href="https://x.com/510Sulove/status/2102234121171079449" target="_blank" rel="noreferrer">@510Sulove</a>). That is the problem Delivery Cut works on. We have not seen its chain or mechanism, so we compare only what Leash shows: a price check before the key signs, and a cut enforced by the Tempo access key, both run on a fork of Tempo mainnet.</p>
+      <p><span className="font-semibold text-ink">Rolepay</span> lets Discord communities pay human contributors in stablecoins on Tempo, one transaction per payout round (<a className="text-ink underline underline-offset-4" href="https://x.com/filipebaleixo/status/2108676772212695189" target="_blank" rel="noreferrer">@filipebaleixo</a>). It shares the chain, not the job: Rolepay pays people, Leash limits what software agents pay vendors.</p>
+    </Block>
+  )
+}
+
+function ForJudges() {
+  return (
+    <Block id="judge-h" title="Check it in two minutes">
+      <ol className="grid list-decimal gap-3 pl-5">
+        <li>On this page, keep "No prompt" and press "Let the agent pay this quote". The real $10.00 quote is refused against the $0.039 listing. Pick "With prompt" or "Listed" to see a quote pass.</li>
+        <li>Scroll to the fork run: the $10.00 bypass and the payment to another vendor both revert on chain. These hashes exist only on a local anvil fork of Tempo mainnet.</li>
+        <li>Open <a className="text-ink underline underline-offset-4" href="#/delivery-cut">Delivery Cut</a> and press "Sign the cut": fal's next charge reverts and stablestudio still gets paid.</li>
+        <li>Rerun it yourself from the repo: <span className="hash text-body-sm text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-body-sm text-ink">scripts/fork/run-delivery-cut.sh</span> (needs Foundry, no funds) and <span className="hash text-body-sm text-ink">pnpm -r test</span>.</li>
+      </ol>
+    </Block>
+  )
+}
+
 export function QuoteCapPage() {
   return (
-    <div className="mx-auto max-w-[1120px]">
+    <div className="mx-auto max-w-[1120px] max-md:pb-24">
       <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
         <header className="lg:pt-6">
           <h1 className="text-display-sm sm:text-display-md">Your agent pays only the price you allow.</h1>
@@ -219,6 +255,8 @@ export function QuoteCapPage() {
       <div className="space-y-24 py-16 lg:space-y-32">
         <ForkSteps />
         <Routes />
+        <Positioning />
+        <ForJudges />
       </div>
     </div>
   )

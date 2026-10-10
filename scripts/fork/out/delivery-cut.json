@@ -23,7 +23,7 @@
    "source": "https://github.com/tempoxyz/mpp/issues/1034 (vet402: 42/89 paid Tempo calls settled then answered 400/422; fal.mpp.tempo.xyz FLUX: 422, `missing` at `body.prompt`)",
    "note": "status and error type/loc are as reported by vet402; the msg wording is the standard FastAPI/pydantic text and is illustrative. LEASH did not pay fal on mainnet to re-observe it."
   },
-  "caveat": "0xca4e...79Fe is the recipient in the 402s of fal, openai and firecrawl .mpp.tempo.xyz (captured 2026-10-10), so a recipient cut stops all three gateways' charges to that address."
+  "caveat": "0xca4e...79Fe was the recipient in unpaid 402 probes of fal, openai, firecrawl and nine other mpp.tempo.xyz gateways (research/platform/scripts/probe-all402.json, 2026-10-03), so a recipient cut would stop charges to that address from all of them. The fork run only charged fal and stablestudio."
  },
  "root": "0xd1cbF18a0599E054F68A8f4f3f1f426f1951E6Bc",
  "agent_key": "0xa07730D5783A279a8B0887cc4C6Ba66F68B76e54",

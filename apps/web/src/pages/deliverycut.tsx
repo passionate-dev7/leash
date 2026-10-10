@@ -30,11 +30,11 @@ function useProof() {
   return p
 }
 
-function Row({ k, v, tone }: { k: string; v: string; tone?: 'bad' }) {
+function Row({ k, v, tone }: { k: string; v: string; tone?: 'warn' }) {
   return (
     <div className="flex items-baseline justify-between gap-6 py-3">
       <span className="text-body text-ink-muted">{k}</span>
-      <span className={cn('num text-right text-body-lg', tone === 'bad' && 'text-error-ink')}>{v}</span>
+      <span className={cn('num text-right text-body-lg', tone === 'warn' && 'text-warning-ink')}>{v}</span>
     </div>
   )
 }
@@ -53,16 +53,17 @@ export function DeliveryCutPage() {
   const steps = [...before, ...(signed ? after : [])]
 
   return (
-    <div className="mx-auto max-w-[1120px]">
+    <div className="mx-auto max-w-[1120px] max-md:pb-24">
       <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
         <header className="lg:pt-6">
           <h1 className="text-display-sm sm:text-display-md">When a vendor takes the money and fails, cut it off.</h1>
           <p className="mt-6 text-body-lg text-ink-muted">
             On MPP the charge settles before the service checks the request. vet402 paid 89 directory calls on Tempo, and 42 settled and then answered 400 or 422 (<a className="text-ink underline underline-offset-4" href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">tempoxyz/mpp#1034</a>).
           </p>
+          <p className="mt-4 text-body-lg text-ink-muted">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
         </header>
 
-        <section aria-label="The failed call" className="min-w-0 border border-ink bg-paper lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <section aria-label="The failed call" className="min-w-0 border border-ink bg-paper">
           <div className="p-6 sm:p-8">
             <p className="text-body-sm text-ink-muted">fal · FLUX schnell · {proof.vendor.origin.replace('https://', '')}</p>
             <div className="mt-4">
@@ -70,37 +71,41 @@ export function DeliveryCutPage() {
               <Separator />
               <Row k="The agent paid" v={usd(proof.vendor.quoted)} />
               <Separator />
-              <Row k="fal answered" v={`HTTP ${proof.failure.status}, no image`} tone="bad" />
+              <Row k="fal answered" v={`HTTP ${proof.failure.status}, no image`} tone="warn" />
             </div>
             <p className="mt-2 text-body-sm text-ink-muted">The request had an empty body. The 402 was captured live by Leash. Status and error from vet402's report.</p>
           </div>
           <div className="border-t border-hairline bg-canvas p-6 sm:p-8">
-            <div aria-live="polite">
+            <div id="dc-verdict" aria-live="polite">
               {signed ? (
                 <div className="border-l-4 border-success pl-4">
                   <p className="text-subhead text-success-ink">fal is cut from the agent key</p>
                   <p className="mt-1 text-body text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. See the transactions below.</p>
                 </div>
               ) : (
-                <div className="border-l-4 border-error pl-4">
-                  <p className="text-subhead text-error-ink">Paid, not delivered: <span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span></p>
+                <div className="border-l-4 border-warning pl-4">
+                  <p className="text-subhead text-warning-ink">Paid, not delivered: <span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span></p>
                   <p className="mt-1 text-body text-ink-muted">Cutting removes fal's payout address <span className="hash text-body-sm">{short(proof.vendor.recipient)}</span> from what the agent key may pay.</p>
                 </div>
               )}
             </div>
-            <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-8 w-full" onClick={() => setSigned(true)} disabled={signed}>
+            <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-8 w-full max-md:hidden" onClick={() => setSigned(true)} disabled={signed}>
               {signed ? 'Cut signed' : 'Sign the cut'}
             </Button>
+            {!signed && (
+              <div className="fixed inset-x-0 bottom-0 z-20 border-t border-ink bg-paper p-4 md:hidden">
+                <Button size="lg" className="w-full" onClick={() => { setSigned(true); document.getElementById('dc-verdict')?.scrollIntoView({ block: 'center' }) }}>Sign the cut</Button>
+              </div>
+            )}
           </div>
         </section>
-        <p className="text-body-lg text-ink-muted lg:col-start-1">Leash spots the paid-but-failed call. One signature removes that vendor from the agent key, and the chain refuses its next charge.</p>
       </div>
 
       <section aria-labelledby="tx-h" className="grid gap-8 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
         <div>
           <h2 id="tx-h" className="text-headline">The run, on a fork of Tempo mainnet</h2>
           <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. Hashes resolve on that fork.</p>
-          <p className="mt-4 text-body-sm text-ink-muted"><span className="hash">{short(proof.vendor.recipient)}</span> is also the payout address in the 402s of openai and firecrawl on mpp.tempo.xyz, so this one cut stops all three.</p>
+          <p className="mt-4 text-body-sm text-ink-muted">A cut removes a payout address, not a brand. In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026, <span className="hash">{short(proof.vendor.recipient)}</span> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
         </div>
         <div>
           <ol className="border-t border-ink">
