@@ -1,0 +1,163 @@
+{
+ "kind": "anvil-tempo-mainnet-fork",
+ "label": "LOCAL FORK ONLY - not mainnet, no real funds, tx hashes exist only on this fork",
+ "forked_from": "https://rpc.mainnet.tempo.xyz",
+ "fork_block": 43488714,
+ "chain_id": 4217,
+ "failure_pattern": {
+  "kind": "recorded third-party failure pattern (replayed, not a LEASH-run vendor)",
+  "vendor": "fal",
+  "origin": "https://fal.mpp.tempo.xyz",
+  "endpoint": "POST /fal-ai/flux/schnell",
+  "request_body": "{}",
+  "challenge": {
+   "source": "fal-402-headers.txt (real unpaid mainnet 402 captured by LEASH, see fal-402-captured-at.txt)",
+   "amount": 3000,
+   "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+   "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+   "chainId": 4217
+  },
+  "post_payment_response": {
+   "status": 422,
+   "body": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"Field required\"}]}",
+   "source": "https://github.com/tempoxyz/mpp/issues/1034 (vet402: 42/89 paid Tempo calls settled then answered 400/422; fal.mpp.tempo.xyz FLUX: 422, `missing` at `body.prompt`)",
+   "note": "status and error type/loc are as reported by vet402; the msg wording is the standard FastAPI/pydantic text and is illustrative. LEASH did not pay fal on mainnet to re-observe it."
+  },
+  "caveat": "0xca4e...79Fe is the recipient in the 402s of fal, openai and firecrawl .mpp.tempo.xyz (captured 2026-10-10), so a recipient cut stops all three gateways' charges to that address."
+ },
+ "root": "0xd1cbF18a0599E054F68A8f4f3f1f426f1951E6Bc",
+ "agent_key": "0xa07730D5783A279a8B0887cc4C6Ba66F68B76e54",
+ "key_check_after_cut": "Wallet:         0xd1cbF18a0599E054F68A8f4f3f1f426f1951E6Bc Key:            0xa07730D5783A279a8B0887cc4C6Ba66F68B76e54 Status:         \u2713 active Signature Type: secp256k1 Key ID:         0xa07730D5783A279a8B0887cc4C6Ba66F68B76e54 Expiry:         never Spending Limits: enforced ",
+ "cut_plan": [
+  {
+   "recipient": "0xca4e835f803cb0b7c428222b3a3b98518d4779fe",
+   "plan": {
+    "calls": [
+     {
+      "to": "0xaAAAaaAA00000000000000000000000000000000",
+      "data": "0xf5456703000000000000000000000000a07730d5783a279a8b0887cc4c6ba66f68b76e5400000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000020c000000000000000000000b9537d11c60e8b50000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020a9059cbb000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000100000000000000000000000007f067959297767c887dbfa3c72379c66e82a045"
+     }
+    ],
+    "rescoped": [
+     "0xa07730D5783A279a8B0887cc4C6Ba66F68B76e54"
+    ],
+    "revoked": [],
+    "unchanged": [],
+    "unbounded": []
+   }
+  }
+ ],
+ "outcomes": [
+  {
+   "vendor": "stablestudio",
+   "recipient": "0x07F067959297767c887dbfA3C72379c66E82a045",
+   "amount": "39000",
+   "settlementTx": "0x7c7e59f8585e61a0a9a9a6df6a21997a2da825458e6ecea3881a544e21527474",
+   "status": 200
+  },
+  {
+   "vendor": "fal",
+   "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+   "amount": "3000",
+   "settlementTx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
+   "status": 422,
+   "body": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"Field required\"}]}"
+  }
+ ],
+ "decisions": [
+  {
+   "recipient": "0x07f067959297767c887dbfa3c72379c66e82a045",
+   "vendor": "stablestudio",
+   "cut": false,
+   "failures": 0,
+   "lost": "0",
+   "evidence": []
+  },
+  {
+   "recipient": "0xca4e835f803cb0b7c428222b3a3b98518d4779fe",
+   "vendor": "fal",
+   "cut": true,
+   "failures": 1,
+   "lost": "3000",
+   "evidence": [
+    {
+     "settlementTx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
+     "status": 422,
+     "reason": "paid_then_client_error"
+    }
+   ]
+  }
+ ],
+ "balances": {
+  "fal_before": "2465581245",
+  "fal_after": "2465584245",
+  "stablestudio_before": "3818201514",
+  "stablestudio_after": "3818279514"
+ },
+ "events": [
+  {
+   "step": "fund",
+   "label": "fork-only: fund fresh root with 20 USDC.e from impersonated holder",
+   "amount": 20000000,
+   "tx": "0x72b726db9c6ca2231fc15c92aa709dc0e3a3d9dd79b393c9a62afee090b4597e",
+   "status": "success",
+   "gasUsed": 287242,
+   "error": null
+  },
+  {
+   "step": "authorize",
+   "label": "agent key: USDC.e.transfer to fal + stablestudio, limit 1.00",
+   "amount": 1000000,
+   "tx": "0x7ebc7b617e035074eaee67b9fb2548c88d9c479fd5f29e0d736678d7e2e3b51c",
+   "status": "success",
+   "gasUsed": 2105816,
+   "error": null
+  },
+  {
+   "step": "pay_fal",
+   "label": "agent pays fal 0.003 (real 402 quote, empty body)",
+   "amount": 3000,
+   "tx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
+   "status": "success",
+   "gasUsed": 63217,
+   "error": null
+  },
+  {
+   "step": "pay_ss",
+   "label": "agent pays stablestudio 0.039 (delivered)",
+   "amount": 39000,
+   "tx": "0x7c7e59f8585e61a0a9a9a6df6a21997a2da825458e6ecea3881a544e21527474",
+   "status": "success",
+   "gasUsed": 63217,
+   "error": null
+  },
+  {
+   "step": "cut",
+   "label": "ONE root signature: cut fal (AccountKeychain.setAllowedCalls without 0xca4e...79Fe, planned by @leash/sdk)",
+   "amount": 0,
+   "tx": "0x6b141d559d751c18f90a672b973f17ed0518e16149446e91dfd6addad2fbe38f",
+   "status": "success",
+   "gasUsed": 69694,
+   "error": null
+  },
+  {
+   "step": "fal_next_charge",
+   "label": "fal's next charge after the cut",
+   "amount": 3000,
+   "tx": "0xa8a3322130fbc6368b2d3c57776b5a316a6dbb9c9398cd6c3d400625804e5134",
+   "status": "reverted_onchain",
+   "gasUsed": 37184,
+   "error": "unknown",
+   "revert_data": null
+  },
+  {
+   "step": "ss_after_cut",
+   "label": "stablestudio after the cut (still allowed)",
+   "amount": 39000,
+   "tx": "0x7133da80ed2fa5f2b731d2825bb1c33154bccdb7e9dfd671dcf3ae909b719eac",
+   "status": "success",
+   "gasUsed": 63217,
+   "error": null
+  }
+ ]
+}
