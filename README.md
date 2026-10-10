@@ -63,15 +63,27 @@ The guard and SDK stay open source, so any MPP client can refuse an overpriced q
 would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and
 one-signature cuts. Route could later take a small share of the saving it finds on each call.
 
-## Neighbours in the World's Fair
+## How Leash differs from its closest rivals
 
-- **Setra402** ([@510Sulove](https://x.com/510Sulove/status/2102234121171079449)): "trust layer for agent payments",
-  for agents that "pay upfront without execution guarantees". Same problem as Delivery Cut. Its chain and mechanism
-  are not public in what we found, so we claim no difference beyond what Leash itself shows: a price check before the
-  key signs, and a cut enforced by the Tempo access key, both run on a Tempo-mainnet fork with real captured 402s.
-- **Rolepay** ([@filipebaleixo](https://x.com/filipebaleixo/status/2108676772212695189)): Discord communities pay human
-  contributors in stablecoins on Tempo, one transaction per payout round, payees on passkeys. Same chain, different job:
-  Rolepay pays people; Leash limits what software agents pay vendors.
+Summaries come from each project's own repo or Arena page, read on 2026-10-11.
+
+- **[vet402](https://github.com/kzmttkc/vet402-delivery)** buys x402 and MPP APIs with its own wallet on Solana,
+  Tempo and Base and publishes what each seller delivered next to the payment tx (its Tempo run is the source of
+  mpp#1034's 42 of 89 paid-then-failed calls). It grades sellers; it does not control an agent's key. Leash acts on
+  the agent's own payments: it refuses a wrong price before signing and cuts a failing vendor on chain. vet402's
+  grades could feed a Leash cut.
+- **[Fermata](https://github.com/bilgin-kocak/fermata)** holds each MPP call's payment in escrow on Tempo, records the
+  vendor's HTTPS answer with TLSNotary, and refunds the agent on a proven failure or timeout (Tempo testnet; vendors
+  are reached through Fermata's gateway). Fermata recovers a failed payment; Leash does not refund. Leash needs no
+  gateway, pays vendors directly, and checks the quoted price against the vendor's listing, which Fermata's README
+  does not describe. After a failure Leash stops all later charges with one signature.
+- **[Cursus](https://colosseum.com/arena/projects/cursus)** is an accountability layer: roles for humans and agents
+  with limits on authority and budget, evidence and human sign-off; its first agent payment was x402 on Solana
+  devnet. Cursus records who acted under whose authority. Leash limits payments only and enforces it on Tempo: the
+  agent key's vendor scope and daily limit are chain rules, and each quote is checked before the key signs.
+
+Also nearby: Setra402 ("trust layer for agent payments", mechanism not public) and Rolepay (Discord communities
+paying people on Tempo, a different job).
 
 ### Built before vs during the World's Fair
 - Before (Sep 2026): the spend desk below: per-agent access keys, delivery ledger, vendor cut-off, API, console.
