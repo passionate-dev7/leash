@@ -43,6 +43,14 @@ function Row({ k, v, tone }: { k: string; v: React.ReactNode; tone?: 'warn' }) {
 export function DeliveryCutPage() {
   const proof = useProof()
   const [signed, setSigned] = useState(false)
+  const [btn, setBtn] = useState<HTMLButtonElement | null>(null)
+  const [btnOut, setBtnOut] = useState(false)
+  useEffect(() => {
+    if (!btn) return
+    const io = new IntersectionObserver(([e]) => setBtnOut(!e!.isIntersecting))
+    io.observe(btn)
+    return () => io.disconnect()
+  }, [btn])
   if (proof === undefined) return <p className="py-16 text-body text-ink-muted">Loading the fork run…</p>
   if (proof === null) return <p className="py-16 text-body text-ink-muted">Fork run not found. Run scripts/fork/run-delivery-cut.sh.</p>
 
@@ -54,16 +62,15 @@ export function DeliveryCutPage() {
   const steps = [...before, ...(signed ? after : [])]
 
   return (
-    <div className="relative mx-auto max-w-[1200px] ">
+    <div className="relative mx-auto max-w-[1200px] max-md:pb-24">
       <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14 lg:py-12">
         <header className="lg:pt-4">
-          <Chip tone="warn">Delivery Cut</Chip>
-          <h1 className="mt-5 text-display-sm font-semibold sm:text-display-md">When a vendor takes the money and fails, cut it off.</h1>
+          <h1 className="text-display-sm font-semibold sm:text-display-md">When a vendor takes the money and fails, cut it off.</h1>
           <p className="mt-5 text-body-lg text-ink-muted">
             On MPP the charge settles before the service checks the request. Leash spots the paid-but-failed call; one signature removes that vendor from the agent key, and the chain refuses its next charge.
           </p>
           <div className="mt-8 grid grid-cols-2 gap-3">
-            <Metric label="Paid, then failed" value="42 of 89" tone="warn" hint={<>vet402 on Tempo, <TextLink href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">mpp#1034</TextLink></>} />
+            <Metric label="Paid, then failed" value="47%" tone="warn" hint={<>42 of 89 calls, vet402 on Tempo, <TextLink href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">mpp#1034</TextLink></>} />
             <Metric label="Signatures to cut" value="1" tone="info" hint="next charge reverts" />
           </div>
         </header>
@@ -100,7 +107,12 @@ export function DeliveryCutPage() {
             <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-6 w-full max-md:hidden" onClick={() => setSigned(true)} disabled={signed}>
               {signed ? 'Cut signed' : 'Sign the cut'}
             </Button>
-            {!signed && <Button size="lg" className="mt-6 w-full md:hidden" onClick={() => setSigned(true)}>Sign the cut</Button>}
+            {!signed && <Button ref={setBtn} size="lg" className="mt-6 w-full md:hidden" onClick={() => setSigned(true)}>Sign the cut</Button>}
+            {!signed && btnOut && (
+              <div className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-paper p-4 shadow-lg md:hidden">
+                <Button size="lg" className="w-full" onClick={() => { setSigned(true); document.getElementById('dc-verdict')?.scrollIntoView({ block: 'center' }) }}>Sign the cut</Button>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -109,14 +121,14 @@ export function DeliveryCutPage() {
         <SectionHead id="tx-h" eyebrow="Fork run 2 · Delivery Cut" title="The cut, on a fork of Tempo mainnet"
           intro={`Its own local anvil fork at block ${proof.block.toLocaleString()}, separate from the Quote-Cap run. Hashes resolve on that fork.`} />
         <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <Card className="p-2 sm:p-3">
+          <Card className="min-w-0 p-2 sm:p-3">
             <ol className="divide-y divide-hairline">
               {steps.map((s) => {
                 const ok = s.status === 'success'
                 return (
                   <li key={s.step} className="flex items-center justify-between gap-4 rounded-md px-4 py-3 transition-colors hover:bg-surface-1">
                     <div className="min-w-0">
-                      <p className="text-body">{s.label}</p>
+                      <p className="text-body [overflow-wrap:anywhere]">{s.label}</p>
                       {s.tx && <div className="mt-1"><Hash value={s.tx} a={10} b={6} /></div>}
                     </div>
                     <Chip tone={ok ? 'ok' : 'bad'}>{ok ? 'Settled' : 'Reverted'}</Chip>
@@ -126,7 +138,7 @@ export function DeliveryCutPage() {
               {!signed && <li className="px-4 py-4 text-body-sm text-ink-subtle">Sign the cut to replay the next three transactions.</li>}
             </ol>
           </Card>
-          <Card className="p-6">
+          <Card className="min-w-0 p-6">
             <Chip tone="info">Evidence</Chip>
             <p className="mt-3 text-body font-semibold">A cut removes a payout address, not a brand.</p>
             <p className="mt-2 text-body-sm text-ink-muted">In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (saved at about Tempo mainnet block 42,298,273), <Hash value={proof.vendor.recipient} /> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>

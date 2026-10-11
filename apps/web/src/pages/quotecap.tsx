@@ -136,7 +136,7 @@ function StepRow({ label, tx, tone, status }: { label: string; tx: string | null
   return (
     <li className="flex items-center justify-between gap-4 rounded-md px-4 py-3 transition-colors hover:bg-surface-1">
       <div className="min-w-0">
-        <p className="text-body">{label}</p>
+        <p className="text-body [overflow-wrap:anywhere]">{label}</p>
         {tx && <div className="mt-1"><Hash value={tx} a={10} b={6} /></div>}
       </div>
       <Chip tone={tone}>{status}</Chip>
@@ -153,13 +153,13 @@ function ForkSteps() {
     <section aria-labelledby="fork-h" className="grid gap-6">
       <SectionHead id="fork-h" eyebrow="Fork run 1 · Quote-Cap" title="The same quotes on a fork of Tempo mainnet"
         intro="Its own local anvil fork, separate from the Delivery Cut run. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork." />
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
+      <div className="grid grid-cols-2 content-start gap-4 lg:grid-cols-1">
         <Metric label="Forked at block" value={proof.block?.toLocaleString() ?? '-'} />
-        <Metric label="Settled" value={settled} tone="ok" />
-        <Metric label="Refused" value={refused} tone="bad" />
-        <Metric label="Daily limit" value={usd(proof.limitAfter ?? '0')} hint={<>was <span className="num">{usd(proof.limitBefore ?? '0')}</span></>} />
+        <Metric label="Daily limit left" value={usd(proof.limitAfter ?? '0')} hint={<>was <span className="num">{usd(proof.limitBefore ?? '0')}</span></>} />
       </div>
-      <Card className="p-2 sm:p-3">
+      <Card className="min-w-0 p-2 sm:p-3">
+        <div className="flex flex-wrap gap-2 px-4 pb-1 pt-3"><Chip tone="ok">{settled} settled</Chip><Chip tone="bad">{refused} refused</Chip></div>
         <ol className="divide-y divide-hairline">
           {proof.steps.map((s, i) => {
             const bad = /refus|revert/i.test(s.status)
@@ -168,6 +168,7 @@ function ForkSteps() {
           })}
         </ol>
       </Card>
+      </div>
     </section>
   )
 }
@@ -216,7 +217,7 @@ function Rival({ name, href, what, diff }: { name: string; href: string; what: R
         <TextLink href={href} target="_blank" rel="noreferrer" className="text-body-sm">Source ↗</TextLink>
       </div>
       <p className="mt-3 text-body-sm text-ink-muted">{what}</p>
-      <div className="mt-4 rounded-md border-l-2 border-primary bg-surface-1 p-3 text-body-sm text-ink">{diff}</div>
+      <div className="mt-auto pt-4"><div className="rounded-md bg-surface-1 p-3 text-body-sm text-ink"><span className="font-semibold text-accent-ink">Leash: </span>{diff}</div></div>
     </Card>
   )
 }
@@ -250,11 +251,10 @@ function Positioning() {
 
 function JudgeStep({ n, title, children }: { n: number; title: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Card className="p-6">
-      <span className="grid size-9 place-items-center rounded-full bg-primary text-body font-bold text-on-primary">{n}</span>
-      <p className="mt-4 text-body-lg font-semibold">{title}</p>
-      <p className="mt-2 text-body-sm text-ink-muted">{children}</p>
-    </Card>
+    <li className="flex gap-4 p-5 md:p-6">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-primary">{n}</span>
+      <div><p className="text-body-lg font-semibold">{title}</p><p className="mt-1 text-body-sm text-ink-muted">{children}</p></div>
+    </li>
   )
 }
 
@@ -262,11 +262,11 @@ function ForJudges() {
   return (
     <section aria-labelledby="judge-h" className="grid gap-6">
       <SectionHead id="judge-h" eyebrow="For judges" title="Check it in 60 seconds: three clicks" />
-      <div className="grid gap-4 md:grid-cols-3">
+      <Card className="overflow-hidden"><ol className="grid divide-hairline max-md:divide-y md:grid-cols-3 md:divide-x">
         <JudgeStep n={1} title={<TextLink href="#/quote-cap" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Click "Let the agent pay this quote"</TextLink>}>At the top. stablestudio's real $10.00 quote is refused against its $0.039 listing, before the agent key signs.</JudgeStep>
         <JudgeStep n={2} title={<TextLink href="#/quote-cap" onClick={(e) => { e.preventDefault(); document.getElementById('route')?.scrollIntoView({ behavior: 'smooth' }) }}>Click to see Route</TextLink>}>Three APIs sold by two sellers each, and how much the cheapest listing saves per call.</JudgeStep>
         <JudgeStep n={3} title={<TextLink href="#/delivery-cut">Open Delivery Cut</TextLink>}>Press "Sign the cut": fal took the money and failed, its next charge reverts, stablestudio still gets paid.</JudgeStep>
-      </div>
+      </ol></Card>
       <p className="text-body-sm text-ink-muted">To rerun it: <span className="hash text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-ink">scripts/fork/run-delivery-cut.sh</span> (Foundry, public Tempo RPC, no funds) and <span className="hash text-ink">pnpm -r test</span>.</p>
     </section>
   )
@@ -277,16 +277,11 @@ export function QuoteCapPage() {
     <div className="mx-auto max-w-[1200px] max-md:pb-24">
       <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14 lg:py-12">
         <header className="lg:pt-4">
-          <Chip tone="info">Quote-Cap · Leash for MPP agents</Chip>
-          <h1 className="mt-5 text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
+          <h1 className="text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
           <p className="mt-5 text-body-lg text-ink-muted">
             stablestudio lists one image call at <span className="num text-ink">$0.039</span>. Asked without a prompt, its 402 named <span className="num text-error-ink">$10.00</span>. A default MPP client signs whatever the 402 names. Leash checks every quote against the listing before the agent key signs.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-3">
-            <Metric label="Listed" value="$0.039" />
-            <Metric label="Quoted" value="$10.00" tone="bad" hint="256x the listing" />
-          </div>
-          <div className="mt-6 grid gap-3">
+          <div className="mt-8 grid gap-3">
             <div className="card-raised flex gap-4 p-4">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-primary">1</span>
               <div><p className="text-body font-semibold">Before signing</p><p className="mt-1 text-body-sm text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing signed, nothing to refund.</p></div>

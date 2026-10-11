@@ -1,0 +1,7 @@
+"claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
+[claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
+The round 5 design audit is written to `apps/web/docs/design/review/design-audit-leash-r5.md`. It grades the design B+ (8.2 average), with mobile the weakest axis at 6.5. Nothing was committed, and the source was not changed.
+
+The top finding is on phones: neither page shows its action on the first 390px screen. On quote-cap, "Let the agent pay this quote" starts at about y=1,584, and on delivery-cut "Sign the cut" starts at about y=1,130. I checked both offsets against the captures. The report also flags the fork and route columns that leave blank space at 1440, a "Hashes resolve only on that fork" line that volunteers a scope gap, and selected toggles that use the same black fill as the primary button.
+
+I did not re-run the browser capture or the sub-12px and overflow checks; the report marks those as taken from the owner's script. Hover and focus states are also unverified.

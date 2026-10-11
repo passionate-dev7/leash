@@ -49,7 +49,7 @@ export function Hash({ value, a, b }: { value: string; a?: number; b?: number })
 }
 
 export function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="text-body-sm font-semibold uppercase tracking-[0.08em] text-accent-ink">{children}</p>
+  return <p className="text-body-sm font-medium text-accent-ink">{children}</p>
 }
 
 export function SectionHead({ id, eyebrow, title, intro }: { id: string; eyebrow?: string; title: string; intro?: React.ReactNode }) {

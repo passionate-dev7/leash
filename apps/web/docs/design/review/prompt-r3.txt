@@ -1,0 +1,16 @@
+/design-review https://design-preview.leash-eiy.pages.dev/#/quote-cap and https://design-preview.leash-eiy.pages.dev/#/delivery-cut
+
+Audit-only run (report mode). Constraints for this run:
+- Do NOT start, restart or drive any browser or browser daemon (the deepsurge harness on this Mac is wedged). Instead use the Playwright screenshots already captured from that live preview at /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/shots-r3/ :
+  p-1440.png and p-390.png are viewport shots of #/quote-cap; p-qc-full-*.png full page; p-qc-pressed-*.png full page after pressing the primary button; p-dc-full-*.png full page of #/delivery-cut. Open each with the Read tool and look at it.
+- For DOM/CSS facts read the source (read-only): src/pages/quotecap.tsx, src/pages/deliverycut.tsx, src/index.css, src/App.tsx, src/components/shadcn/. Measured by the capture script: 0 text nodes under 12px on both pages at both widths; monospace (Geist Mono) is used only on shortened 0x hashes; amounts use Geist with tabular figures.
+- Do NOT write any script or scratch file. Do NOT edit source, commit or deploy. The ONLY file you write is the report below.
+- The red "API unreachable" text in the top strip appears only because this preview origin is not in the API's CORS allowlist; production is allowed.
+
+Judge both pages as a product UI for hackathon judges. The owner's earlier complaints: too dense, no clear main action, gray text under 12px, walls of monospace text, unfinished left panel. Check each explicitly.
+
+Write the full report (must contain the lines "Design Score: <letter>" and "AI Slop Score: <letter>") to
+/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r3.md
+and end it with "## Critic scores (0-10)": one line per axis: hierarchy, primary action, typography, density/whitespace, color, consistency across the two pages, AI-slop absence, mobile; then "average: X.X" and "min: X.X". Then print the two grades, the axis scores and the top 5 findings.
+
+This is round 3. The round-2 report is at /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r2.md; read it and say for each of its findings whether it is fixed. Grade the current state on its own merits.

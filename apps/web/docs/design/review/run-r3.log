@@ -1,0 +1,7 @@
+"claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
+[claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
+Round 3 audit is written to `docs/design/review/design-audit-leash-r3.md`. Design score is B- (7.8 average), up from C+. Most round 2 findings are fixed, including the 390px overflow and the testnet strip on proof routes.
+
+The one High finding: the quote-cap headline says the agent "never pays more than the listed price," but the policy control allows +50%, 2x and 4x. I suggested "Your agent pays only the price you allow." That 2x case is from the ceiling arithmetic, not a browser run.
+
+Blind spots: I did not re-read `p-1440.png` or `p-390.png` in this pass, and `scrollWidth` at 390 was not measured.

@@ -1,0 +1,144 @@
+Scope: 5 of 6 workspace projects
+packages/policy test$ vitest run test/unit
+apps/vendors test$ node --import tsx --test test/*.test.ts
+packages/policy test:  RUN  v3.2.4 /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/packages/policy
+packages/policy test:  ✓ test/unit/delivery-cut.test.ts (7 tests) 6ms
+packages/policy test:  ✓ test/unit/cutoff.test.ts (5 tests) 94ms
+packages/policy test:  ✓ test/unit/errors.test.ts (14 tests) 49ms
+packages/policy test:  ✓ test/unit/blast-radius.test.ts (13 tests) 12ms
+packages/policy test:  ✓ test/unit/compile.test.ts (18 tests) 16ms
+packages/policy test:  ✓ test/unit/budget.test.ts (12 tests) 21ms
+packages/policy test:  ✓ test/unit/quote-cap.test.ts (11 tests) 9ms
+packages/policy test:  Test Files  7 passed (7)
+packages/policy test:       Tests  80 passed (80)
+packages/policy test:    Start at  01:00:44
+packages/policy test:    Duration  3.64s (transform 1.72s, setup 0ms, collect 12.98s, tests 207ms, environment 6ms, prepare 1.41s)
+packages/policy test: Done
+apps/vendors test: ✔ keywords ranks by frequency and drops stopwords (28.238167ms)
+apps/vendors test: ✔ summarize returns at most three sentences, in source order, and drops the off-topic one (2.958125ms)
+apps/vendors test: ✔ extractPage strips scripts and tags, decodes entities, caps text (0.690917ms)
+apps/vendors test: ✔ scrape refuses non-https, odd ports, credentials and private addresses (6.709084ms)
+apps/vendors test: ✔ catalog: atlas services have distinct virtual recipients under one master, relay shares a payout (0.17475ms)
+apps/vendors test: ✔ summarize validates before charging: empty text is 422, valid text without payment is a 402 challenge (34.131417ms)
+apps/vendors test: ✔ scrape charges before it validates: an unpaid request is a 402 even with a bad body (1.919375ms)
+apps/vendors test: ✔ router ignores paths outside /v/ and answers 404 and 405 inside it (0.264375ms)
+apps/vendors test: ✔ a vendor with a fee payer advertises sponsorship in every challenge, one without does not (30.886042ms)
+apps/vendors test: ℹ tests 9
+apps/vendors test: ℹ suites 0
+apps/vendors test: ℹ pass 9
+apps/vendors test: ℹ fail 0
+apps/vendors test: ℹ cancelled 0
+apps/vendors test: ℹ skipped 0
+apps/vendors test: ℹ todo 0
+apps/vendors test: ℹ duration_ms 4855.044083
+apps/vendors test: Done
+apps/web test$ node --import tsx --test test/*.test.ts
+packages/sdk test$ vitest run --config vitest.unit.config.ts
+packages/sdk test:  RUN  v3.2.4 /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/packages/sdk
+apps/web test: ✔ an honest cut plan passes and says what it signs (4.80025ms)
+apps/web test: ✔ a cut plan carrying a USDC.e transfer is refused before signing (0.875708ms)
+apps/web test: ✔ a cut plan is refused for a wrong target, a wrong function, a key outside the team, or scopes that differ (3.293375ms)
+apps/web test: ✔ the revoke call is built from the key id and decodes to revokeKey of that key only (0.450417ms)
+apps/web test: ✔ an honest authorize plan passes, and shows the key, limit, recipients and expiry (16.589167ms)
+apps/web test: ✔ an authorize plan is refused when the key, limit, token, scope, recipients or expiry are not what was asked (2.814291ms)
+apps/web test: ✔ on mainnet an authorize plan above 25 USDC.e a day is refused, even when it matches what was entered (0.156625ms)
+apps/web test: ℹ tests 7
+apps/web test: ℹ suites 0
+apps/web test: ℹ pass 7
+apps/web test: ℹ fail 0
+apps/web test: ℹ cancelled 0
+apps/web test: ℹ skipped 0
+apps/web test: ℹ todo 0
+apps/web test: ℹ duration_ms 1785.180584
+apps/web test: Done
+packages/sdk test:  ✓ test/unit/delivery-cut.test.ts (2 tests) 6ms
+packages/sdk test:  ✓ test/unit/quote-cap-guard.test.ts (4 tests) 62ms
+packages/sdk test:  Test Files  2 passed (2)
+packages/sdk test:       Tests  6 passed (6)
+packages/sdk test:    Start at  01:00:49
+packages/sdk test:    Duration  1.98s (transform 314ms, setup 0ms, collect 2.32s, tests 68ms, environment 0ms, prepare 191ms)
+packages/sdk test: Done
+apps/api test$ node --import tsx --test test/*.test.ts
+apps/api test: (node:36798) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ an external agent registers by key id, holds no key in the desk, and cannot be run or called by it (2891.974917ms)
+apps/api test: ✔ a signed record recovers to the agent key; a signature from another key does not (16.986208ms)
+apps/api test: ✔ a refused record needs no transaction; a forged or altered one is rejected and writes nothing (37.368208ms)
+apps/api test: ✔ a payment is rejected when it repeats a settlement, names another key or team, or contradicts its own status (407.732208ms)
+apps/api test: ✔ a record for a runner agent is refused: the desk writes those itself (51.143541ms)
+apps/api test: ✔ blocked lists the recipients whose cut confirmed on chain, and a prepared cut blocks nothing (19.029625ms)
+apps/api test: ✔ settlementProof accepts a sponsored settlement and an unsponsored one where the price is one of two spends (18.31275ms)
+apps/api test: ✔ settlementProof rejects the wrong key, amount, memo, recipient, payer, token and a gas-only spend (13.859417ms)
+apps/api test: (node:36799) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ seal and open round trip; the stored form hides the key and differs every time (1.608542ms)
+apps/api test: ✔ tamper detection: flipped ciphertext, flipped tag, another row, another master key (0.4145ms)
+apps/api test: ✔ master key: created with mode 600 on first use, reused after, rejected when malformed (0.990458ms)
+apps/api test: ✔ store seals new agent keys and opens them for the runner (4.563167ms)
+apps/api test: ✔ boot migration: plaintext rows are sealed and the clear text is gone from the database file (8.285208ms)
+apps/api test: (node:36800) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ N1: posts to key ids that are not live agents do not drain the address bucket a real agent reports from (542.456958ms)
+apps/api test: ✔ N2: a confirm that arrives after the pending hour is checked against the chain, and the row survives a failed check (30012.527291ms)
+apps/api test: (node:36801) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: H1 observed: rename status 401, renamed=false, owner add after 25 unsigned adds: 401 unauthorized
+apps/api test: ✔ H1: a caller who is not the team cannot rename it or fill its agent slots (501.116458ms)
+apps/api test: M1 observed on a mainnet: false desk: add agent 503, team read 503 chainId undefined
+apps/api test: ✔ M1: with LEASH_MAINNET unset, a mainnet team takes no new agents (8.761208ms)
+apps/api test: ✔ M1: with LEASH_MAINNET unset, every mainnet team route answers 503 mainnet_disabled, signed or not; with it set the same routes answer (87.768625ms)
+apps/api test: ✔ L-emitter: an AccessKeySpend not emitted by the keychain precompile proves nothing (3.636167ms)
+apps/api test: ✔ M3: a record dated in the future is refused (it would sit in the 24h window forever) (0.9435ms)
+apps/api test: ✔ M3: a payment cannot have finished more than an hour before its settlement block (0.075167ms)
+apps/api test: ✔ M3: the 24 hour window runs on the desk and the chain clock, not on the times the agent wrote (2.721041ms)
+apps/api test: M2 observed: 200 signed refused records from one key: 61 accepted, first 429 at request 61
+apps/api test: ✔ M2: unverified record intake is rate limited per key and per address, and cannot pick the featured team (2072.172625ms)
+apps/api test: ✔ M2: the token bucket refills with time and forgets its least recent keys (0.643625ms)
+apps/api test: ✔ M5: the mainnet replay reads once per page-rounded window, however many sizes are asked for (1.083917ms)
+apps/api test: ✔ the fixture is two real mainnet settlements: chain 4217, USDC.e, a tx hash and block each, one sponsored and one not (3.205708ms)
+apps/api test: ✔ a real mainnet settlement paid by an access key proves the payment it carries (0.787375ms)
+apps/api test: ✔ the same real settlement fails for the wrong key, amount, memo and recipient (2.196667ms)
+apps/api test: (node:36804) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ agentNetwork: mainnet pays budget, payments and gas in USDC.e with no sponsor; moderato in OUSD (6.446834ms)
+apps/api test: ✔ health reports whether this desk runs mainnet teams (1780.43675ms)
+apps/api test: ✔ a mainnet team is refused with 400 unless the desk runs with mainnet on; a bad network is a 422 (25.230791ms)
+apps/api test: ✔ a mainnet team keeps its network: another network on the same account is a 409 (26.944667ms)
+apps/api test: ✔ mainnet agents must be external and scoped to USDC.e payouts from the live probe; the desk never runs or funds them (43.500916ms)
+apps/api test: ✔ a mainnet record that pays in another token is rejected before any chain read (16.48175ms)
+apps/api test: ✔ the vendors roll-up of a mainnet team names services from the live payout map, and shows an unknown payout as its address (9.402583ms)
+apps/api test: ✔ teams created before mainnet teams existed read back as moderato teams (6.578458ms)
+apps/api test: ✔ a mainnet agent is capped at 25 USDC.e a day, and a mainnet team at five open agents (118.83325ms)
+apps/api test: (node:36805) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ every write route rejects bad input with a 4xx and an error body, before any chain read (529.221375ms)
+apps/api test: ✔ a valid agent request answers with the key id and authorize plan, never the private key (6.106167ms)
+apps/api test: ✔ 409 gating: a cut for failures needs a measured failure in the last 24 hours (76.384042ms)
+apps/api test: ✔ featured: the env team or the team with the most records (6.41375ms)
+apps/api test: (node:37580) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ H1: a caller who is not the team cannot rename it, fill its agent slots or block its vendors (186.675333ms)
+apps/api test: ✔ H1: every write route that changes a team refuses an unsigned or foreign request (67.932708ms)
+apps/api test: ✔ H1: a signature is bound to its method, path, body, team and chain, expires in five minutes and is accepted once (51.576625ms)
+apps/api test: ✔ H1: a WebCrypto P256 team key, the browser signer, signs team writes, and another P256 key does not (168.089167ms)
+apps/api test: ✔ H1: a passkey (WebAuthn assertion) team key signs team writes, and a tampered assertion does not (25.468334ms)
+apps/api test: ✔ H1: only the owner renames; the signer kind and the network stay as created (9.452584ms)
+apps/api test: ✔ H1: pending agents older than an hour whose key is not on chain are dropped and free their slots (14410.280709ms)
+apps/api test: ✔ H1: a cut is the planned keychain calls on this team's keys and nothing else (2.710166ms)
+apps/api test: (node:37827) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+apps/api test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/api test: ✔ roll-up counts only settled payments and computes the failure rate over them (18.810209ms)
+apps/api test: ✔ evidence: window, newest-first txs, cap of 10, and an empty service has rate 0 (3.409583ms)
+apps/api test: ✔ recommendCut: needs at least 3 failures and a rate of at least 15 percent in the window (0.136292ms)
+apps/api test: ✔ a failure older than 24 hours does not recommend a cut, a recent one does (2.149625ms)
+apps/api test: ✔ a confirmed cut stops recommending a cut for that service (6.02375ms)
+apps/api test: ✔ a prepared cut is a plan: it shows as prepared and the failures keep recommending the cut (1.204958ms)
+apps/api test: ℹ tests 55
+apps/api test: ℹ suites 0
+apps/api test: ℹ pass 55
+apps/api test: ℹ fail 0
+apps/api test: ℹ cancelled 0
+apps/api test: ℹ skipped 0
+apps/api test: ℹ todo 0
+apps/api test: ℹ duration_ms 41500.292542
+apps/api test: Done

@@ -1,0 +1,47 @@
+I wrote the round-10 report to `docs/design/review/design-audit-leash-r10.md`. It is the only file I touched: no browser, no scripts, no commits. The required lines are in it, it has no em dashes, and it ends with the critic block.
+
+**Design Score: B-**
+**AI Slop Score: B-**
+
+r9 scored B+ (8.4). This round averages 7.4, but r9 graded a different visual system, so this is a new baseline rather than the same surface getting worse. The first screens at 1440 are the best this project has shipped.
+
+| Axis | Score |
+|---|---|
+| hierarchy | 8.0 |
+| primary action | 8.5 |
+| typography | 7.5 |
+| density/whitespace | 7.0 |
+| color | 7.5 |
+| consistency across the two pages | 8.0 |
+| AI-slop absence | 6.5 |
+| mobile | 6.0 |
+| **average** | **7.4** |
+| **min** | **6.0** |
+
+**Top 5 findings**
+
+1. **HIGH, mobile: Delivery Cut is wider than the 390 screen after "Sign the cut".** The capture `p-dc-signed-390.png` is 422px wide. The Settled/Reverted status labels and the Evidence card text are cut off on the right, and `overflow-x: clip` (`index.css:80`) stops the user from scrolling to them.
+   - Likely cause, from reading the source: the label `(AccountKeychain.setAllowedCalls)` can't wrap, and the two cards at `deliverycut.tsx:99` and `:115` lack `min-w-0`, so the long word stretches both cards.
+   - Fix: add `min-w-0` to both cards and `[overflow-wrap:anywhere]` to the row label.
+2. **MEDIUM, AI-template patterns on the lower half of Quote-Cap:**
+   - a pill above each headline;
+   - an uppercase violet label above every section;
+   - three identical numbered cards in "For judges";
+   - lime left borders inside rounded cards (`quotecap.tsx:222`);
+   - most sections built as a wall of cards.
+3. **MEDIUM, density: Quote-Cap's first screen repeats its two numbers.** `$0.039` appears four times and `$10.00` three times above the fold. The two metric tiles restate the card beside them. In Fork run 1, the four tiles count the seven rows listed right below.
+4. **MEDIUM, primary action on mobile: Delivery Cut's 390 first screen has no "Sign the cut".** The button sits around y=1210. Quote-Cap pins its button to the bottom of the screen (`quotecap.tsx:112`); Delivery Cut should do the same.
+5. **MEDIUM, typography: amounts use two typefaces.** The metric tiles use JetBrains Mono, but the card rows use Rubik with tabular figures (`.num`). So the claim that amounts use JetBrains Mono holds only for the tiles. "42 of 89" also sets the word "of" in mono.
+
+**Your five earlier complaints are fixed**, with two catches:
+- **Density:** Quote-Cap below the fold is still long, about 3815px.
+- **Monospace:** source shows mono in more places than the capture note says (metric values, script paths, `route: true`, the word "of"). None of them reads as a wall of text.
+
+The report also covers lime being used on many non-button elements, red "Refused/Reverted" labels on rows where the refusal is the product working, 24px copy buttons, and DESIGN.md values that don't match `index.css`.
+
+**What I couldn't check:**
+- No live page this round, so finding 1's cause comes from reading the code; the 422px capture is the hard evidence.
+- No automated detector scan and no second reviewer, because the run ruled out scripts.
+- Tablet width (768) was never captured.
+
+No durable learnings this session.

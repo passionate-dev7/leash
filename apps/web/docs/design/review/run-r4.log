@@ -1,0 +1,20 @@
+"claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
+[claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
+**Design Score: B+ (axes average 8.2, min 7.5). AI Slop Score: A-.**
+
+Report: `apps/web/docs/design/review/design-audit-leash-r4.md`. Read-only except that file. No browser driven, no source edited.
+
+**Axis scores (0-10):** hierarchy 8.5, primary action 8.5, typography 8, density/whitespace 7.5, color 8, consistency 8.5, AI-slop absence 8.5, mobile 8.
+
+**Top 5 findings:**
+1. **Medium, evidence:** The 1440 captures predate the r4 build. They show the r3 H1 and "QuoteCapExceeded". All eight files share one mtime, so I can't tell which build produced which set. Recapture with a build check.
+2. **Medium, layout:** Quote-cap's left column is still empty beside the policy card at 1440 (r3 finding 6, open).
+3. **Low, copy:** "Hashes resolve only on that fork" still appears on both proof pages. The refund line repeats at `quotecap.tsx:113` and `:204`.
+4. **Low, copy:** Idle-state instruction sentences at `quotecap.tsx:117` and `deliverycut.tsx:120`.
+5. **Low, color:** The red 402 amount at `quotecap.tsx:77` shows before any press, so red reads as a verdict the page hasn't reached.
+
+**Round 3 status:** Fixed: the H1 promise (1), the refusal name (3), the testnet footer (4), the address in body type (5). Partly fixed: proof copy (2). Open: the empty left column (6).
+
+**Owner complaints:** Density passes with a note, main action passes, mono passes. The left panel fails on quote-cap. Sub-12px passes by static read only, since the run log has no measurements.
+
+**Blind spot:** The "API unreachable" strip is hidden on these routes in source (`App.tsx:51`) and absent from every capture. If you see it on these URLs, the served build isn't `7640692`. Contrast figures are hand-computed from tokens, not measured.

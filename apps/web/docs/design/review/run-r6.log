@@ -1,0 +1,29 @@
+Warning: no stdin data received in 3s, proceeding without it. If piping from a slow command, redirect stdin explicitly: < /dev/null to skip, or wait longer.
+"claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
+[claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
+Design Score: **B+**. AI Slop Score: **A-**. Report written to `apps/web/docs/design/review/design-audit-leash-r6.md`. Read-only: no browser, no scripts, no source edits, no commits.
+
+**Axis scores (0-10)**
+- hierarchy 8.5
+- primary action 8.5
+- typography 8.5
+- density/whitespace 8.0
+- color 8.0
+- consistency across the two pages 9.0
+- AI-slop absence 8.5
+- mobile 7.0
+- average 8.3 (8.25 rounded), min 7.0
+
+**Top 5 findings**
+1. **High, mobile:** neither page shows its action on the first 390px screen. Quote-cap's CTA starts about 1,130px down (estimated). Delivery-cut's "Sign the cut" starts about 922px down. Fix: sticky bottom primary button below `md`.
+2. **Medium, 1440:** delivery-cut has a ~120px hole in its left column. `deliverycut.tsx:65` uses `row-span-2` and the paragraph at `:96` lands in row 2. Fix: fold `:96` into the header and drop the span.
+3. **Medium, claim:** "this one cut stops all three" (`deliverycut.tsx:103`) has no capture behind it. The run file has two decisions. openai and firecrawl appear only in the `caveat` string (`delivery-cut-proof.json:19`).
+4. **Medium, 1440:** quote-cap's fork section left column is still ~210px shorter than its seven-row list.
+5. **Low-medium, color:** delivery-cut uses red for vendor failure and green for a cut, against the stated rule in `index.css:6-7`. This is the r5 residual, still open.
+
+**Round 5 status:** #1 partly fixed, #2 partly fixed, #3 fixed, #4 fixed, #5 fixed (no `size="sm"` left, policy toggles 44px). Red residual still open.
+
+**Other notes**
+- The "API unreachable" strip is not in any r6 capture. `App.tsx:51` excludes it on both routes, so I did not grade it.
+- Skipped under report-only mode: the gstack preamble and telemetry, the design-detector probe, DESIGN setup, and outside voices.
+- Blind spots: no hover or focus rendering, mobile CTA positions estimated from captures, the signed and "With prompt" states judged from source only.

@@ -1,0 +1,18 @@
+"claude-haiku-5-5" isn't described by this version's model catalog; update Claude Code, or map it with behavesAs on a modelPicker row (or modelOverrides, if it is a provider id of a model this version knows). Until then auto-compact keeps this session within 200k tokens (the context window it assumes); if the model accepts more, append [1m] to the model name for 1M; CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1 restores the previous wait-for-the-API behavior.
+[claude-code:unrecognized_model] {"model":"claude-haiku-5-5","query_source":"sdk"}
+Report written to `apps/web/docs/design/review/design-audit-leash-r9.md`, the only file I wrote. No browser, script, source edit, commit or deploy.
+
+**Grades:** Design Score **B+** (8.4, raw 8.38, up from 8.3). AI Slop Score **A-**.
+
+**Axes (0-10):** hierarchy 8.5, primary action 8.5, typography 8.5, density/whitespace 7.5, color 8.5, consistency 8.5, AI-slop absence 8.5, mobile 8.0. Average 8.4, min 7.5.
+
+**Top 5 findings:**
+1. **Medium, evidence.** `deliverycut.tsx:120` links the probe file, but that file has no block field and does not contain 42298273. The block figure has no source in the file it cites. I am counting this against the page even though the owner keeps the "about" caveat, so the owner may disagree.
+2. **Medium, density.** Quote-cap is 3,580px at 1440 and 6,508px at 390. The phone stats table still shows (`quotecap.tsx:176`).
+3. **Medium, consistency.** Quote-cap's phone bar has no state (`quotecap.tsx:104`), so it stays after pressing. Delivery-cut's bar hides after signing.
+4. **Low, mobile.** Quote-cap's phone bar covers the "Most this agent will pay" row. Delivery-cut's first phone screen shows no sign action until the reader scrolls.
+5. **Low, evidence and slop.** The mpp.dev price line has no link (`quotecap.tsx:175`). The "The same ..." heading pattern persists.
+
+**r8 status:** Fixed: signed cut colour, delivery-cut bar placement. Partly fixed: payout-address link added but block untraceable, quote-cap judge block moved above rivals but length unchanged, fork runs labelled but mpp.dev link missing.
+
+**Blind spots:** no browser this round, so hover and focus are unverified. The delivery-cut signed state was judged from source, not captured. Mobile bar positions come from captures, not DOM measurement. The owner's sub-12px count and scrollWidth were not re-run; a source grep found no sub-12px classes.
