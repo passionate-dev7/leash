@@ -1,16 +1,16 @@
-# LEASH: 2-minute pitch (spoken, about 290 words)
+# LEASH: 2-minute pitch (spoken)
 
-**Problem (0:00-0:25)**
-AI agents now pay for APIs on their own. On Tempo, a seller tells the agent its price at the moment of payment, and the standard client simply pays whatever it is asked. Nobody checks that number against the price the seller advertised.
+**Problem (0:00-0:20)**
+AI agents now pay for APIs by themselves. On Tempo, the seller states its price at the moment of payment, and the standard payment client pays whatever it is asked. Nobody checks that price against the one the seller advertised.
 
-**Proof (0:25-0:55)**
-We checked. On October 10, stablestudio listed an image call at 3.9 cents. When the request was missing its prompt, it asked for ten dollars. That is 256 times the listing. We captured the request and paid nothing. Across 273 live price requests we read, 13 did not match their listing. And builders are already saying this out loud: one GitHub issue describes being charged 450 dollars when 100 was authorized, and another buyer measured 42 of 89 paid calls failing after the money had already moved.
+**Proof (0:20-0:50)**
+We checked. On October 10, stablestudio listed an image call at 3.9 cents. When the request had no prompt, it asked for ten dollars, 256 times the listing. We saved that request and paid nothing. People are already reporting this on GitHub. One person was charged 450 dollars after approving 100. vet402, a service that buys from sellers to grade them, found that 42 of its 89 paid calls failed after the money had moved.
 
-**Product (0:55-1:30)**
-LEASH is a leash for an agent's wallet. First, Quote-Cap: before the agent signs anything, LEASH compares the asking price with the listed price and refuses anything above your limit. Second, Route: when several sellers offer the same API, LEASH picks the cheapest. Third, Delivery Cut: when a vendor takes payment and fails to deliver, one signature from the owner cuts that vendor off, and the chain itself refuses its next charge while healthy vendors keep getting paid. Behind the check sits an on-chain spending limit, so even a bypassed check cannot overspend. We showed all of this on a fork of Tempo mainnet.
+**Product (0:50-1:30)**
+Leash puts limits on an agent's wallet. Quote-Cap compares the asking price with the listed price before the agent signs anything, and refuses anything above your limit. Route sends each call to the cheapest seller of the same service. Delivery Cut handles a vendor that takes the money and then fails: one signature from the owner removes it from the agent's key, the chain refuses its next charge, and the other vendors keep getting paid. We ran all of this on a copy of Tempo mainnet without spending real money.
 
 **Why now (1:30-1:40)**
 Agent payments on Tempo are new, the default tools have no price ceiling, and the complaints are already public.
 
 **Positioning (1:40-2:00)**
-Other teams here see the same problem. vet402 buys from sellers with its own money and publishes who delivered; its report is part of our evidence. Fermata holds each payment in escrow until a delivery proof. Cursus gives organizations roles and budgets for agents. LEASH is the piece on the agent's own wallet: it needs nothing from the vendor, refuses a wrong price before signing, and cuts a bad vendor with one signature that the chain enforces.
+Other teams see the same problem. vet402 grades sellers, and its report is part of our evidence. Fermata holds each payment until the seller proves it delivered. Cursus gives agents roles and budgets. Leash sits on the agent's own key. Sellers change nothing, a wrong price is refused before signing, and a bad vendor is cut with one signature.

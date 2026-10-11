@@ -145,7 +145,7 @@ The guard and SDK stay open source, so any MPP client can refuse an overpriced q
 
 ## Built before vs during the World's Fair
 
-- **Before** (19 Sep to 5 Oct 2026, 53 of the first commits): the spend desk: per-agent access keys, delivery ledger, vendor cut-off, API, console.
+- **Before** (19 Sep to 5 Oct 2026, 53 commits): the spend desk: per-agent access keys, delivery ledger, vendor cut-off, API, console.
 - **During** (10 to 13 Oct 2026): Quote-Cap guard, price book, Route in the payment path, Delivery Cut on an outside vendor, fork proofs, the new UI.
 
 ## License
