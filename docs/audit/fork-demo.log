@@ -1,0 +1,95 @@
+{
+ "kind": "anvil-tempo-mainnet-fork",
+ "forked_from": "https://rpc.mainnet.tempo.xyz",
+ "fork_block": 43588280,
+ "chain_id": 4217,
+ "anvil": "foundry v1.8.5 --network tempo",
+ "note": "local fork; no real funds; root is a real mainnet USDC.e holder impersonated on the fork only; tx hashes exist only on this fork",
+ "token": "0x20c000000000000000000000b9537d11c60e8b50",
+ "vendor": {
+  "name": "stablestudio",
+  "recipient": "0x07F067959297767c887dbfA3C72379c66E82a045",
+  "catalog_amount": 39000
+ },
+ "root": "0x88Df2AD157Fc7976912FC50E2F11121936525cE0",
+ "funder": "0x1ec34cbcd685587f8015dcbf6c1b8665cc93d567",
+ "agent_limit": 200000,
+ "agent_key": "0x6f0fa4255b7F77a0421E32eC57086df5BEaaAA2c",
+ "quotes_source": "quotes.json (real mainnet 402 challenges captured 2026-10-10 IST)",
+ "remaining_limit_before": "200000",
+ "remaining_limit_after": "91000",
+ "balances": {
+  "root_before": "20000000",
+  "root_after": "19891000",
+  "stablestudio_before": "3820071514",
+  "stablestudio_after": "3820180514"
+ },
+ "events": [
+  {
+   "step": "fund",
+   "label": "fork-only: fund fresh root with 20 USDC.e from impersonated holder",
+   "amount": 20000000,
+   "tx": "0x33e84bf260f7566907f84cb1d3bfd6578255f3041ea50962f3bf0b2f2ff5c802",
+   "status": "success",
+   "gasUsed": 287242,
+   "error": null
+  },
+  {
+   "step": "authorize",
+   "label": "per-vendor limit: agent key -> USDC.e.transfer@stablestudio, limit 200000",
+   "amount": 200000,
+   "tx": "0x65f870bb33672da2f9a86d136e02755215c0920ee409cba9d826a8bfa90465d6",
+   "status": "success",
+   "gasUsed": 2090798,
+   "error": null
+  },
+  {
+   "step": "paid",
+   "label": "guard PASS: nano_banana_valid_prompt_0.07",
+   "amount": 70000,
+   "tx": "0x3057725417d9b8608975ae4ea33f19cc9df06162f7088310ee457fd156dc8242",
+   "status": "success",
+   "gasUsed": 63229,
+   "error": null
+  },
+  {
+   "step": "paid",
+   "label": "guard PASS: catalog_listed_0.039",
+   "amount": 39000,
+   "tx": "0x8e81cb16cde212ba079d0546479b59a916a7b700bb1cc20ff82ec7e037cbeb62",
+   "status": "success",
+   "gasUsed": 63217,
+   "error": null
+  },
+  {
+   "step": "guard_refused",
+   "label": "guard REFUSE: nano_banana_missing_field_10.00 (REFUSE (cap 78000))",
+   "amount": 10000000,
+   "tx": null,
+   "status": "not_sent",
+   "gasUsed": null,
+   "error": null
+  },
+  {
+   "step": "bypass_chain_refusal",
+   "label": "guard bypassed, agent key signs anyway: nano_banana_missing_field_10.00",
+   "amount": 10000000,
+   "tx": "0x6f775041715d7228b13e3352796ae046e5e6258ca68bc8123d896471678cdd7c",
+   "status": "reverted_onchain",
+   "gasUsed": 46086,
+   "error": "unknown",
+   "revert_data": null
+  },
+  {
+   "step": "scope_refusal",
+   "label": "agent key pays a different vendor 0.01",
+   "amount": 10000,
+   "tx": "0xad8d0beb67d47142c1bb904f159c3ae42a924c09c5d712556c625336e2ec2f06",
+   "status": "reverted_onchain",
+   "gasUsed": 37184,
+   "error": "unknown",
+   "revert_data": null
+  }
+ ]
+}
+EXIT=0
