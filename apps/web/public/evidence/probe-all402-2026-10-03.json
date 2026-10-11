@@ -1,0 +1,2279 @@
+[
+  {
+    "id": "apex-db",
+    "name": "Apex DB",
+    "realm": "api.apex-db.org",
+    "integration": "third-party",
+    "url": "https://api.apex-db.org/v1/apex",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "evm",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "methodDetails": {
+            "chainId": 8453,
+            "credentialTypes": [
+              "authorization"
+            ],
+            "decimals": 6
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      }
+    ],
+    "catalogAmount": "100000"
+  },
+  {
+    "id": "rxatlas",
+    "name": "RxAtlas",
+    "realm": "api.rxatlas.dev",
+    "integration": "third-party",
+    "url": "https://api.rxatlas.dev/v1/drugs",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "evm",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "methodDetails": {
+            "chainId": 8453,
+            "credentialTypes": [
+              "authorization"
+            ],
+            "decimals": 6
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      }
+    ],
+    "catalogAmount": "100000"
+  },
+  {
+    "id": "trialbase-db",
+    "name": "TrialBase DB",
+    "realm": "api.trialbase-db.org",
+    "integration": "third-party",
+    "url": "https://api.trialbase-db.org/v1/trials",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "evm",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "methodDetails": {
+            "chainId": 8453,
+            "credentialTypes": [
+              "authorization"
+            ],
+            "decimals": 6
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      }
+    ],
+    "catalogAmount": "100000"
+  },
+  {
+    "id": "recallradar",
+    "name": "RecallRadar",
+    "realm": "api.recallradar.dev",
+    "integration": "third-party",
+    "url": "https://api.recallradar.dev/v1/recalls",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "evm",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "methodDetails": {
+            "chainId": 8453,
+            "credentialTypes": [
+              "authorization"
+            ],
+            "decimals": 6
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x1Ee42717b1c370dACE197a8850Bf41a932F3b5A8"
+        }
+      }
+    ],
+    "catalogAmount": "100000"
+  },
+  {
+    "id": "agentfax",
+    "name": "agentfax",
+    "realm": "agentfax.val.run",
+    "integration": "third-party",
+    "url": "https://agentfax.val.run/v1/fax",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "200000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xed5bd29c47d40a054591b18cc2142cea8ab7c18a"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "agentmail",
+    "name": "AgentMail",
+    "realm": "mpp.api.agentmail.to",
+    "integration": "first-party",
+    "url": "https://mpp.api.agentmail.to/v0/inboxes",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x6e3184C204e596dED89E8A5693B602097F4Ab687"
+        }
+      }
+    ]
+  },
+  {
+    "id": "allium",
+    "name": "Allium",
+    "realm": "agents.allium.so",
+    "integration": "first-party",
+    "url": "https://agents.allium.so/api/v1/developer/tokens/search",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "30000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "expires": "2026-10-02T18:45:36.279852+00:00",
+          "extra": {
+            "stripe_mode": "custody",
+            "stripe_payment_intent_id": "pi_3UMBNnIfpVe57BNU176ETgie"
+          },
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xdda2faeceb240a6fbc73601fa2145ff974b69831"
+        }
+      }
+    ],
+    "catalogAmount": "30000"
+  },
+  {
+    "id": "anthropic",
+    "name": "Anthropic",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://anthropic.mpp.tempo.xyz/v1/messages",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10250",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10250",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10250",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "session",
+        "request": {
+          "amount": "10250",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "escrowContract": "0x4d50500000000000000000000000000000000000",
+            "feePayer": true,
+            "feeToken": "0x20c000000000000000000000b9537d11c60e8b50",
+            "sessionProtocol": "v2"
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+          "unitType": "request"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "doma",
+    "name": "Doma",
+    "realm": "mpp.doma.xyz",
+    "integration": "first-party",
+    "url": "https://mpp.doma.xyz/register",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x17ae28d21f80a1082eE3C54AcB03769B09d42DA8"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "exa",
+    "name": "Exa",
+    "realm": "api.exa.ai",
+    "integration": "first-party",
+    "url": "https://api.exa.ai/search",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "7000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true,
+            "supportedModes": [
+              "pull"
+            ]
+          },
+          "recipient": "0xB98eF29eb2be19Ae646A8FC0248255B90A332dbC"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "fal",
+    "name": "fal.ai",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://fal.mpp.tempo.xyz/fal-ai/flux/dev",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "25000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "25000",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "25000",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "catalogAmount": "25000"
+  },
+  {
+    "id": "firecrawl",
+    "name": "Firecrawl",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://firecrawl.mpp.tempo.xyz/v1/scrape",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "2000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "2000",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "2000",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "catalogAmount": "2000"
+  },
+  {
+    "id": "modal",
+    "name": "Modal",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://modal.mpp.tempo.xyz/sandbox/create",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "13842",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "13842",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "13842",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://openai.mpp.tempo.xyz/v1/responses",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "session",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "escrowContract": "0x4d50500000000000000000000000000000000000",
+            "feePayer": true,
+            "feeToken": "0x20c000000000000000000000b9537d11c60e8b50",
+            "sessionProtocol": "v2"
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+          "unitType": "request"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "openrouter",
+    "name": "OpenRouter",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://openrouter.mpp.tempo.xyz/v1/chat/completions",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "session",
+        "request": {
+          "amount": "5125",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "escrowContract": "0x4d50500000000000000000000000000000000000",
+            "feePayer": true,
+            "feeToken": "0x20c000000000000000000000b9537d11c60e8b50",
+            "sessionProtocol": "v2"
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+          "unitType": "request"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "alchemy",
+    "name": "Alchemy",
+    "realm": "alchemy.com",
+    "integration": "first-party",
+    "url": "https://mpp.alchemy.com/1/nft/v3/1",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x7f51327A5A0927815DCcA531aa97Ec7252354091"
+        }
+      },
+      {
+        "method": "stripe",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "usd",
+          "methodDetails": {
+            "networkId": "profile_61UL7DvKb8nvneJzrA6UL7Dv6ISQAmVcIxFnQY6OG14a",
+            "paymentMethodTypes": [
+              "card"
+            ]
+          }
+        }
+      }
+    ],
+    "catalogAmount": "500"
+  },
+  {
+    "id": "rpc",
+    "name": "Tempo RPC",
+    "realm": "mpp.tempo.xyz",
+    "integration": "first-party",
+    "url": "https://rpc.mpp.tempo.xyz/",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "session",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "escrowContract": "0x4d50500000000000000000000000000000000000",
+            "feePayer": true,
+            "feeToken": "0x20c000000000000000000000b9537d11c60e8b50",
+            "sessionProtocol": "v2"
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+          "unitType": "request"
+        }
+      }
+    ],
+    "catalogAmount": "1000"
+  },
+  {
+    "id": "storage",
+    "name": "Object Storage",
+    "realm": "mpp.tempo.xyz",
+    "integration": "first-party",
+    "url": "https://storage.mpp.tempo.xyz/1",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "100",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "pinata",
+    "name": "Pinata IPFS",
+    "realm": "mpp.pinata.cloud",
+    "integration": "first-party",
+    "url": "https://mpp.pinata.cloud/v1/pin/public/1",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x37dc404065f7b005d222022b9beb56e352403e9e"
+        }
+      }
+    ],
+    "catalogAmount": "10000"
+  },
+  {
+    "id": "stableemail",
+    "name": "StableEmail",
+    "realm": "stableemail.dev",
+    "integration": "first-party",
+    "url": "https://stableemail.dev/api/subdomain/status",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xdb5aa553feeb2c3e3d03e8360b36fb0f7e480671"
+        }
+      }
+    ]
+  },
+  {
+    "id": "stableenrich",
+    "name": "StableEnrich",
+    "realm": "stableenrich.dev",
+    "integration": "first-party",
+    "url": "https://stableenrich.dev/api/google-maps/place-details/full",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "50000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x325bdF6F7efAB24a2210c48c1b64cAb2eAe1d430"
+        }
+      }
+    ],
+    "catalogAmount": "50000"
+  },
+  {
+    "id": "stabletravel",
+    "name": "StableTravel",
+    "realm": "stabletravel.dev",
+    "integration": "first-party",
+    "url": "https://stabletravel.dev/api/google-flights/search",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "20000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xDd257723b86B4947483905cdAcBbBC70fACF2ec0"
+        }
+      }
+    ],
+    "catalogAmount": "20000"
+  },
+  {
+    "id": "stablephone",
+    "name": "StablePhone",
+    "realm": "stablephone.dev",
+    "integration": "first-party",
+    "url": "https://stablephone.dev/api/call/1",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xD219dB8179Bb9C1899eF87f39eebA9D1070c6801"
+        }
+      }
+    ]
+  },
+  {
+    "id": "stablesocial",
+    "name": "StableSocial",
+    "realm": "stablesocial.dev",
+    "integration": "first-party",
+    "url": "https://stablesocial.dev/api/jobs",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xCfA26F13c6C18307033EcE13BBb8F470dA5b4dbE"
+        }
+      }
+    ]
+  },
+  {
+    "id": "stablestudio",
+    "name": "StableStudio",
+    "realm": "stablestudio.dev",
+    "integration": "first-party",
+    "url": "https://stablestudio.dev/api/jobs/1",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x07F067959297767c887dbfA3C72379c66E82a045"
+        }
+      }
+    ]
+  },
+  {
+    "id": "stableupload",
+    "name": "StableUpload",
+    "realm": "stableupload.dev",
+    "integration": "first-party",
+    "url": "https://stableupload.dev/api/uploads",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "0",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x06dFF3c8380b5D1799874adA903fc3422882FD6f"
+        }
+      }
+    ]
+  },
+  {
+    "id": "codestorage",
+    "name": "Code Storage",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://codestorage.mpp.tempo.xyz/repos/1",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "catalogAmount": "10000"
+  },
+  {
+    "id": "goflightlabs",
+    "name": "GoFlightLabs",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://goflightlabs.mpp.tempo.xyz/airports-by-filters",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "catalogAmount": "5000"
+  },
+  {
+    "id": "kicksdb",
+    "name": "KicksDB",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://kicksdb.mpp.tempo.xyz/v3/stockx/products",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "500",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "500",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "500",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "catalogAmount": "500"
+  },
+  {
+    "id": "twocaptcha",
+    "name": "2Captcha",
+    "realm": "mpp.tempo.xyz",
+    "integration": "third-party",
+    "url": "https://twocaptcha.mpp.tempo.xyz/createTask",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "3000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "3000",
+          "currency": "0x20c0000000000000000000008b4c619d2eedec7a",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x975937feafc6869a260c176854dda8764a78e122"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "3000",
+          "currency": "0x20c0000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe"
+        }
+      }
+    ],
+    "catalogAmount": "3000"
+  },
+  {
+    "id": "orth-fantastic-jobs",
+    "name": "Fantastic Jobs",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/fantastic-jobs/v1/ats-organizations",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "400000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x673bFe87d96Caa1569583D6cBE69e0ce7AC8640f"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "400000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x673bFe87d96Caa1569583D6cBE69e0ce7AC8640f"
+        }
+      }
+    ],
+    "catalogAmount": "10000"
+  },
+  {
+    "id": "orth-peopledatalabs",
+    "name": "People Data Labs",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/peopledatalabs/v5/person/identify",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "700000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x19a09691d0A9c4fB80Cc40694704a15858C6A454"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "700000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x19a09691d0A9c4fB80Cc40694704a15858C6A454"
+        }
+      }
+    ],
+    "catalogAmount": "700000"
+  },
+  {
+    "id": "orth-nyne",
+    "name": "Nyne.ai",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/nyne/company/funding",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "578000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xd8b2797E90336721A69b5685D5F6A9Ca52b6e8eF"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "578000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xd8b2797E90336721A69b5685D5F6A9Ca52b6e8eF"
+        }
+      }
+    ],
+    "catalogAmount": "578000"
+  },
+  {
+    "id": "orth-company-enrich",
+    "name": "Company Enrich",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/company-enrich/companies/workforce",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "61250",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xa136b6919A7b3C45c2c793B069ce6e3441AEc32a"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "61250",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xa136b6919A7b3C45c2c793B069ce6e3441AEc32a"
+        }
+      }
+    ],
+    "catalogAmount": "61250"
+  },
+  {
+    "id": "orth-coresignal",
+    "name": "Coresignal",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/coresignal/v2/company_base/collect/1_url",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "42000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x12E8DE0712aEbe6579A9E16deE2AE9FfCc4E7dC2"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "42000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x12E8DE0712aEbe6579A9E16deE2AE9FfCc4E7dC2"
+        }
+      }
+    ],
+    "catalogAmount": "42000"
+  },
+  {
+    "id": "orth-tako",
+    "name": "Tako via Orthogonal",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/tako/v1/tako_tools_description",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "23000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x8e4A08ac4A195FA8BFd9d4573D4859A9C9882145"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "23000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x8e4A08ac4A195FA8BFd9d4573D4859A9C9882145"
+        }
+      }
+    ],
+    "catalogAmount": "23000"
+  },
+  {
+    "id": "orth-ocean-io",
+    "name": "Ocean.io",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/ocean-io/v3/search/companies",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x31220DD5ae5798cd881E913281E1989A7b91eCeD"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x31220DD5ae5798cd881E913281E1989A7b91eCeD"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "orth-crustdata",
+    "name": "Crustdata",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/crustdata/screener/company",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "313000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x68E8bCC127cd079a79A48e9B7Fa3934DE40a2443"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "313000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x68E8bCC127cd079a79A48e9B7Fa3934DE40a2443"
+        }
+      }
+    ],
+    "dynamic": true
+  },
+  {
+    "id": "orth-agentmail",
+    "name": "AgentMail via Orthogonal",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/agentmail/v0/inboxes",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "2000000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xaA4a75114b5BdA671844ae10256d2B048dF8fdc3"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "2000000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xaA4a75114b5BdA671844ae10256d2B048dF8fdc3"
+        }
+      }
+    ],
+    "catalogAmount": "2000000"
+  },
+  {
+    "id": "orth-predictleads",
+    "name": "PredictLeads",
+    "realm": "mpp.orthogonal.com",
+    "integration": "third-party",
+    "url": "https://mpp.orthogonal.com/predictleads/v3/companies/1_or_domain",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "40000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xcA37dE138574432B96F92B0Cd9826DaDFd1cf443"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "40000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xcA37dE138574432B96F92B0Cd9826DaDFd1cf443"
+        }
+      }
+    ],
+    "catalogAmount": "40000"
+  },
+  {
+    "id": "browserbase",
+    "name": "Browserbase",
+    "realm": "mpp.browserbase.com",
+    "url": "https://mpp.browserbase.com/browser/session/create",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x93f293b5524b76bfa2f992bc216fb93ca274770b"
+        }
+      },
+      {
+        "method": "stripe",
+        "intent": "charge",
+        "request": {
+          "amount": "1",
+          "currency": "usd",
+          "methodDetails": {
+            "networkId": "profile_61UYn9AY8q43D2NlRA6UYn9AB1SQFBz852q7jMRNoBjE",
+            "paymentMethodTypes": [
+              "card"
+            ]
+          }
+        }
+      }
+    ],
+    "tried": [
+      402
+    ]
+  },
+  {
+    "id": "dune",
+    "name": "Dune",
+    "realm": "api.dune.com",
+    "url": "https://api.dune.com/api/v1/sql/execute",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "session",
+        "request": {
+          "amount": "4000000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "decimals": 6,
+          "methodDetails": {
+            "chainId": 4217,
+            "escrowContract": "0x33b901018174DDabE4841042ab76ba85D4e24f25"
+          },
+          "recipient": "0xb25d77c967d412bbc10891c5254f4e56bb056f3d",
+          "suggestedDeposit": "10000000"
+        }
+      }
+    ],
+    "tried": [
+      402
+    ]
+  },
+  {
+    "id": "nansen",
+    "name": "Nansen",
+    "realm": "api.nansen.ai",
+    "url": "https://api.nansen.ai/api/v1/smart-money/netflow",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [],
+    "tried": [
+      401,
+      402
+    ]
+  },
+  {
+    "id": "parallel",
+    "name": "Parallel",
+    "realm": "parallelmpp.dev",
+    "url": "https://parallelmpp.dev/api/search",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xcaa9d70b7b8d15c6068aa74672dcd6110d92e287"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      402
+    ]
+  },
+  {
+    "id": "postalform",
+    "name": "PostalForm",
+    "realm": "postalform.com",
+    "url": "https://postalform.com/api/machine/mpp/orders",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "3400000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "externalId": "00000000-0000-4000-8000-000000000403",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0xf1c954c89b6c8d5b41248e1011c1a42ad1ff9b22"
+        }
+      },
+      {
+        "method": "stripe",
+        "intent": "charge",
+        "request": {
+          "amount": "340",
+          "currency": "usd",
+          "externalId": "00000000-0000-4000-8000-000000000403",
+          "methodDetails": {
+            "metadata": {
+              "buyer_email": "support@postalform.com",
+              "buyer_name": "PostalForm Discovery Probe",
+              "machine_method": "stripe_spt",
+              "machine_protocol": "mpp",
+              "orderId": "00000000-0000-4000-8000-000000000403",
+              "payment_channel": "mpp_machine"
+            },
+            "networkId": "profile_61TtEFzJLc3ern1bCA6TtEFz2WSQelapp2aMumCymWBE",
+            "paymentMethodTypes": [
+              "card",
+              "link"
+            ]
+          }
+        }
+      }
+    ],
+    "tried": [
+      422,
+      402
+    ]
+  },
+  {
+    "id": "martin-estate",
+    "name": "Martin Estate Winery",
+    "realm": "agents.martinestate.com",
+    "url": "https://agents.martinestate.com/purchase",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "decimals": 6,
+          "recipient": "0x0000000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217
+          }
+        }
+      }
+    ],
+    "tried": [
+      200,
+      404,
+      402
+    ]
+  },
+  {
+    "id": "sayer-and-stone",
+    "name": "Sayer & Stone",
+    "realm": "agents.sayerandstone.com",
+    "url": "https://agents.sayerandstone.com/purchase",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "decimals": 6,
+          "recipient": "0x0000000000000000000000000000000000000000",
+          "methodDetails": {
+            "chainId": 4217
+          }
+        }
+      }
+    ],
+    "tried": [
+      200,
+      404,
+      402
+    ]
+  },
+  {
+    "id": "billboard",
+    "name": "Billboard",
+    "realm": "billboard.mpp.paywithlocus.com",
+    "url": "https://billboard.mpp.paywithlocus.com/billboard/get-price",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "1000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      402
+    ]
+  },
+  {
+    "id": "coingecko",
+    "name": "CoinGecko",
+    "realm": "coingecko.mpp.paywithlocus.com",
+    "url": "https://coingecko.mpp.paywithlocus.com/coingecko/coins-list",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "60000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "deepgram",
+    "name": "Deepgram",
+    "realm": "deepgram.mpp.paywithlocus.com",
+    "url": "https://deepgram.mpp.paywithlocus.com/deepgram/list-models",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "4000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "deepl",
+    "name": "DeepL",
+    "realm": "deepl.mpp.paywithlocus.com",
+    "url": "https://deepl.mpp.paywithlocus.com/deepl/languages",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "realm": "deepseek.mpp.paywithlocus.com",
+    "url": "https://deepseek.mpp.paywithlocus.com/deepseek/list-models",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "3000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "groq",
+    "name": "Groq",
+    "realm": "groq.mpp.paywithlocus.com",
+    "url": "https://groq.mpp.paywithlocus.com/groq/models",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      402
+    ]
+  },
+  {
+    "id": "hunter",
+    "name": "Hunter",
+    "realm": "hunter.mpp.paywithlocus.com",
+    "url": "https://hunter.mpp.paywithlocus.com/hunter/discover",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "8000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      402
+    ]
+  },
+  {
+    "id": "judge0",
+    "name": "Judge0",
+    "realm": "judge0.mpp.paywithlocus.com",
+    "url": "https://judge0.mpp.paywithlocus.com/judge0/list-languages",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "mistral",
+    "name": "Mistral AI",
+    "realm": "mistral.mpp.paywithlocus.com",
+    "url": "https://mistral.mpp.paywithlocus.com/mistral/models",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "5000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "rentcast",
+    "name": "RentCast",
+    "realm": "rentcast.mpp.paywithlocus.com",
+    "url": "https://rentcast.mpp.paywithlocus.com/rentcast/random-properties",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "33000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "replicate",
+    "name": "Replicate",
+    "realm": "replicate.mpp.paywithlocus.com",
+    "url": "https://replicate.mpp.paywithlocus.com/replicate/list-models",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "4000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "methodDetails": {
+            "chainId": 4217
+          },
+          "recipient": "0x060b0fB0Be9d90557577B3AEE480711067149Ff0"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "tako",
+    "name": "Tako",
+    "realm": "tako.com",
+    "url": "https://tako.com/api/mpp/v1/search",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "12000",
+          "currency": "0x20c000000000000000000000b9537d11c60e8b50",
+          "recipient": "0xDC5b8D3D2037Fbe7621b53E5A5983a547ef5dFdE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": false
+          }
+        }
+      }
+    ],
+    "tried": [
+      402
+    ]
+  },
+  {
+    "id": "orth-openmart",
+    "name": "Openmart",
+    "realm": "mpp.orthogonal.com",
+    "url": "https://mpp.orthogonal.com/openmart/api/v1/enrich_company",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x1B1cCaaB3D71b8BA017103AE8d511FA9ad3d3a5E"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "10000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x1B1cCaaB3D71b8BA017103AE8d511FA9ad3d3a5E"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "orth-fundable",
+    "name": "Fundable",
+    "realm": "mpp.orthogonal.com",
+    "url": "https://mpp.orthogonal.com/fundable/investor",
+    "httpMethod": "GET",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "60000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xBE44f1397349bb9Bbe97F7c404CCe8dC0A09D283"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "60000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xBE44f1397349bb9Bbe97F7c404CCe8dC0A09D283"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      402
+    ]
+  },
+  {
+    "id": "orth-bytemine",
+    "name": "Bytemine",
+    "realm": "mpp.orthogonal.com",
+    "url": "https://mpp.orthogonal.com/bytemine/b2b-search",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "600000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xdCbC59A62C3a9C5cEc58ac806EBC579Fa13d67F7"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "600000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0xdCbC59A62C3a9C5cEc58ac806EBC579Fa13d67F7"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      402
+    ]
+  },
+  {
+    "id": "orth-scrapecreators",
+    "name": "Scrape Creators",
+    "realm": "mpp.orthogonal.com",
+    "url": "https://mpp.orthogonal.com/scrapecreators/v1/truthsocial/webhook",
+    "httpMethod": "POST",
+    "status": 402,
+    "challenges": [
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "20000",
+          "currency": "0x20C000000000000000000000b9537d11c60E8b50",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x9EdC06E69FBf71B191510CA9446Fe09caa95668d"
+        }
+      },
+      {
+        "method": "tempo",
+        "intent": "charge",
+        "request": {
+          "amount": "20000",
+          "currency": "0x20c0000000000000000000006a37DA5C996874BE",
+          "methodDetails": {
+            "chainId": 4217,
+            "feePayer": true
+          },
+          "recipient": "0x9EdC06E69FBf71B191510CA9446Fe09caa95668d"
+        }
+      }
+    ],
+    "tried": [
+      400,
+      400,
+      400,
+      400,
+      402
+    ]
+  }
+]

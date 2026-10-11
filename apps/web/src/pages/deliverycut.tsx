@@ -42,6 +42,13 @@ function Row({ k, v, tone }: { k: string; v: string; tone?: 'warn' }) {
 export function DeliveryCutPage() {
   const proof = useProof()
   const [signed, setSigned] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 120)
+    on()
+    window.addEventListener('scroll', on, { passive: true })
+    return () => window.removeEventListener('scroll', on)
+  }, [])
   if (proof === undefined) return <p className="py-16 text-body text-ink-muted">Loading the fork run…</p>
   if (proof === null) return <p className="py-16 text-body text-ink-muted">Fork run not found. Run scripts/fork/run-delivery-cut.sh.</p>
 
@@ -79,8 +86,8 @@ export function DeliveryCutPage() {
           <div className="border-t border-hairline bg-canvas p-6 sm:p-8 max-md:border-t-0">
             <div id="dc-verdict" aria-live="polite">
               {signed ? (
-                <div className="border-l-4 border-success pl-4">
-                  <p className="text-subhead text-success-ink">fal is cut from the agent key</p>
+                <div className="border-l-4 border-ink pl-4">
+                  <p className="text-subhead text-ink">fal is cut from the agent key</p>
                   <p className="mt-1 text-body text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. See the transactions below.</p>
                 </div>
               ) : (
@@ -93,7 +100,7 @@ export function DeliveryCutPage() {
             <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-8 w-full max-md:hidden" onClick={() => setSigned(true)} disabled={signed}>
               {signed ? 'Cut signed' : 'Sign the cut'}
             </Button>
-            {!signed && (
+            {!signed && scrolled && (
               <div className="fixed inset-x-0 bottom-0 z-20 border-t border-ink bg-paper p-4 md:hidden">
                 <Button size="lg" className="w-full" onClick={() => { setSigned(true); document.getElementById('dc-verdict')?.scrollIntoView({ block: 'center' }) }}>Sign the cut</Button>
               </div>
@@ -104,9 +111,9 @@ export function DeliveryCutPage() {
 
       <section aria-labelledby="tx-h" className="grid gap-8 py-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
         <div>
-          <h2 id="tx-h" className="text-headline">The run, on a fork of Tempo mainnet</h2>
-          <p className="mt-4 text-body-lg text-ink-muted">A local anvil fork at block {proof.block.toLocaleString()}. Hashes resolve on that fork.</p>
-          <p className="mt-4 text-body-sm text-ink-muted">A cut removes a payout address, not a brand. In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026, <span className="hash">{short(proof.vendor.recipient)}</span> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
+          <h2 id="tx-h" className="text-headline">Fork run 2: the cut, on a fork of Tempo mainnet</h2>
+          <p className="mt-4 text-body-lg text-ink-muted">Its own local anvil fork at block {proof.block.toLocaleString()}, separate from the Quote-Cap run. Hashes resolve on that fork.</p>
+          <p className="mt-4 text-body-sm text-ink-muted">A cut removes a payout address, not a brand. In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (<a className="text-ink underline underline-offset-4" href="/evidence/probe-all402-2026-10-03.json" target="_blank" rel="noreferrer">probe file</a>, saved at about Tempo mainnet block 42,298,273), <span className="hash">{short(proof.vendor.recipient)}</span> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
         </div>
         <div>
           <ol className="border-t border-ink">

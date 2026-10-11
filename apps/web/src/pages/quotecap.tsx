@@ -132,9 +132,9 @@ function ForkSteps() {
   return (
     <section aria-labelledby="fork-h" className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
       <div>
-        <h2 id="fork-h" className="text-headline">The same quotes, run on a fork of Tempo mainnet</h2>
+        <h2 id="fork-h" className="text-headline">Fork run 1: the same quotes on a fork of Tempo mainnet</h2>
         <p className="mt-4 text-body-lg text-ink-muted">
-          Run on a local anvil fork. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork.
+          Its own local anvil fork, separate from the Delivery Cut run. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork.
         </p>
         <dl className="mt-8 border-t border-hairline">
           <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Forked at block</dt><dd className="num text-body-lg">{proof.block?.toLocaleString()}</dd></div>
@@ -168,10 +168,10 @@ function ForkSteps() {
 function Routes() {
   const plans = useMemo(() => allRoutes(book), [])
   return (
-    <section aria-labelledby="route-h" className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+    <section id="route" aria-labelledby="route-h" className="scroll-mt-24 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
       <div>
         <h2 id="route-h" className="text-headline">The same API, from the cheapest seller</h2>
-        <p className="mt-4 text-body-lg text-ink-muted">Resellers list the same upstream call at different prices. Leash sends the agent to the cheapest listing, and the quote check then holds that seller to its own price.</p>
+        <p className="mt-4 text-body-lg text-ink-muted">Resellers list the same upstream call at different prices. With <span className="hash text-body-sm text-ink">route: true</span>, the Leash SDK sends the call to the cheapest listing before paying, and the quote check then holds that seller to its own price. The agent key must be allowed to pay that seller.</p>
         <p className="mt-4 text-body-sm text-ink-muted">Prices from the mpp.dev catalog on 10 Oct 2026.</p>
         <dl className="mt-8 border-t border-hairline">
           <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Largest saving</dt><dd className="text-body-lg"><span className="num">{Math.max(...plans.map((p) => p.savingBps / 100)).toFixed(0)}%</span></dd></div>
@@ -241,13 +241,13 @@ function Positioning() {
 
 function ForJudges() {
   return (
-    <Block id="judge-h" title="Check it in two minutes">
+    <Block id="judge-h" title="Check it in 60 seconds: three clicks">
       <ol className="grid max-w-[720px] list-decimal gap-3 pl-5 text-body-lg text-ink-muted">
-        <li>On this page, keep "No prompt" and press "Let the agent pay this quote". The real $10.00 quote is refused against the $0.039 listing. Pick "Listed", or "With prompt" with the allowance at 2x, to see a quote pass.</li>
-        <li>Scroll to the fork run: the $10.00 bypass and the payment to another vendor both revert on chain. These hashes exist only on a local anvil fork of Tempo mainnet.</li>
-        <li>Open <a className="text-ink underline underline-offset-4" href="#/delivery-cut">Delivery Cut</a> and press "Sign the cut": fal's next charge reverts and stablestudio still gets paid.</li>
-        <li>Rerun it yourself from the repo: <span className="hash text-body-sm text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-body-sm text-ink">scripts/fork/run-delivery-cut.sh</span> (needs Foundry, no funds) and <span className="hash text-body-sm text-ink">pnpm -r test</span>.</li>
+        <li><span className="font-semibold text-ink">Click "Let the agent pay this quote"</span> at the top. stablestudio's real $10.00 quote is refused against its $0.039 listing, before the agent key signs.</li>
+        <li><a className="font-semibold text-ink underline underline-offset-4" href="#/quote-cap" onClick={(e) => { e.preventDefault(); document.getElementById('route')?.scrollIntoView({ behavior: 'smooth' }) }}>Click to see Route</a>: three APIs sold by two sellers each, and how much the cheapest listing saves per call.</li>
+        <li><a className="font-semibold text-ink underline underline-offset-4" href="#/delivery-cut">Open Delivery Cut</a> and press "Sign the cut": fal took the money and failed, its next charge reverts, stablestudio still gets paid.</li>
       </ol>
+      <p className="max-w-[720px] text-body-sm text-ink-muted">To rerun it: <span className="hash text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-ink">scripts/fork/run-delivery-cut.sh</span> (Foundry, public Tempo RPC, no funds) and <span className="hash text-ink">pnpm -r test</span>.</p>
     </Block>
   )
 }
@@ -281,8 +281,8 @@ export function QuoteCapPage() {
       <div className="space-y-24 py-16 lg:space-y-32">
         <ForkSteps />
         <Routes />
-        <Positioning />
         <ForJudges />
+        <Positioning />
       </div>
     </div>
   )
