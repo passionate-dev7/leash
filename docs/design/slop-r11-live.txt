@@ -1,0 +1,14 @@
+ok   webfont loaded
+ok   primary font: RubikVariable
+ok   tables: 0, none bare
+ok   no Markdown rendering
+ok   links styled
+ok   CSS variables defined (1 decls)
+ok   button styles present
+ok   status chips/badges styled (3)
+ok   surfaces/cards present
+ok   summary metrics present
+ok   radius mixed (1 zero, 3 non-zero)
+rendered: face=Rubik Variable rounded=98 square=219 panels=16 status_plain=0 status_chip=0
+---
+slop-check: PASS
