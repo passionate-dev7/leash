@@ -18,7 +18,7 @@ export function Status({ tone, children }: { tone: Tone; children: ReactNode }) 
   const t = tones[tone]
   return (
     <span className={cn('inline-flex items-center gap-2 text-body-sm', t.text)}>
-      <span aria-hidden className={cn('size-2 shrink-0', t.dot)} />
+      <span aria-hidden className={cn('size-2 shrink-0 rounded-full', t.dot)} />
       {children}
     </span>
   )
@@ -32,7 +32,7 @@ export function Notice({ tone, title, children }: { tone: 'error' | 'success' | 
     warning: 'border-warning/40 bg-warning-tint',
   }[tone]
   return (
-    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('border px-4 py-3 text-body-sm', style)}>
+    <div role={tone === 'error' ? 'alert' : 'status'} className={cn('rounded-md border px-4 py-3 text-body-sm', style)}>
       {title && <p className="font-semibold">{title}</p>}
       {children && <div className={cn('text-ink-muted', title && 'mt-1')}>{children}</div>}
     </div>

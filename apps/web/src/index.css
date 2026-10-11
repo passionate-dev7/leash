@@ -1,44 +1,51 @@
-@import "@fontsource-variable/geist";
-@import "@fontsource-variable/geist-mono";
+@import "@fontsource-variable/rubik";
+@import "@fontsource-variable/jetbrains-mono";
 @import "tailwindcss";
 
-/* Tokens from DESIGN.md (IBM Carbon). Components read these, never raw hex. */
-/* Tokens: DESIGN-DIRECTIONS.md "Receipt printer / spend terminal". Components read these, never raw hex.
-   Off-white paper, ink, hairline. Red only for a refusal, green only for an allow. One radius: 0. */
+/* Tokens: DESIGN.md v3 "night console" (adapted from design-md sentry). Components read these, never raw hex. */
 @theme {
   --color-*: initial;
-  --color-primary: #111111;
-  --color-primary-hover: #2b2b29;
-  --color-primary-pressed: #000000;
-  --color-link-hover: #2b2b29;
-  --color-on-primary: #f7f7f5;
-  --color-ink: #111111;
-  --color-ink-muted: #55554f;
-  --color-ink-subtle: #6b6b65;
-  --color-canvas: #f7f7f5;
-  --color-paper: #ffffff;
-  --color-surface-1: #efefeb;
-  --color-surface-2: #e4e4e0;
-  --color-surface-3: #cfcfc9;
-  --color-hairline: #e4e4e0;
-  --color-hairline-strong: #111111;
-  --color-inverse-canvas: #111111;
-  --color-inverse-surface: #2b2b29;
-  --color-inverse-ink: #f7f7f5;
-  --color-inverse-ink-muted: #cfcfc9;
-  --color-success: #12b76a;
-  --color-success-ink: #067647;
-  --color-warning: #b54708;
-  --color-warning-ink: #93370d;
-  --color-error: #d92d20;
-  --color-error-ink: #b42318;
-  --color-error-tint: #fef3f2;
-  --color-success-tint: #ecfdf3;
-  --color-warning-tint: #fffaeb;
-  --color-info-tint: #efefeb;
+  --color-primary: #c2ef4e;
+  --color-primary-hover: #d2f77a;
+  --color-primary-pressed: #a9d63a;
+  --color-link-hover: #d2f77a;
+  --color-on-primary: #150f23;
+  --color-accent: #6a5fc1;
+  --color-accent-ink: #b4abff;
+  --color-pink: #fa7faa;
+  --color-ink: #f4f1fa;
+  --color-ink-muted: #bdb8c0;
+  --color-ink-subtle: #a29bb0;
+  --color-canvas: #150f23;
+  --color-paper: #1f1633;
+  --color-surface-1: #271d40;
+  --color-surface-2: #30254d;
+  --color-surface-3: #3d3160;
+  --color-hairline: #362d59;
+  --color-hairline-strong: #6a5fc1;
+  --color-inverse-canvas: #f4f1fa;
+  --color-inverse-surface: #e7e2f2;
+  --color-inverse-ink: #150f23;
+  --color-inverse-ink-muted: #3f3849;
+  --color-success: #4ade80;
+  --color-success-ink: #86efac;
+  --color-warning: #fbbf24;
+  --color-warning-ink: #fcd34d;
+  --color-error: #fb7185;
+  --color-error-ink: #fda4af;
+  --color-error-tint: #3a1424;
+  --color-success-tint: #12301f;
+  --color-warning-tint: #33260b;
+  --color-info-tint: #271d40;
 
-  --font-sans: "Geist Variable", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, Menlo, monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 12px 32px -12px rgb(0 0 0 / 0.6);
+
+  --font-sans: "Rubik Variable", "Rubik", sans-serif;
+  --font-display: "Rubik Variable", "Rubik", sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
   /* Sizes: 44 display, 28 section, 20 result, 18 lead, 16 body, 14 secondary, 12 hashes only. */
   --text-display-md: 44px;
@@ -72,8 +79,7 @@
 }
 
 @layer base {
-  html { color-scheme: light; overflow-x: clip; }
-  * { border-radius: 0; }
+  html { color-scheme: dark; overflow-x: clip; }
   h1, h2, h3 { text-wrap: balance; font-weight: 600; }
   body {
     margin: 0;
@@ -82,7 +88,7 @@
     font-family: var(--font-sans);
     font-size: 16px;
     line-height: 1.55;
-    font-feature-settings: "ss01";
+    
     overflow-x: clip;
     -webkit-font-smoothing: antialiased;
   }
@@ -99,5 +105,13 @@
 
 @layer components {
   .num { font-variant-numeric: tabular-nums; }
+  .card { background: var(--color-paper); border: 1px solid var(--color-hairline); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+  .card-raised { background: var(--color-surface-1); border: 1px solid var(--color-hairline); border-radius: var(--radius-md); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600; line-height: 1.6; white-space: nowrap; }
+  .chip-ok { background: var(--color-success-tint); color: var(--color-success-ink); }
+  .chip-bad { background: var(--color-error-tint); color: var(--color-error-ink); }
+  .chip-warn { background: var(--color-warning-tint); color: var(--color-warning-ink); }
+  .chip-info { background: var(--color-surface-2); color: var(--color-accent-ink); }
+  .metric-value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(28px, 7vw, 40px); line-height: 1.05; font-weight: 600; letter-spacing: -1px; white-space: nowrap; }
   .hash { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 }

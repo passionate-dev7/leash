@@ -6,7 +6,7 @@ import { allRoutes } from '@leash/policy/route'
 import bookJson from '@leash/policy/data/price-book.4217.json'
 import { Button } from '@/components/shadcn/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/shadcn/toggle-group'
-import { Separator } from '@/components/shadcn/separator'
+import { Card, Chip, Hash, Metric, SectionHead, TextLink, Eyebrow } from '@/components/kit'
 import { cn } from '@/lib/utils'
 
 const book = bookJson as PriceBook
@@ -48,7 +48,7 @@ function Row({ k, v, big, tone }: { k: string; v: string; big?: boolean; tone?: 
   return (
     <div className="flex items-baseline justify-between gap-6 py-3">
       <span className="text-body text-ink-muted">{k}</span>
-      <span className={cn('num', big ? 'text-headline' : 'text-body-lg', tone === 'bad' && 'text-error-ink')}>{v}</span>
+      <span className={cn('num', big ? 'text-headline font-semibold' : 'text-body-lg', tone === 'bad' && 'text-error-ink')}>{v}</span>
     </div>
   )
 }
@@ -66,23 +66,24 @@ function QuoteCheck() {
   const shown = ran === key
 
   return (
-    <section aria-label="Quote check" className="border border-ink bg-paper">
-      <div className="p-6 sm:p-8">
-        <p className="text-body-sm text-ink-muted">stablestudio · image generation · Tempo mainnet</p>
+    <Card aria-label="Quote check" className="overflow-hidden">
+      <div className="p-6 sm:p-7">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-body-sm text-ink-muted">stablestudio · image generation</p>
+          <Chip tone="info">Tempo mainnet 402</Chip>
+        </div>
         <ToggleGroup type="single" value={qid} onValueChange={(x) => x && setQid(x)} aria-label="Which 402 quote" className="mt-4 w-full">
           {QUOTES.map((x) => <ToggleGroupItem key={x.id} value={x.id}>{x.label}</ToggleGroupItem>)}
         </ToggleGroup>
-        <div className="mt-6">
+        <div className="mt-4 divide-y divide-hairline">
           <Row k="Listed price" v={v.listed === null ? 'unlisted' : usd(v.listed)} />
-          <Separator />
           <Row k="The 402 asks" v={usd(q.amount)} big tone={shown && !v.ok ? 'bad' : undefined} />
-          <Separator />
           <Row k="Most this agent will pay" v={v.ceiling === null ? 'no limit' : usd(v.ceiling)} />
         </div>
-        <p className="mt-2 text-body-sm text-ink-muted">{q.note}</p>
+        <p className="mt-2 text-body-sm text-ink-subtle">{q.note}</p>
       </div>
 
-      <div className="border-t border-hairline bg-canvas p-6 sm:p-8">
+      <div className="border-t border-hairline bg-surface-1/60 p-6 sm:p-7">
         <h2 className="text-body font-semibold">Agent policy</h2>
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           <div>
@@ -100,129 +101,131 @@ function QuoteCheck() {
             </ToggleGroup>
           </div>
         </div>
-        <Button size="lg" className="mt-8 w-full max-md:hidden" onClick={() => setRan(key)}>Let the agent pay this quote</Button>
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-ink bg-paper p-4 md:hidden">
+        <Button size="lg" className="mt-7 w-full max-md:hidden" onClick={() => setRan(key)}>Let the agent pay this quote</Button>
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-hairline bg-paper p-4 shadow-lg md:hidden">
           <Button size="lg" className="w-full" onClick={() => { setRan(key); document.getElementById('qc-verdict')?.scrollIntoView({ block: 'center' }) }}>Let the agent pay this quote</Button>
         </div>
-        <div id="qc-verdict" aria-live="polite" className="min-h-24 pt-6">
+        <div id="qc-verdict" aria-live="polite" className="min-h-24 pt-5">
           {shown ? (
             v.ok ? (
-              <div className="border-l-4 border-success pl-4">
-                <p className="text-subhead text-success-ink">Paid {usd(q.amount)}</p>
-                <p className="mt-1 text-body text-ink-muted">Within the policy, so the agent key signs and the payment settles on Tempo.</p>
+              <div className="rounded-md border border-success/30 bg-success-tint p-4">
+                <Chip tone="ok">Paid</Chip>
+                <p className="mt-2 text-subhead font-semibold text-success-ink"><span className="num">{usd(q.amount)}</span> settled</p>
+                <p className="mt-1 text-body-sm text-ink-muted">Within the policy, so the agent key signs and the payment settles on Tempo.</p>
               </div>
             ) : (
-              <div className="border-l-4 border-error pl-4">
-                <p className="text-subhead text-error-ink">Refused before signing</p>
-                <p className="mt-1 text-body text-ink-muted">The quote asked for <span className="num">{usd(q.amount)}</span> against a <span className="num">{v.listed === null ? 'missing' : usd(v.listed)}</span> listing. Leash stopped it before the agent key signed.</p>
+              <div className="rounded-md border border-error/30 bg-error-tint p-4">
+                <Chip tone="bad">Refused before signing</Chip>
+                <p className="mt-2 text-body text-ink">The quote asked for <span className="num font-semibold">{usd(q.amount)}</span> against a <span className="num font-semibold">{v.listed === null ? 'missing' : usd(v.listed)}</span> listing.</p>
+                <p className="mt-1 text-body-sm text-ink-muted">Leash stopped it before the agent key signed. Nothing to refund.</p>
               </div>
             )
           ) : (
-            <p className="text-body text-ink-muted">{v.ok ? 'This quote is inside the policy.' : 'This quote is above the policy.'}</p>
+            <div className="flex items-center gap-3 text-body-sm text-ink-muted">
+              <Chip tone={v.ok ? 'ok' : 'warn'}>{v.ok ? 'Inside policy' : 'Above policy'}</Chip>
+              Press the button to run it.
+            </div>
           )}
         </div>
       </div>
-    </section>
+    </Card>
+  )
+}
+
+function StepRow({ label, tx, tone, status }: { label: string; tx: string | null; tone: 'ok' | 'bad' | 'info'; status: string }) {
+  return (
+    <li className="flex items-center justify-between gap-4 rounded-md px-4 py-3 transition-colors hover:bg-surface-1">
+      <div className="min-w-0">
+        <p className="text-body">{label}</p>
+        {tx && <div className="mt-1"><Hash value={tx} a={10} b={6} /></div>}
+      </div>
+      <Chip tone={tone}>{status}</Chip>
+    </li>
   )
 }
 
 function ForkSteps() {
   const proof = useForkProof()
   if (!proof) return null
+  const settled = proof.steps.filter((s) => /success/i.test(s.status)).length
+  const refused = proof.steps.filter((s) => /refus|revert/i.test(s.status)).length
   return (
-    <section aria-labelledby="fork-h" className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
-      <div>
-        <h2 id="fork-h" className="text-headline">Fork run 1: the same quotes on a fork of Tempo mainnet</h2>
-        <p className="mt-4 text-body-lg text-ink-muted">
-          Its own local anvil fork, separate from the Delivery Cut run. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork.
-        </p>
-        <dl className="mt-8 border-t border-hairline">
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Forked at block</dt><dd className="num text-body-lg">{proof.block?.toLocaleString()}</dd></div>
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Settled</dt><dd className="num text-body-lg text-success-ink">{proof.steps.filter((s) => /success/i.test(s.status)).length}</dd></div>
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Refused</dt><dd className="num text-body-lg text-error-ink">{proof.steps.filter((s) => /refus|revert/i.test(s.status)).length}</dd></div>
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Daily limit before</dt><dd className="num text-body-lg">{usd(proof.limitBefore ?? '0')}</dd></div>
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Daily limit after</dt><dd className="num text-body-lg">{usd(proof.limitAfter ?? '0')}</dd></div>
-        </dl>
+    <section aria-labelledby="fork-h" className="grid gap-6">
+      <SectionHead id="fork-h" eyebrow="Fork run 1 · Quote-Cap" title="The same quotes on a fork of Tempo mainnet"
+        intro="Its own local anvil fork, separate from the Delivery Cut run. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork." />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Metric label="Forked at block" value={proof.block?.toLocaleString() ?? '-'} />
+        <Metric label="Settled" value={settled} tone="ok" />
+        <Metric label="Refused" value={refused} tone="bad" />
+        <Metric label="Daily limit" value={usd(proof.limitAfter ?? '0')} hint={<>was <span className="num">{usd(proof.limitBefore ?? '0')}</span></>} />
       </div>
-      <ol className="border-t border-ink">
-        {proof.steps.map((s, i) => {
-          const bad = /refus|revert/i.test(s.status)
-          const ok = /success/i.test(s.status)
-          return (
-            <li key={i} className="flex items-baseline justify-between gap-6 border-b border-hairline py-4">
-              <div className="min-w-0">
-                <p className="text-body">{s.label}</p>
-                {s.tx && <p className="hash mt-1 truncate text-caption text-ink-muted">{s.tx.slice(0, 10)}…{s.tx.slice(-8)}</p>}
-              </div>
-              <span className={cn('shrink-0 text-body-sm font-semibold', bad ? 'text-error-ink' : ok ? 'text-success-ink' : 'text-ink-muted')}>
-                {bad ? 'Refused' : ok ? 'Settled' : s.status}
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+      <Card className="p-2 sm:p-3">
+        <ol className="divide-y divide-hairline">
+          {proof.steps.map((s, i) => {
+            const bad = /refus|revert/i.test(s.status)
+            const ok = /success/i.test(s.status)
+            return <StepRow key={i} label={s.label} tx={s.tx} tone={bad ? 'bad' : ok ? 'ok' : 'info'} status={bad ? 'Refused' : ok ? 'Settled' : s.status} />
+          })}
+        </ol>
+      </Card>
     </section>
   )
 }
 
 function Routes() {
   const plans = useMemo(() => allRoutes(book), [])
+  const best = Math.max(...plans.map((p) => p.savingBps / 100)).toFixed(0)
   return (
-    <section id="route" aria-labelledby="route-h" className="scroll-mt-24 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
-      <div>
-        <h2 id="route-h" className="text-headline">The same API, from the cheapest seller</h2>
-        <p className="mt-4 text-body-lg text-ink-muted">Resellers list the same upstream call at different prices. With <span className="hash text-body-sm text-ink">route: true</span>, the Leash SDK sends the call to the cheapest listing before paying, and the quote check then holds that seller to its own price. The agent key must be allowed to pay that seller.</p>
-        <p className="mt-4 text-body-sm text-ink-muted">Prices from the mpp.dev catalog on 10 Oct 2026.</p>
-        <dl className="mt-8 border-t border-hairline">
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">Largest saving</dt><dd className="text-body-lg"><span className="num">{Math.max(...plans.map((p) => p.savingBps / 100)).toFixed(0)}%</span></dd></div>
-          <div className="flex items-baseline justify-between gap-6 border-b border-hairline py-4"><dt className="text-body text-ink-muted">APIs compared</dt><dd className="num text-body-lg">{plans.length}</dd></div>
-        </dl>
+    <section id="route" aria-labelledby="route-h" className="grid scroll-mt-24 gap-6">
+      <SectionHead id="route-h" eyebrow="Route · route: true" title="The same API, from the cheapest seller"
+        intro={<>Resellers list the same upstream call at different prices. With <span className="hash rounded-sm bg-surface-2 px-1.5 py-0.5 text-body-sm text-primary">route: true</span> the Leash SDK sends the call to the cheapest listing before paying, and the quote check holds that seller to its own price. The agent key must be allowed to pay that seller.</>} />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
+        <div className="grid grid-cols-2 content-start gap-4 lg:grid-cols-1">
+          <Metric label="Largest saving" value={`${best}%`} tone="info" />
+          <Metric label="APIs compared" value={plans.length} hint="mpp.dev catalog, 10 Oct 2026" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {plans.map((p) => {
+            const b = p.options[0]!
+            const w = p.options[p.options.length - 1]!
+            return (
+              <Card key={p.group.id} className="flex flex-col p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-body font-semibold">{p.group.label}</p>
+                  <Chip tone="ok">{(p.savingBps / 100).toFixed(0)}% less</Chip>
+                </div>
+                <div className="mt-5 grid gap-2 text-body-sm">
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-success-tint px-3 py-2"><span className="text-ink">{b.service}</span><span className="num font-semibold text-success-ink">{usd(b.amount)}</span></div>
+                  <div className="flex items-center justify-between gap-3 rounded-md bg-surface-1 px-3 py-2"><span className="text-ink-muted">{w.service}</span><span className="num text-ink-muted line-through">{usd(w.amount)}</span></div>
+                </div>
+                <p className="mt-auto pt-4 text-body-sm text-ink-subtle">Routed to {b.service}</p>
+              </Card>
+            )
+          })}
+        </div>
       </div>
-      <ul className="border-t border-ink">
-        {plans.map((p) => {
-          const best = p.options[0]!
-          const worst = p.options[p.options.length - 1]!
-          return (
-            <li key={p.group.id} className="flex items-baseline justify-between gap-6 border-b border-hairline py-4">
-              <div className="min-w-0">
-                <p className="text-body font-semibold">{p.group.label}</p>
-                <p className="mt-1 text-body-sm text-ink-muted">{best.service} at <span className="num">{usd(best.amount)}</span> instead of {worst.service} at <span className="num">{usd(worst.amount)}</span></p>
-              </div>
-              <span className="shrink-0 text-body-lg"><span className="num">{(p.savingBps / 100).toFixed(0)}%</span> less</span>
-            </li>
-          )
-        })}
-      </ul>
-    </section>
-  )
-}
-
-function Block({ id, title, intro, children }: { id: string; title: string; intro?: string; children: React.ReactNode }) {
-  return (
-    <section aria-labelledby={id} className="grid gap-8">
-      <div className="max-w-[720px]">
-        <h2 id={id} className="text-headline">{title}</h2>
-        {intro && <p className="mt-4 text-body-lg text-ink-muted">{intro}</p>}
-      </div>
-      {children}
     </section>
   )
 }
 
 function Rival({ name, href, what, diff }: { name: string; href: string; what: React.ReactNode; diff: React.ReactNode }) {
   return (
-    <div className="border-t border-ink pt-4">
-      <p className="text-subhead"><a className="underline underline-offset-4" href={href} target="_blank" rel="noreferrer">{name}</a></p>
-      <p className="mt-3 text-body text-ink-muted">{what}</p>
-      <p className="mt-3 text-body">{diff}</p>
-    </div>
+    <Card className="flex flex-col p-6">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-subhead font-semibold">{name}</p>
+        <TextLink href={href} target="_blank" rel="noreferrer" className="text-body-sm">Source ↗</TextLink>
+      </div>
+      <p className="mt-3 text-body-sm text-ink-muted">{what}</p>
+      <div className="mt-4 rounded-md border-l-2 border-primary bg-surface-1 p-3 text-body-sm text-ink">{diff}</div>
+    </Card>
   )
 }
 
 function Positioning() {
   return (
-    <Block id="pos-h" title="How Leash differs from its closest rivals" intro="Three World's Fair projects work on the same risk: an agent's money leaving before anyone checks the price or the delivery. Each summary below comes from the project's own repo or Arena page, read on 11 Oct 2026.">
-      <div className="grid gap-10 md:grid-cols-3 md:gap-8">
+    <section aria-labelledby="pos-h" className="grid gap-6">
+      <SectionHead id="pos-h" eyebrow="Positioning" title="How Leash differs from its closest rivals" intro="Three World's Fair projects work on the same risk: an agent's money leaving before anyone checks the price or the delivery. Each summary comes from the project's own repo or Arena page, read on 11 Oct 2026." />
+      <div className="grid gap-4 md:grid-cols-3">
         <Rival name="vet402" href="https://github.com/kzmttkc/vet402-delivery"
           what="Buys x402 and MPP APIs with its own wallet on Solana, Tempo and Base, and publishes what each seller delivered next to the payment tx. Its Tempo run is the source for the 42 of 89 paid-then-failed calls in mpp#1034."
           diff="vet402 grades sellers; it does not control an agent's key. Leash acts on the agent's own payments: it refuses a wrong price before signing and cuts a failing vendor on chain. vet402's grades could feed a Leash cut." />
@@ -233,55 +236,75 @@ function Positioning() {
           what="An accountability layer: organisations give humans and agents roles with limits on authority and budget, and results need evidence and human sign-off. Its first agent payment was x402 on Solana devnet."
           diff="Cursus records who acted under whose authority. Leash limits one thing, payments, and enforces it on Tempo: the agent key's vendor scope and daily limit are chain rules, and each quote is checked before the key signs." />
       </div>
-      <p className="max-w-[720px] text-body-sm text-ink-muted">Also nearby: Setra402 ("trust layer for agent payments", mechanism not public) and Rolepay (Discord communities paying people on Tempo, a different job).</p>
-      <p className="max-w-[720px] text-body text-ink-muted"><span className="font-semibold text-ink">Business model (planned, no revenue yet).</span> The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.</p>
-    </Block>
+      <p className="text-body-sm text-ink-subtle">Also nearby: Setra402 ("trust layer for agent payments", mechanism not public) and Rolepay (Discord communities paying people on Tempo, a different job).</p>
+      <Card className="grid gap-4 p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-center">
+        <div>
+          <Eyebrow>Business model</Eyebrow>
+          <div className="mt-2"><Chip tone="warn">Planned, no revenue yet</Chip></div>
+        </div>
+        <p className="text-body text-ink-muted">The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.</p>
+      </Card>
+    </section>
+  )
+}
+
+function JudgeStep({ n, title, children }: { n: number; title: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <Card className="p-6">
+      <span className="grid size-9 place-items-center rounded-full bg-primary text-body font-bold text-on-primary">{n}</span>
+      <p className="mt-4 text-body-lg font-semibold">{title}</p>
+      <p className="mt-2 text-body-sm text-ink-muted">{children}</p>
+    </Card>
   )
 }
 
 function ForJudges() {
   return (
-    <Block id="judge-h" title="Check it in 60 seconds: three clicks">
-      <ol className="grid max-w-[720px] list-decimal gap-3 pl-5 text-body-lg text-ink-muted">
-        <li><span className="font-semibold text-ink">Click "Let the agent pay this quote"</span> at the top. stablestudio's real $10.00 quote is refused against its $0.039 listing, before the agent key signs.</li>
-        <li><a className="font-semibold text-ink underline underline-offset-4" href="#/quote-cap" onClick={(e) => { e.preventDefault(); document.getElementById('route')?.scrollIntoView({ behavior: 'smooth' }) }}>Click to see Route</a>: three APIs sold by two sellers each, and how much the cheapest listing saves per call.</li>
-        <li><a className="font-semibold text-ink underline underline-offset-4" href="#/delivery-cut">Open Delivery Cut</a> and press "Sign the cut": fal took the money and failed, its next charge reverts, stablestudio still gets paid.</li>
-      </ol>
-      <p className="max-w-[720px] text-body-sm text-ink-muted">To rerun it: <span className="hash text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-ink">scripts/fork/run-delivery-cut.sh</span> (Foundry, public Tempo RPC, no funds) and <span className="hash text-ink">pnpm -r test</span>.</p>
-    </Block>
+    <section aria-labelledby="judge-h" className="grid gap-6">
+      <SectionHead id="judge-h" eyebrow="For judges" title="Check it in 60 seconds: three clicks" />
+      <div className="grid gap-4 md:grid-cols-3">
+        <JudgeStep n={1} title={<TextLink href="#/quote-cap" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Click "Let the agent pay this quote"</TextLink>}>At the top. stablestudio's real $10.00 quote is refused against its $0.039 listing, before the agent key signs.</JudgeStep>
+        <JudgeStep n={2} title={<TextLink href="#/quote-cap" onClick={(e) => { e.preventDefault(); document.getElementById('route')?.scrollIntoView({ behavior: 'smooth' }) }}>Click to see Route</TextLink>}>Three APIs sold by two sellers each, and how much the cheapest listing saves per call.</JudgeStep>
+        <JudgeStep n={3} title={<TextLink href="#/delivery-cut">Open Delivery Cut</TextLink>}>Press "Sign the cut": fal took the money and failed, its next charge reverts, stablestudio still gets paid.</JudgeStep>
+      </div>
+      <p className="text-body-sm text-ink-muted">To rerun it: <span className="hash text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-ink">scripts/fork/run-delivery-cut.sh</span> (Foundry, public Tempo RPC, no funds) and <span className="hash text-ink">pnpm -r test</span>.</p>
+    </section>
   )
 }
 
 export function QuoteCapPage() {
   return (
-    <div className="mx-auto max-w-[1120px] max-md:pb-24">
-      <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
-        <header className="lg:pt-6">
-          <h1 className="text-display-sm sm:text-display-md">Your agent pays only the price you allow.</h1>
-          <p className="mt-6 text-body-lg text-ink-muted">
-            stablestudio lists one image call at <span className="num text-ink">$0.039</span>. When we asked without a prompt, its 402 asked for <span className="num text-ink">$10.00</span>. A default MPP client signs whatever the 402 names.
+    <div className="mx-auto max-w-[1200px] max-md:pb-24">
+      <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14 lg:py-12">
+        <header className="lg:pt-4">
+          <Chip tone="info">Quote-Cap · Leash for MPP agents</Chip>
+          <h1 className="mt-5 text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
+          <p className="mt-5 text-body-lg text-ink-muted">
+            stablestudio lists one image call at <span className="num text-ink">$0.039</span>. Asked without a prompt, its 402 named <span className="num text-error-ink">$10.00</span>. A default MPP client signs whatever the 402 names. Leash checks every quote against the listing before the agent key signs.
           </p>
-          <p className="mt-4 text-body-lg text-ink-muted">Leash checks every quote against the listing before the agent key signs. If the price is wrong, the payment never starts.</p>
+          <div className="mt-8 grid grid-cols-2 gap-3">
+            <Metric label="Listed" value="$0.039" />
+            <Metric label="Quoted" value="$10.00" tone="bad" hint="256x the listing" />
+          </div>
+          <div className="mt-6 grid gap-3">
+            <div className="card-raised flex gap-4 p-4">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-primary">1</span>
+              <div><p className="text-body font-semibold">Before signing</p><p className="mt-1 text-body-sm text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing signed, nothing to refund.</p></div>
+            </div>
+            <div className="card-raised flex gap-4 p-4">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-primary">2</span>
+              <div><p className="text-body font-semibold">If the check is bypassed</p><p className="mt-1 text-body-sm text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. Fork run 1 shows the chain refusing both.</p></div>
+            </div>
+          </div>
         </header>
-        <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <div className="min-w-0">
           <QuoteCheck />
         </div>
-        <div className="grid gap-6 border-t border-hairline pt-8 lg:col-start-1">
-            <h2 className="text-body font-semibold">Two locks, in order</h2>
-            <div>
-              <p className="text-body font-semibold">1. Before signing</p>
-              <p className="mt-1 text-body text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing is signed, so nothing needs a refund.</p>
-            </div>
-            <div>
-              <p className="text-body font-semibold">2. If the check is bypassed</p>
-              <p className="mt-1 text-body text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. The fork run below shows the chain refusing both.</p>
-            </div>
-        </div>
       </div>
-      <div className="space-y-24 py-16 lg:space-y-32">
-        <ForkSteps />
-        <Routes />
+      <div className="space-y-20 py-12 lg:space-y-24">
         <ForJudges />
+        <Routes />
+        <ForkSteps />
         <Positioning />
       </div>
     </div>

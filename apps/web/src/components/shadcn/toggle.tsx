@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils'
 
 // shadcn/ui toggle (installed with `uicraft add shadcn/toggle-group`), restyled to LEASH tokens.
 const toggleVariants = cva(
-  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap text-body-sm transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-surface-1 data-[state=on]:font-semibold data-[state=on]:text-ink data-[state=on]:ring-2 data-[state=on]:ring-inset data-[state=on]:ring-ink',
+  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap text-body-sm transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:pointer-events-none disabled:opacity-50 rounded-md data-[state=on]:bg-surface-3 data-[state=on]:font-semibold data-[state=on]:text-ink data-[state=on]:shadow-sm data-[state=on]:ring-1 data-[state=on]:ring-inset data-[state=on]:ring-primary/70',
   {
     variants: {
       variant: {
-        default: 'bg-paper text-ink hover:bg-surface-1',
+        default: 'flex-1 bg-transparent text-ink-muted hover:bg-surface-2 hover:text-ink',
         outline: 'border border-hairline bg-paper text-ink hover:bg-surface-1',
       },
       size: { default: 'min-h-11 px-4', sm: 'min-h-9 px-3', lg: 'min-h-12 px-5' },

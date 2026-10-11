@@ -49,10 +49,10 @@ function Shell() {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       {route.page !== 'quote-cap' && route.page !== 'delivery-cut' && <UtilityBar />}
-      <header className="sticky top-0 z-40 border-b border-hairline bg-canvas">
-        <div className="mx-auto flex h-12 max-w-[1584px] items-stretch px-4 sm:px-8">
+      <header className="sticky top-0 z-40 border-b border-hairline bg-canvas/95 shadow-sm">
+        <div className="mx-auto flex h-14 max-w-[1584px] items-stretch px-4 sm:px-8">
           <a href="#/" className="flex items-center gap-3 pr-8 text-body-sm font-semibold">
-            <span className="text-body font-semibold tracking-tight">Leash</span>
+            <span aria-hidden className="grid size-7 place-items-center rounded-md bg-primary text-body-sm font-bold text-on-primary">L</span><span className="text-body font-semibold tracking-tight">Leash</span>
             <span className="hidden text-caption text-ink-subtle lg:inline">spend terminal for paying agents</span>
           </a>
           <nav aria-label="Primary" className="hidden min-w-0 flex-1 items-stretch md:flex">
@@ -61,9 +61,8 @@ function Shell() {
                 key={r.path}
                 href={`#/${r.path}`}
                 aria-current={hereOf(r.path) ? 'page' : undefined}
-                className={cn(item, 'gap-2 px-3', hereOf(r.path) ? 'text-ink' : 'text-ink-muted hover:text-ink')}
+                className={cn(item, 'my-2.5 rounded-md px-3', hereOf(r.path) ? 'bg-surface-2 font-semibold text-ink' : 'text-ink-muted hover:bg-surface-1 hover:text-ink')}
               >
-                <span aria-hidden className={cn('size-1.5', hereOf(r.path) ? 'bg-ink' : 'bg-transparent')} />
                 {r.label}
               </a>
             ))}
@@ -75,7 +74,7 @@ function Shell() {
                 <span className="ml-2"><NetworkBadge network={network} /></span>
               </span>
             ) : route.page === 'view' ? null : (
-              <a href="#/team" className="flex items-center px-3 py-1.5 text-body-sm text-ink underline underline-offset-4 hover:text-ink-muted">Create a team</a>
+              <a href="#/team" className="flex items-center rounded-md border border-hairline px-3 py-1.5 text-body-sm text-ink hover:bg-surface-1">Create a team</a>
             )}
           </div>
           <button
@@ -101,7 +100,7 @@ function Shell() {
                 {r.label}
               </a>
             ))}
-            {!active && route.page !== 'view' && <a href="#/team" className={cn(item, 'h-12 bg-primary px-5 text-on-primary')}>Create your own team</a>}
+            {!active && route.page !== 'view' && <a href="#/team" className={cn(item, 'm-3 h-11 justify-center rounded-md bg-primary px-5 font-semibold text-on-primary')}>Create your own team</a>}
           </nav>
         )}
       </header>
