@@ -58,6 +58,8 @@ export type DeliveryRecord = {
   quote: { listed: string | null; quoted: string; ceiling: string | null; ok: boolean; reason: string | null; message: string | null } | null
   /** Route: a cheaper seller of the same API, by listed price, if one exists. */
   cheaper: { url: string; service: string; amount: string; savingPerCall: string } | null
+  /** Route: set when the request was sent to a cheaper seller than the one asked for. */
+  routed: { from: string; to: string; service: string; savingPerCall: string } | null
   settlement: Settlement | null
   outcome: Outcome
   startedAt: string
@@ -78,6 +80,13 @@ export type LeashFetchOptions = {
    * (plus tolerance) or the per-call cap. Omit to sign whatever the vendor asks (mppx default).
    */
   quoteCap?: { book: PriceBook; policy: QuoteCapPolicy }
+  /**
+   * Route: when the request URL belongs to a known group of sellers of the same upstream API,
+   * send it to the cheapest listed seller instead (query string and body kept). Needs quoteCap
+   * for the price book; the chosen seller is then held to its own listing. The agent key must be
+   * allowed to pay that seller's recipient, or the chain refuses the charge.
+   */
+  route?: boolean
   /** How long to look for the settlement after the response. Default 20 s. */
   settleTimeoutMs?: number
 }
@@ -160,10 +169,21 @@ export function createLeashFetch(options: LeashFetchOptions) {
   const settleTimeoutMs = options.settleTimeoutMs ?? 20_000
 
   return async function leashFetch(
-    input: string,
+    requested: string,
     init: RequestInit = {},
   ): Promise<{ response: Response | null; record: DeliveryRecord }> {
     const method = (init.method ?? 'GET').toUpperCase()
+    let input = requested
+    let routed: DeliveryRecord['routed'] = null
+    if (options.route && options.quoteCap) {
+      const r = routeFor(options.quoteCap.book, method, requested)
+      const [base, ...rest] = requested.split('?')
+      if (r && r.cheapest.url !== base) {
+        const from = r.options.find((o) => o.url === base)
+        input = r.cheapest.url + (rest.length ? '?' + rest.join('?') : '')
+        routed = { from: requested, to: input, service: r.cheapest.service, savingPerCall: String((from?.amount ?? r.priciest.amount) - r.cheapest.amount) }
+      }
+    }
     const body = typeof init.body === 'string' ? init.body : null
     const startedAt = new Date().toISOString()
     let credential: string | undefined
@@ -243,7 +263,7 @@ export function createLeashFetch(options: LeashFetchOptions) {
     const v = verdict as QuoteVerdict | null
     const plan = options.quoteCap ? routeFor(options.quoteCap.book, method, input) : null
     const cheaper =
-      plan && plan.cheapest.url !== input.split('?')[0]
+      !routed && plan && plan.cheapest.url !== input.split('?')[0]
         ? { url: plan.cheapest.url, service: plan.cheapest.service, amount: String(plan.cheapest.amount), savingPerCall: String((v?.listed ?? plan.priciest.amount) - plan.cheapest.amount) }
         : null
     const outcome: Outcome = refused
@@ -281,6 +301,7 @@ export function createLeashFetch(options: LeashFetchOptions) {
           }
         : null,
       cheaper,
+      routed,
       settlement,
       outcome,
       startedAt,
