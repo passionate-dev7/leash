@@ -55,11 +55,11 @@ export type DeliveryRecord = {
   status: number | null
   refused: string | null
   /** Quote-Cap: the catalog listing and the ceiling this quote was checked against. */
-  quote: { listed: string | null; quoted: string; ceiling: string | null; ok: boolean; reason: string | null; message: string | null } | null
+  quote?: { listed: string | null; quoted: string; ceiling: string | null; ok: boolean; reason: string | null; message: string | null } | null
   /** Route: a cheaper seller of the same API, by listed price, if one exists. */
-  cheaper: { url: string; service: string; amount: string; savingPerCall: string } | null
+  cheaper?: { url: string; service: string; amount: string; savingPerCall: string } | null
   /** Route: set when the request was sent to a cheaper seller than the one asked for. */
-  routed: { from: string; to: string; service: string; savingPerCall: string } | null
+  routed?: { from: string; to: string; service: string; savingPerCall: string } | null
   settlement: Settlement | null
   outcome: Outcome
   startedAt: string
