@@ -130,7 +130,7 @@ function QuoteCheck() {
             )
           ) : (
             <div className="flex items-center gap-3 text-body-sm text-ink-muted">
-              <Chip tone="info">Not run yet</Chip>
+              <span className="chip bg-surface-2 text-ink-muted">Not run yet</span>
               Press the button to run this quote through the policy.
             </div>
           )}
@@ -283,7 +283,7 @@ function ForJudges() {
 export function QuoteCapPage() {
   return (
     <div className="mx-auto max-w-[1200px] max-md:pb-24">
-      <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14 lg:py-12">
+      <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-8 lg:py-12">
         <header className="lg:pt-4">
           <h1 className="text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
           <p className="mt-5 text-body-lg text-ink-muted">

@@ -1,0 +1,31 @@
+The third-pass report is written to `docs/design/review/design-audit-leash-r10.md` and overwrites the old file. It is the only file written; no source was edited, nothing committed, no browser touched.
+
+**Design Score: B+** (r10b: B)
+**AI Slop Score: B+** (r10b: B)
+
+| Axis | Score |
+|---|---|
+| hierarchy | 8.5 |
+| primary action | 9.0 |
+| typography | 8.5 |
+| density/whitespace | 7.5 |
+| color | 8.0 |
+| consistency across the two pages | 8.0 |
+| AI-slop absence | 8.0 |
+| mobile | 8.5 |
+| **average** | **8.3** |
+| **min** | **7.5** |
+
+**r10b findings:** 7 fixed, 3 partly fixed, 2 not fixed (all minor polish).
+- **Fixed:** lime overuse, phone order, the mono "HTTP 422, no image", copy hit area, the "Above policy" wording, the root `DESIGN.md`, and the mobile button pattern.
+- **Partly fixed:** the card mosaic below the fold, rows appearing after signing (the link is there, no highlight yet), and token drift between `DESIGN.md` and the code.
+- **Not fixed:** the block height is still the biggest number in Fork run 1, and "setAllowedCalls" still breaks mid-word on phones.
+
+**Top 5 findings:**
+1. **New regression, desktop, quote-cap.** The two explainer cards now sit about 150px below the lead at 1440, which brings back the "unfinished left panel" look. The cause is the quote card spanning two grid rows, so its extra height is split between both. Fix: add `lg:grid-rows-[auto_1fr]` to the hero grid at `quotecap.tsx:286`.
+2. **The main proof is still red.** Pressing the quote-cap button shows a red "Refused before signing" panel (`quotecap.tsx:125-126`). The same refusal further down the page is violet, and delivery-cut's signed result is violet too. Proposed rule: red for what the vendor did wrong, violet for what Leash did.
+3. **Quote-cap below the fold is still built from cards.** The three rival cards each have a tinted box inside, the business model is another card, and there are five numbered circles across two sections.
+4. **"Not run yet" is violet, not neutral as the brief said.** It uses the same chip style as "Refused", "Cut" and "Evidence", so the untouched state looks like a result. Fix: add a neutral chip tone.
+5. **The Evidence card on delivery-cut still stretches.** After signing it leaves about 195px of empty space at 1440. Fix: `lg:items-start` on the grid at `deliverycut.tsx:124`.
+
+Gaps in this pass: there was no live page and no automated detector scan, and no second reviewer. The gap measurements come from the PNGs, and the grid-row explanation comes from reading the source.

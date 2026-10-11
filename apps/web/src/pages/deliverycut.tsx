@@ -121,7 +121,7 @@ export function DeliveryCutPage() {
       <section aria-labelledby="tx-h" className="grid gap-6 py-12">
         <SectionHead id="tx-h" eyebrow="Fork run 2 · Delivery Cut" title="The cut, on a fork of Tempo mainnet"
           intro={`Its own local anvil fork at block ${proof.block.toLocaleString()}, separate from the Quote-Cap run. Hashes resolve on that fork.`} />
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
           <Card className="min-w-0 p-2 sm:p-3">
             <ol className="divide-y divide-hairline">
               {steps.map((s) => {

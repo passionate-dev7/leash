@@ -67,4 +67,14 @@ average: 8.4
 min: 7.5
 report: /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r9.md
 
-FINAL: 8.4 min=7.5 round=9 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r9.md
+r9 FINAL (superseded): 8.4 min=7.5 round=9 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r9.md
+
+## Round 10 (v3 night console rebuild, 11 Oct 2026)
+
+Self-critique of it1 (1440 + 390): reads as a product now, dark violet surfaces, cards with shadow, chips for every status, one lime button per page.
+Top 3 fixed in it2: "42 / 89" metric wrapped on phones; Route metric column stretched into empty tiles; judge step 1 was not clickable while 2 and 3 were.
+Independent review r10a (design-review): B-/B-, 7.4 min 6.0. Fixed: 422px overflow on Delivery Cut after signing, template pills/uppercase labels/lime borders, repeated hero numbers, no Sign the cut on the first phone screen, two faces for amounts.
+Review r10b: B/B, 7.9 min 7.5. Fixed: lime on non-buttons (info tone now violet), red on refusals that prove the product, pre-run chip leaking the result, phone order (card before explainers), mono status text, 24px copy buttons, stale root DESIGN.md.
+Review r10c: B+/B+, 8.3 min 7.5. Then fixed its quick ones: left-column gap at 1440 (grid-rows auto/1fr), neutral "Not run yet" chip, Evidence card stretch.
+Known, accepted: Quote-Cap below the fold is still card-heavy; the Quote-Cap refusal panel stays red (a refused overcharge is the alarm state).
+FINAL: 8.3 min=7.5 round=10 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r10.md
