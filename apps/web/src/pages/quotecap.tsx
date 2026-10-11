@@ -273,7 +273,7 @@ function ForJudges() {
       <Card className="overflow-hidden"><ol className="grid divide-hairline max-md:divide-y md:grid-cols-3 md:divide-x">
         <JudgeStep n={1} title={<TextLink href="#/quote-cap" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>Click "Let the agent pay this quote"</TextLink>}>At the top. stablestudio's real $10.00 quote is refused against its $0.039 listing, before the agent key signs.</JudgeStep>
         <JudgeStep n={2} title={<TextLink href="#/quote-cap" onClick={(e) => { e.preventDefault(); document.getElementById('route')?.scrollIntoView({ behavior: 'smooth' }) }}>Click to see Route</TextLink>}>Three APIs sold by two sellers each, and how much the cheapest listing saves per call.</JudgeStep>
-        <JudgeStep n={3} title={<TextLink href="#/delivery-cut">Open Delivery Cut</TextLink>}>Press "Sign the cut": fal took the money and failed, its next charge reverts, stablestudio still gets paid.</JudgeStep>
+        <JudgeStep n={3} title={<TextLink href="#/delivery-cut">Go to Delivery Cut</TextLink>}>Press "Sign the cut": fal took the money and failed, its next charge reverts, stablestudio still gets paid.</JudgeStep>
       </ol></Card>
       <p className="text-body-sm text-ink-muted">To rerun it: <span className="hash text-ink">scripts/fork/run-fork-demo.sh</span>, <span className="hash text-ink">scripts/fork/run-delivery-cut.sh</span> (Foundry, public Tempo RPC, no funds) and <span className="hash text-ink">pnpm -r test</span>.</p>
     </section>
