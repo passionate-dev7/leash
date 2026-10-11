@@ -43,12 +43,15 @@ export function DeliveryCutPage() {
   const proof = useProof()
   const [signed, setSigned] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [sentinel, setSentinel] = useState<HTMLDivElement | null>(null)
   useEffect(() => {
-    const on = () => setScrolled(window.scrollY > 120)
-    on()
-    window.addEventListener('scroll', on, { passive: true })
-    return () => window.removeEventListener('scroll', on)
-  }, [])
+    if (!sentinel) return
+    // The phone action bar appears once the reader has scrolled past the top of the page,
+    // so it never covers the failed call on the first screen.
+    const io = new IntersectionObserver(([e]) => setScrolled(!e!.isIntersecting))
+    io.observe(sentinel)
+    return () => io.disconnect()
+  }, [sentinel])
   if (proof === undefined) return <p className="py-16 text-body text-ink-muted">Loading the fork run…</p>
   if (proof === null) return <p className="py-16 text-body text-ink-muted">Fork run not found. Run scripts/fork/run-delivery-cut.sh.</p>
 
@@ -60,7 +63,8 @@ export function DeliveryCutPage() {
   const steps = [...before, ...(signed ? after : [])]
 
   return (
-    <div className="mx-auto max-w-[1120px] max-md:pb-24">
+    <div className="relative mx-auto max-w-[1120px] max-md:pb-24">
+      <div ref={setSentinel} aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-32" />
       <div className="grid gap-12 py-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16 lg:py-16">
         <header className="lg:pt-6">
           <h1 className="text-display-sm sm:text-display-md">When a vendor takes the money and fails, cut it off.</h1>
