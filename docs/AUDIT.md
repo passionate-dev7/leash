@@ -30,8 +30,31 @@ Every feature or claim in the README and UI, exercised on 11 Oct 2026 (IST). Sta
 | 24 | Shared payout address (fal = openai = firecrawl + 9) | partial | backed by the 3 Oct unpaid probe, but the site has no link or block; fixing in r9 |
 | 25 | `pnpm test:adversarial` (20, live Moderato) | not re-run this pass | needs live Moderato agents; unit suites all green |
 
-## Final status
-(updated at the end of the round)
+## Final status (11 Oct 2026, 11:30 IST; live deploy 88d48ffa)
+
+| Feature / claim | Final |
+|---|---|
+| Quote-Cap: listing + tolerance, hard cap, currency, unlisted, bad amounts | working |
+| Guard in the mppx payment path (nothing signed on refusal) | working |
+| Price book (10 Oct mpp.dev snapshot) | working; static snapshot |
+| Route ranking + savings (UI, `allRoutes`) | working |
+| Route in the payment path (`route: true`) | working (`534c0b0`, 4 SDK tests) |
+| Route output equivalence across sellers | not verified (disclosed) |
+| Delivery Cut judge / decide / plan | working |
+| Fork demo: Quote-Cap / Delivery Cut | working (re-run 11 Oct); outputs no longer tracked |
+| Per-vendor key limit and scope | partial: reverts on the fork decode as unknown; Moderato e2e decodes CallNotAllowed |
+| Spend desk loop on Moderato (`pnpm --filter @leash/api e2e`) | working (E2E PASS, API must run locally) |
+| Live API endpoints | working (mainnet teams disabled by design) |
+| UI pages #/quote-cap #/delivery-cut #/t #/mainnet | working |
+| UI #/vendors #/ledger #/agents | working after creating a team on #/team |
+| Shared-payout evidence | fixed: probe file served at /evidence/probe-all402-2026-10-03.json, block approximate (from the file save time via `cast find-block`) |
+| 60-second judge path (3 clicks) | working, above the rivals block |
+| `pnpm typecheck` | fixed (0 errors) |
+| Root `pnpm test` | fixed: runs every package (policy 80, sdk 10, api 55, vendors 9, web 7) |
+| Root scripts for gitignored apps/console, apps/demo | removed |
+| Internal review files, local paths, mitm dbs | untracked + gitignored; still in git history (rewrite before going public); `docs/pitch/positioning.md` still has a local path (pitch worker's file) |
+| `pnpm test:adversarial` (live Moderato) | not re-run |
+| Design gate r9 | exit 0; design-review B+ / A-, 8.4 avg, 7.5 min |
 
 ## From dry run
 (added by the pitch worker; clean clone, 11 Oct 10:10 IST; full transcript `docs/pitch/outside-user-dry-run.md`)
