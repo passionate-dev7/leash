@@ -1,0 +1,13 @@
+ok   webfont loaded
+ok   primary font: GeistVariable
+warn 3 <table> without class (global table CSS present)
+ok   no Markdown rendering
+ok   links styled
+ok   CSS variables defined (58 decls)
+ok   button styles present
+FAIL status shown as plain text (97 status words, no chip/badge class)
+FAIL no surfaces (card/panel class + shadow/surface token): flat document
+ok   summary metrics present
+ok   radius mixed (1 zero, 2 non-zero)
+---
+slop-check: 2 issue(s)
