@@ -151,14 +151,15 @@ export function StepFeed({ steps }: { steps: { label: string; tx: string | null;
       {steps.map((s, i) => {
         const t = stepTone(s.status)
         return (
-          <li key={i} className="relative grid grid-cols-[32px_minmax(0,1fr)_auto] items-start gap-x-4 rounded-md px-3 py-3 transition-colors hover:bg-surface-1">
+          <li key={i} className="relative grid grid-cols-[32px_minmax(0,1fr)] items-start gap-x-3 sm:grid-cols-[32px_minmax(0,1fr)_auto] sm:gap-x-4 rounded-md px-3 py-3 transition-colors hover:bg-surface-1">
             {i < steps.length - 1 && <span aria-hidden className="absolute bottom-[-12px] left-[27px] top-[40px] w-px bg-hairline" />}
             <span className={cn('relative z-[1] grid size-8 place-items-center rounded-full text-caption font-bold num', `chip-${t}`)}>{i + 1}</span>
             <div className="min-w-0 pt-1">
               <p className="text-body [overflow-wrap:anywhere]">{s.label}</p>
-              {s.tx ? <div className="mt-1.5"><Hash value={s.tx} a={10} b={6} /></div> : <p className="mt-1 text-body-sm text-ink-subtle">No transaction: nothing was signed</p>}
+              <div className="mt-1.5 sm:hidden"><Chip tone={t}>{STEP_LABEL[t]}</Chip></div>
+              {s.tx ? <div className="mt-1.5"><Hash value={s.tx} a={8} b={6} /></div> : <p className="mt-1 text-body-sm text-ink-subtle">No transaction: nothing was signed</p>}
             </div>
-            <div className="pt-1"><Chip tone={t}>{STEP_LABEL[t]}</Chip></div>
+            <div className="hidden pt-1 sm:block"><Chip tone={t}>{STEP_LABEL[t]}</Chip></div>
           </li>
         )
       })}
