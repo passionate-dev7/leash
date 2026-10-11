@@ -1,101 +1,115 @@
 {
- "label": "LOCAL FORK ONLY - not mainnet, no real funds, tx hashes exist only on this fork",
- "fork": "https://rpc.mainnet.tempo.xyz",
- "chainId": 4217,
- "block": 43488714,
- "vendor": {
-  "name": "fal",
-  "origin": "https://fal.mpp.tempo.xyz",
-  "endpoint": "POST /fal-ai/flux/schnell",
-  "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
-  "quoted": 3000
- },
- "failure": {
-  "status": 422,
-  "body": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"Field required\"}]}",
-  "source": "https://github.com/tempoxyz/mpp/issues/1034 (vet402: 42/89 paid Tempo calls settled then answered 400/422; fal.mpp.tempo.xyz FLUX: 422, `missing` at `body.prompt`)",
-  "note": "status and error type/loc are as reported by vet402; the msg wording is the standard FastAPI/pydantic text and is illustrative. LEASH did not pay fal on mainnet to re-observe it."
- },
- "caveat": "0xca4e...79Fe was the recipient in unpaid 402 probes of fal, openai, firecrawl and nine other mpp.tempo.xyz gateways (research/platform/scripts/probe-all402.json, 2026-10-03), so a recipient cut would stop charges to that address from all of them. The fork run only charged fal and stablestudio.",
- "decisions": [
-  {
-   "recipient": "0x07f067959297767c887dbfa3c72379c66e82a045",
-   "vendor": "stablestudio",
-   "cut": false,
-   "failures": 0,
-   "lost": "0",
-   "evidence": []
+  "label": "LOCAL FORK ONLY - not mainnet, no real funds, tx hashes exist only on this fork",
+  "fork": "https://rpc.mainnet.tempo.xyz",
+  "chainId": 4217,
+  "block": 43488714,
+  "vendor": {
+    "name": "fal",
+    "origin": "https://fal.mpp.tempo.xyz",
+    "endpoint": "POST /fal-ai/flux/schnell",
+    "recipient": "0xca4e835F803cB0b7C428222B3A3B98518d4779Fe",
+    "quoted": 3000
   },
-  {
-   "recipient": "0xca4e835f803cb0b7c428222b3a3b98518d4779fe",
-   "vendor": "fal",
-   "cut": true,
-   "failures": 1,
-   "lost": "3000",
-   "evidence": [
+  "failure": {
+    "status": 422,
+    "body": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"body\",\"prompt\"],\"msg\":\"Field required\"}]}",
+    "source": "https://github.com/tempoxyz/mpp/issues/1034 (vet402: 42/89 paid Tempo calls settled then answered 400/422; fal.mpp.tempo.xyz FLUX: 422, `missing` at `body.prompt`)",
+    "note": "status and error type/loc are as reported by vet402; the msg wording is the standard FastAPI/pydantic text and is illustrative. LEASH did not pay fal on mainnet to re-observe it."
+  },
+  "caveat": "0xca4e...79Fe was the recipient in unpaid 402 probes of fal, openai, firecrawl and nine other mpp.tempo.xyz gateways (research/platform/scripts/probe-all402.json, 2026-10-03), so a recipient cut would stop charges to that address from all of them. The fork run only charged fal and stablestudio.",
+  "decisions": [
     {
-     "settlementTx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
-     "status": 422,
-     "reason": "paid_then_client_error"
+      "recipient": "0x07f067959297767c887dbfa3c72379c66e82a045",
+      "vendor": "stablestudio",
+      "cut": false,
+      "failures": 0,
+      "lost": "0",
+      "evidence": []
+    },
+    {
+      "recipient": "0xca4e835f803cb0b7c428222b3a3b98518d4779fe",
+      "vendor": "fal",
+      "cut": true,
+      "failures": 1,
+      "lost": "3000",
+      "evidence": [
+        {
+          "settlementTx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
+          "status": 422,
+          "reason": "paid_then_client_error"
+        }
+      ]
     }
-   ]
-  }
- ],
- "balances": {
-  "fal_before": "2465581245",
-  "fal_after": "2465584245",
-  "stablestudio_before": "3818201514",
-  "stablestudio_after": "3818279514"
- },
- "steps": [
-  {
-   "step": "fund",
-   "label": "Fund a fresh team account with 20 USDC.e (fork only)",
-   "status": "success",
-   "tx": "0x72b726db9c6ca2231fc15c92aa709dc0e3a3d9dd79b393c9a62afee090b4597e",
-   "error": null
+  ],
+  "balances": {
+    "fal_before": "2465581245",
+    "fal_after": "2465584245",
+    "stablestudio_before": "3818201514",
+    "stablestudio_after": "3818279514"
   },
-  {
-   "step": "authorize",
-   "label": "Authorize agent key: USDC.e transfer to fal and stablestudio, limit $1.00",
-   "status": "success",
-   "tx": "0x7ebc7b617e035074eaee67b9fb2548c88d9c479fd5f29e0d736678d7e2e3b51c",
-   "error": null
-  },
-  {
-   "step": "pay_fal",
-   "label": "Agent pays fal $0.003, the amount in fal's real 402 for an empty-body FLUX call: settles",
-   "status": "success",
-   "tx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
-   "error": null
-  },
-  {
-   "step": "pay_ss",
-   "label": "Agent pays stablestudio $0.039: settles, image delivered",
-   "status": "success",
-   "tx": "0x7c7e59f8585e61a0a9a9a6df6a21997a2da825458e6ecea3881a544e21527474",
-   "error": null
-  },
-  {
-   "step": "cut",
-   "label": "One root signature cuts fal from the agent key (AccountKeychain.setAllowedCalls)",
-   "status": "success",
-   "tx": "0x6b141d559d751c18f90a672b973f17ed0518e16149446e91dfd6addad2fbe38f",
-   "error": null
-  },
-  {
-   "step": "fal_next_charge",
-   "label": "fal's next $0.003 charge: the chain refuses",
-   "status": "reverted on chain",
-   "tx": "0xa8a3322130fbc6368b2d3c57776b5a316a6dbb9c9398cd6c3d400625804e5134",
-   "error": "CallNotAllowed (inferred: recipient removed from key scope; the same transfer succeeded before the cut)"
-  },
-  {
-   "step": "ss_after_cut",
-   "label": "stablestudio after the cut: still paid",
-   "status": "success",
-   "tx": "0x7133da80ed2fa5f2b731d2825bb1c33154bccdb7e9dfd671dcf3ae909b719eac",
-   "error": null
-  }
- ]
+  "steps": [
+    {
+      "step": "fund",
+      "label": "Fund a fresh team account with 20 USDC.e (fork only)",
+      "status": "success",
+      "tx": "0x72b726db9c6ca2231fc15c92aa709dc0e3a3d9dd79b393c9a62afee090b4597e",
+      "error": null,
+      "block": 43488714,
+      "time": "2026-10-10T12:45:40Z"
+    },
+    {
+      "step": "authorize",
+      "label": "Authorize agent key: USDC.e transfer to fal and stablestudio, limit $1.00",
+      "status": "success",
+      "tx": "0x7ebc7b617e035074eaee67b9fb2548c88d9c479fd5f29e0d736678d7e2e3b51c",
+      "error": null,
+      "block": 43488715,
+      "time": "2026-10-10T12:45:45Z"
+    },
+    {
+      "step": "pay_fal",
+      "label": "Agent pays fal $0.003, the amount in fal's real 402 for an empty-body FLUX call: settles",
+      "status": "success",
+      "tx": "0x0d8855ce9a3cfdd11d45961b1cfddc58d8e075f6a7e76e06dee787a263504614",
+      "error": null,
+      "block": 43488716,
+      "time": "2026-10-10T12:45:50Z"
+    },
+    {
+      "step": "pay_ss",
+      "label": "Agent pays stablestudio $0.039: settles, image delivered",
+      "status": "success",
+      "tx": "0x7c7e59f8585e61a0a9a9a6df6a21997a2da825458e6ecea3881a544e21527474",
+      "error": null,
+      "block": 43488717,
+      "time": "2026-10-10T12:45:51Z"
+    },
+    {
+      "step": "cut",
+      "label": "One root signature cuts fal from the agent key (AccountKeychain.setAllowedCalls)",
+      "status": "success",
+      "tx": "0x6b141d559d751c18f90a672b973f17ed0518e16149446e91dfd6addad2fbe38f",
+      "error": null,
+      "block": 43488718,
+      "time": null
+    },
+    {
+      "step": "fal_next_charge",
+      "label": "fal's next $0.003 charge: the chain refuses",
+      "status": "reverted on chain",
+      "tx": "0xa8a3322130fbc6368b2d3c57776b5a316a6dbb9c9398cd6c3d400625804e5134",
+      "error": "CallNotAllowed (inferred: recipient removed from key scope; the same transfer succeeded before the cut)",
+      "block": 43488719,
+      "time": null
+    },
+    {
+      "step": "ss_after_cut",
+      "label": "stablestudio after the cut: still paid",
+      "status": "success",
+      "tx": "0x7133da80ed2fa5f2b731d2825bb1c33154bccdb7e9dfd671dcf3ae909b719eac",
+      "error": null,
+      "block": 43488720,
+      "time": "2026-10-10T12:45:57Z"
+    }
+  ]
 }

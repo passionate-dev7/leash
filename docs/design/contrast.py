@@ -12,7 +12,7 @@ pairs=[('ink','canvas'),('ink','paper'),('ink-muted','canvas'),('ink-muted','pap
  ('ink-subtle','canvas'),('ink-subtle','paper'),('ink-subtle','surface-1'),('accent-ink','paper'),('accent-ink','canvas'),('accent-2','paper'),
  ('on-primary','primary'),('paid','paid-tint'),('paid','paper'),('refused','refused-tint'),('refused','paper'),
  ('reverted','reverted-tint'),('reverted','paper'),('failed','failed-tint'),('failed','paper'),('neutral','neutral-tint'),
- ('ink','surface-2'),('ink','surface-3'),('error-ink','error-tint'),('warning-ink','warning-tint'),('success-ink','success-tint'),('ink-muted','surface-2')]
+ ('ink','surface-2'),('ink','surface-3'),('error-ink','error-tint'),('warning-ink','warning-tint'),('success-ink','success-tint'),('ink-muted','surface-2'),('link','paper'),('link','surface-2'),('link','canvas')]
 fails=0
 for a,b in pairs:
     r=ratio(a,b); ok=r>=4.5; fails+=not ok

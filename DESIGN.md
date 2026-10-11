@@ -48,3 +48,11 @@ Type scale (px): 12 caption (hashes, step numbers only) / 14 secondary / 16 body
 Contrast: every text token pair checked by `docs/design/contrast.py` (WCAG 2.x); all >= 4.5:1, output in `docs/design/contrast-r11.txt`. `--color-ink-subtle` raised to #a9a2b8 (7.0:1 on cards).
 
 Data viz: Route uses horizontal price bars per API (scaled to the most expensive listing, labelled seller + amount, paid colour for the routed seller). Fork runs use a numbered event rail coloured by status.
+
+## Round 12 additions: primary metric, consequences, link hue, trust signals
+
+- Primary metric zone at the top of Quote-Cap: overcharge refused (refused pink, 56px mono) | quotes refused (2 of 3) | basis. Computed in the page from the 3 recorded stablestudio 402s (10 Oct 2026 09:45 IST) under the default policy (exact listing, $1.00 cap); labelled illustrative.
+- Every quote shows its consequence: "256.4x the listing, +$9.961 over (+25,541%)"; skipped Route sellers show "+N%".
+- Links: `--color-link` #7dd3fc (sky, 10.3:1 on cards). Violet now means only "reverted".
+- Trust: fork steps show block number and UTC block time from the saved receipts (`scripts/fork/enrich_blocks.py`), with a "Local anvil fork, no explorer" note; real mainnet addresses link to explore.tempo.xyz.
+- Delivery Cut: a plain-language "Before you sign" summary (vendor, what changes, shared-address side effect, not a refund) sits above the button.

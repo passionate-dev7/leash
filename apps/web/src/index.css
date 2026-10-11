@@ -14,6 +14,9 @@
   --color-accent-ink: #b4abff;
   --color-pink: #fa7faa;
   --color-accent-2: #ff8fb8;
+  /* Links get their own hue so violet means only 'reverted'. */
+  --color-link: #7dd3fc;
+  --color-link-hover-ink: #bae6fd;
   /* Status system: paid (settled), refused (Leash stopped it before signing), reverted (chain refused),
      failed (vendor took money, did not deliver), neutral (not run / info). fg on tint >= 4.5:1. */
   --color-paid: #6ee7a0;

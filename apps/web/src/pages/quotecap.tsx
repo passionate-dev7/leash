@@ -6,7 +6,7 @@ import { allRoutes } from '@leash/policy/route'
 import bookJson from '@leash/policy/data/price-book.4217.json'
 import { Button } from '@/components/shadcn/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/shadcn/toggle-group'
-import { Card, Chip, Hash, Metric, SectionHead, TextLink, Eyebrow } from '@/components/kit'
+import { Card, Chip, Hash, Metric, SectionHead, TextLink, Eyebrow, overBy, utcTime } from '@/components/kit'
 import { cn } from '@/lib/utils'
 
 const book = bookJson as PriceBook
@@ -88,6 +88,11 @@ function QuoteCheck() {
           <Row k="The 402 asks" v={usd(q.amount)} big tone={shown && !v.ok ? 'bad' : undefined} />
           <Row k="Most this agent will pay" v={v.ceiling === null ? 'no limit' : usd(v.ceiling)} />
         </div>
+        {(() => { const o = overBy(BigInt(q.amount), v.listed === null ? null : BigInt(v.listed), (x) => usd(x)); return o && (
+          <div className={cn('mt-3 flex flex-wrap items-center gap-2 rounded-md px-3 py-2 text-body-sm', o.diff > 0n ? 'panel-refused' : 'panel-paid')}>
+            <span className={cn('num font-semibold', o.diff > 0n ? 'text-refused' : 'text-paid')}>{o.diff > 0n ? `${o.mult.toFixed(1)}x the listing` : 'Matches the listing'}</span>
+            {o.diff > 0n && <span className="text-ink">{o.text}</span>}
+          </div>) })()}
         <p className="mt-2 text-body-sm text-ink-subtle">{q.note}</p>
       </div>
 
@@ -145,8 +150,12 @@ const stepTone = (status: string, step?: string): StepTone =>
   /refus/i.test(status) ? 'refused' : /revert/i.test(status) ? 'reverted' : step === 'cut' ? 'reverted' : /^(fund|authorize)$/.test(step ?? '') ? 'neutral' : /success/i.test(status) ? 'paid' : 'neutral'
 const stepLabel = (t: StepTone, step?: string) => (step === 'cut' ? 'Cut' : t === 'paid' ? 'Settled' : t === 'refused' ? 'Refused' : t === 'reverted' ? 'Reverted' : 'Confirmed')
 
+export function ForkNote() {
+  return <p className="mx-3 mb-1 rounded-md bg-surface-1 px-3 py-2 text-body-sm text-ink-muted"><span className="font-semibold text-ink">Local anvil fork, no explorer.</span> These hashes exist only on that fork, so no public explorer can show them. Blocks and times come from the saved receipts; reverted calls carry no block time.</p>
+}
+
 /* A vertical event feed: numbered nodes on a rail, colored by outcome, hash under each label. */
-export function StepFeed({ steps }: { steps: { label: string; tx: string | null; status: string; step?: string }[] }) {
+export function StepFeed({ steps }: { steps: { label: string; tx: string | null; status: string; step?: string; block?: number; time?: string | null; error?: string | null }[] }) {
   return (
     <ol className="relative">
       {steps.map((s, i) => {
@@ -159,7 +168,14 @@ export function StepFeed({ steps }: { steps: { label: string; tx: string | null;
             <div className="min-w-0 pt-1">
               <p className="text-body [overflow-wrap:anywhere]">{s.label}</p>
               <div className="mt-1.5 sm:hidden"><Chip tone={t}>{lbl}</Chip></div>
-              {s.tx ? <div className="mt-1.5"><Hash value={s.tx} a={8} b={6} /></div> : <p className="mt-1 text-body-sm text-ink-subtle">No transaction: nothing was signed</p>}
+              {s.tx ? (
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-body-sm text-ink-subtle">
+                  <Hash value={s.tx} a={8} b={6} />
+                  {s.block && <span>Block <span className="num text-ink-muted">{s.block.toLocaleString()}</span></span>}
+                  {utcTime(s.time) && <span className="num">{utcTime(s.time)}</span>}
+                </div>
+              ) : <p className="mt-1 text-body-sm text-ink-subtle">No transaction: nothing was signed</p>}
+              {s.error && t !== 'paid' && <p className="mt-1 text-body-sm text-ink-subtle">{s.error}</p>}
             </div>
             <div className="hidden pt-1 sm:block"><Chip tone={t}>{lbl}</Chip></div>
           </li>
@@ -188,6 +204,7 @@ function ForkSteps() {
             <Chip tone="refused">{count('refused')} refused by Leash</Chip>
             <Chip tone="reverted">{count('reverted')} reverted by the chain</Chip>
           </div>
+          <ForkNote />
           <StepFeed steps={proof.steps} />
         </Card>
       </div>
@@ -201,7 +218,7 @@ function Routes() {
   return (
     <section id="route" aria-labelledby="route-h" className="grid scroll-mt-24 gap-6">
       <SectionHead id="route-h" eyebrow="Route · route: true" title="The same API, from the cheapest seller"
-        intro={<>Resellers list the same upstream call at different prices. With <span className="hash rounded-sm bg-surface-2 px-1.5 py-0.5 text-body-sm text-accent-ink">route: true</span> the Leash SDK sends the call to the cheapest listing before paying, and the quote check holds that seller to its own price. The agent key must be allowed to pay that seller.</>} />
+        intro={<>Resellers list the same upstream call at different prices. With <span className="hash rounded-sm bg-surface-2 px-1.5 py-0.5 text-body-sm text-ink">route: true</span> the Leash SDK sends the call to the cheapest listing before paying, and the quote check holds that seller to its own price. The agent key must be allowed to pay that seller.</>} />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
         <div className="grid grid-cols-2 content-start gap-4 lg:grid-cols-1">
           <Metric label="Largest saving" value={`${best}%`} tone="paid" />
@@ -231,7 +248,7 @@ function Routes() {
                         <div className="h-3 rounded-full bg-surface-1">
                           <div className={cn('h-3 rounded-full', i === 0 ? 'bg-paid' : 'bg-surface-3')} style={{ width: `${Math.max(4, (Number(o.amount) / max) * 100)}%` }} />
                         </div>
-                        <span className={cn('num text-right text-body-sm', i === 0 ? 'font-semibold text-paid' : 'text-ink-muted')}>{usd(o.amount)}</span>
+                        <span className={cn('num text-right text-body-sm', i === 0 ? 'font-semibold text-paid' : 'text-ink-muted')}>{usd(o.amount)}{i > 0 && <span className="block text-caption text-refused">+{Math.round(((Number(o.amount) - Number(p.options[0]!.amount)) / Number(p.options[0]!.amount)) * 100)}%</span>}</span>
                       </div>
                     ))}
                   </div>
@@ -288,7 +305,7 @@ function Positioning() {
 function JudgeStep({ n, title, children }: { n: number; title: React.ReactNode; children: React.ReactNode }) {
   return (
     <li className="flex gap-4 p-5 md:p-6">
-      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-accent-ink">{n}</span>
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-ink">{n}</span>
       <div><p className="text-body-lg font-semibold">{title}</p><p className="mt-1 text-body-sm text-ink-muted">{children}</p></div>
     </li>
   )
@@ -308,9 +325,39 @@ function ForJudges() {
   )
 }
 
+const DEFAULT_POLICY: QuoteCapPolicy = { toleranceBps: 0, maxPerCall: 1_000_000n, unlisted: 'cap' }
+
+/* The headline number, computed from the three recorded stablestudio 402s under the default policy. */
+function PrimaryMetric() {
+  const runs = QUOTES.map((q) => ({ q, v: checkQuote(book, DEFAULT_POLICY, { method: 'POST', url: NB, amount: q.amount, currency: USDCE }) }))
+  const refused = runs.filter((r) => !r.v.ok)
+  const over = refused.reduce((a, r) => a + BigInt(r.q.amount) - BigInt(r.v.listed ?? 0), 0n)
+  const asked = refused.reduce((a, r) => a + BigInt(r.q.amount), 0n)
+  return (
+    <section aria-label="What Leash stopped" className="card grid gap-0 overflow-hidden md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="border-hairline p-5 max-md:border-b md:border-r sm:p-6">
+        <p className="text-body-sm text-ink-muted">Overcharge refused before signing</p>
+        <p className="metric-value mt-2 text-refused" style={{ fontSize: 'clamp(36px, 8vw, 56px)' }}>{usd(over)}</p>
+        <p className="mt-2 text-body-sm text-ink-subtle">above the listed price, across the refused quotes</p>
+      </div>
+      <div className="border-hairline p-5 max-md:border-b md:border-r sm:p-6">
+        <p className="text-body-sm text-ink-muted">Quotes refused</p>
+        <p className="metric-value mt-2"><span className="text-refused">{refused.length}</span><span className="text-ink-subtle"> of {runs.length}</span></p>
+        <p className="mt-2 text-body-sm text-ink-subtle"><span className="num">{usd(asked)}</span> asked, nothing signed</p>
+      </div>
+      <div className="p-5 sm:p-6">
+        <p className="text-body-sm text-ink-muted">Basis</p>
+        <p className="mt-2 text-body-sm text-ink">The 3 real stablestudio 402s recorded unpaid on Tempo mainnet, 10 Oct 2026 09:45 IST, checked against the <span className="num">$0.039</span> mpp.dev listing with the default policy (exact listing, <span className="num">$1.00</span> cap).</p>
+        <p className="mt-2 text-body-sm text-ink-subtle">Illustrative: a sample of recorded quotes, not live traffic.</p>
+      </div>
+    </section>
+  )
+}
+
 export function QuoteCapPage() {
   return (
     <div className="mx-auto max-w-[1200px] max-md:pb-24">
+      <div className="pt-2"><PrimaryMetric /></div>
       <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-8 lg:py-12">
         <header className="lg:pt-4">
           <h1 className="text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
@@ -324,11 +371,11 @@ export function QuoteCapPage() {
         <div className="lg:col-start-1">
           <div className="grid gap-3">
             <div className="card-raised flex gap-4 p-4">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-accent-ink">1</span>
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-ink">1</span>
               <div><p className="text-body font-semibold">Before signing</p><p className="mt-1 text-body-sm text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing signed, nothing to refund.</p></div>
             </div>
             <div className="card-raised flex gap-4 p-4">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-accent-ink">2</span>
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-ink">2</span>
               <div><p className="text-body font-semibold">If the check is bypassed</p><p className="mt-1 text-body-sm text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. Fork run 1 shows the chain refusing both.</p></div>
             </div>
           </div>

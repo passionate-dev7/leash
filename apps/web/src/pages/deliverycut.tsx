@@ -5,7 +5,8 @@ import type { PaidCallOutcome } from '@leash/policy/delivery-cut'
 import { formatUnits } from '@leash/policy/quote-cap'
 import { Button } from '@/components/shadcn/button'
 import { Card, Chip, Hash, Metric, SectionHead, TextLink } from '@/components/kit'
-import { StepFeed } from '@/pages/quotecap'
+import { StepFeed, ForkNote } from '@/pages/quotecap'
+import { mainnetAddressUrl } from '@/lib/config'
 import { cn } from '@/lib/utils'
 
 /**
@@ -86,6 +87,7 @@ export function DeliveryCutPage() {
               <Row k="fal's 402 asked" v={usd(proof.vendor.quoted)} />
               <Row k="The agent paid" v={usd(proof.vendor.quoted)} />
               <Row k="fal answered" v={`HTTP ${proof.failure.status}, no image`} tone="warn" />
+              <Row k="Delivered for the money" v="0% (lost 100%)" tone="warn" />
             </div>
             <p className="mt-2 text-body-sm text-ink-subtle">The request had an empty body. The 402 was captured live by Leash. Status and error from vet402's report.</p>
           </div>
@@ -96,16 +98,27 @@ export function DeliveryCutPage() {
                   <Chip tone="reverted">Cut signed</Chip>
                   <p className="mt-2 text-subhead font-semibold text-ink">fal is cut from the agent key</p>
                   <p className="mt-1 text-body-sm text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. </p>
-                  <a href="#/delivery-cut" onClick={(e) => { e.preventDefault(); document.getElementById('tx-h')?.scrollIntoView({ behavior: 'smooth' }) }} className="link mt-2 inline-block text-body-sm font-medium text-accent-ink hover:underline">See the three new transactions ↓</a>
+                  <a href="#/delivery-cut" onClick={(e) => { e.preventDefault(); document.getElementById('tx-h')?.scrollIntoView({ behavior: 'smooth' }) }} className="link mt-2 inline-block text-body-sm font-medium text-link underline underline-offset-4">See the three new transactions ↓</a>
                 </div>
               ) : (
                 <div className="panel-failed p-4">
                   <Chip tone="failed">Paid, not delivered</Chip>
                   <p className="mt-2 text-subhead font-semibold text-failed"><span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span> lost</p>
-                  <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal's payout address <Hash value={proof.vendor.recipient} /> from what the agent key may pay.</p>
+                  <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal's payout address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} /> from what the agent key may pay.</p>
                 </div>
               )}
             </div>
+            {!signed && (
+              <div className="mt-5 rounded-md border border-hairline bg-paper p-4">
+                <p className="text-body font-semibold">Before you sign: what this cut does</p>
+                <ul className="mt-3 grid gap-2 text-body-sm text-ink-muted">
+                  <li><span className="font-semibold text-ink">Vendor:</span> fal ({proof.vendor.origin.replace('https://', '')}), paid <span className="num text-ink">{usd(proof.vendor.quoted)}</span> and answered HTTP {proof.failure.status}.</li>
+                  <li><span className="font-semibold text-ink">What changes:</span> the agent key may no longer pay the address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} />. fal's next charge reverts on chain. stablestudio and other vendors keep working.</li>
+                  <li><span className="font-semibold text-failed">Side effect:</span> in our 3 Oct 2026 probe this same address also received payments for openai, firecrawl and nine other mpp.tempo.xyz gateways, so their charges stop too.</li>
+                  <li><span className="font-semibold text-ink">Not a refund:</span> the <span className="num text-ink">{usd(proof.vendor.quoted)}</span> already paid stays with fal.</li>
+                </ul>
+              </div>
+            )}
             <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-6 w-full max-md:hidden" onClick={() => setSigned(true)} disabled={signed}>
               {signed ? 'Cut signed' : 'Sign the cut'}
             </Button>
@@ -124,13 +137,14 @@ export function DeliveryCutPage() {
           intro={`Its own local anvil fork at block ${proof.block.toLocaleString()}, separate from the Quote-Cap run. Hashes resolve on that fork.`} />
         <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
           <Card className="min-w-0 p-2 sm:p-3">
+            <div className="pt-2"><ForkNote /></div>
             <StepFeed steps={steps} />
             {!signed && <p className="px-3 py-3 text-body-sm text-ink-subtle">Sign the cut to replay the next three transactions.</p>}
           </Card>
           <Card className="min-w-0 p-6">
             <Chip tone="neutral">Evidence</Chip>
             <p className="mt-3 text-body font-semibold">A cut removes a payout address, not a brand.</p>
-            <p className="mt-2 text-body-sm text-ink-muted">In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (saved at about Tempo mainnet block 42,298,273), <Hash value={proof.vendor.recipient} /> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
+            <p className="mt-2 text-body-sm text-ink-muted">In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (saved at about Tempo mainnet block 42,298,273), <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} /> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
             <Button asChild variant="outline" className="mt-5"><a href="/evidence/probe-all402-2026-10-03.json" target="_blank" rel="noreferrer">Open the probe file</a></Button>
           </Card>
         </div>

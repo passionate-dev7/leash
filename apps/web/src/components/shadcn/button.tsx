@@ -12,7 +12,7 @@ const buttonVariants = cva(
         default: 'bg-primary text-on-primary shadow-md shadow-primary/10 hover:bg-primary-hover active:bg-primary-pressed',
         outline: 'border border-hairline-strong bg-surface-1 text-ink hover:bg-surface-2',
         ghost: 'text-ink-muted hover:bg-surface-2 hover:text-ink',
-        link: 'text-accent-ink underline-offset-4 hover:underline',
+        link: 'text-link underline-offset-4 hover:underline',
       },
       size: {
         default: 'min-h-11 px-5 text-body',
