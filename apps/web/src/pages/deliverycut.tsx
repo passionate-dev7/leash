@@ -35,7 +35,7 @@ function Row({ k, v, tone }: { k: string; v: React.ReactNode; tone?: 'warn' }) {
   return (
     <div className="flex items-baseline justify-between gap-6 py-3">
       <span className="text-body text-ink-muted">{k}</span>
-      <span className={cn('num text-right text-body-lg', tone === 'warn' && 'text-warning-ink')}>{v}</span>
+      <span className={cn('text-right text-body-lg', tone === 'warn' ? 'font-medium text-warning-ink' : 'num')}>{v}</span>
     </div>
   )
 }
@@ -94,7 +94,8 @@ export function DeliveryCutPage() {
                 <div className="rounded-md border border-hairline-strong bg-surface-2 p-4">
                   <Chip tone="info">Cut signed</Chip>
                   <p className="mt-2 text-subhead font-semibold text-ink">fal is cut from the agent key</p>
-                  <p className="mt-1 text-body-sm text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. See the transactions below.</p>
+                  <p className="mt-1 text-body-sm text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. </p>
+                  <a href="#/delivery-cut" onClick={(e) => { e.preventDefault(); document.getElementById('tx-h')?.scrollIntoView({ behavior: 'smooth' }) }} className="link mt-2 inline-block text-body-sm font-medium text-accent-ink hover:underline">See the three new transactions ↓</a>
                 </div>
               ) : (
                 <div className="rounded-md border border-warning/30 bg-warning-tint p-4">
@@ -131,7 +132,7 @@ export function DeliveryCutPage() {
                       <p className="text-body [overflow-wrap:anywhere]">{s.label}</p>
                       {s.tx && <div className="mt-1"><Hash value={s.tx} a={10} b={6} /></div>}
                     </div>
-                    <Chip tone={ok ? 'ok' : 'bad'}>{ok ? 'Settled' : 'Reverted'}</Chip>
+                    <Chip tone={ok ? 'ok' : 'info'}>{ok ? 'Settled' : 'Reverted'}</Chip>
                   </li>
                 )
               })}

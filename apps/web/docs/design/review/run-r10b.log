@@ -1,0 +1,44 @@
+Round 10 is now graded **B** for design and **B** for AI slop, up from B- / B- in the first pass. The critic average rose from 7.4 to 7.9 and the lowest axis from 6.0 to 7.5. The report replaces `docs/design/review/design-audit-leash-r10.md`.
+
+**Design Score: B**
+**AI Slop Score: B**
+
+| Axis | Score (first pass) |
+|---|---|
+| hierarchy | 8.5 (8.0) |
+| primary action | 8.5 (8.5) |
+| typography | 8.0 (7.5) |
+| density/whitespace | 7.5 (7.0) |
+| color | 7.5 (7.5) |
+| consistency across the two pages | 8.0 (8.0) |
+| AI-slop absence | 7.5 (6.5) |
+| mobile | 7.5 (6.0) |
+| **average** | **7.9** |
+| **min** | **7.5** |
+
+**First-pass findings:**
+- **Fixed:**
+  - The Delivery Cut overflow at 390 after signing. Both phone captures are now 390 wide and the chips are fully on screen.
+  - Delivery Cut now has "Sign the cut" on the first phone screen.
+  - Amounts use one typeface, and "47%" replaced "42 of 89".
+- **Mostly fixed:** Quote-Cap no longer repeats its numbers. The one leftover is "Forked at block 43,440,365", still the biggest number in Fork run 1.
+- **Partly fixed:** the template patterns. The hero pills, uppercase labels and lime borders are gone. A violet label still sits above every heading, and the cards below the fold remain.
+- **Not fixed:**
+  - Lime used on things you can't press, and red on refusals that mean the product worked.
+  - The 24px copy buttons.
+  - The "Above policy" chip that gives away the result before the button is pressed.
+  - The signed rows appearing below the fold with nothing pointing to them.
+  - The design contract drifting from the shipped colours.
+
+**Top 5 findings now:**
+1. **Colour (medium):** lime still marks about eight things on Quote-Cap that aren't buttons ("84%", "1", the step numbers, `route: true`). "Refused" and "Reverted" use the error colour on rows that prove Leash works. The quickest fix is one line at `kit.tsx:27`, so the `info` tone renders violet instead of lime.
+2. **Phone, primary action (medium):** at 390, Quote-Cap shows "Let the agent pay this quote" before the quote card. The two explainer cards push the card below the fold, so users press the button without seeing the $10.00 quote or the policy toggles.
+3. **Card mosaic (medium):** below the fold, Quote-Cap is still mostly cards (Route, Positioning, Business model), with five numbered circles across the page. "For judges" and "Positioning" carry labels that only repeat their headings.
+4. **"HTTP 422, no image" (medium):** this status text now gets the amount typeface (mono). On a phone it wraps to "HTTP 422, no / image", on the row that proves the vendor failed.
+5. **Copy buttons (medium):** still 24px, below the 44px touch minimum, and every one is labelled just "Copy".
+
+Two new problems to know about:
+- **Stale root `DESIGN.md`:** `projects/leash/DESIGN.md` is the old IBM Carbon system (white, square corners), which contradicts v3. The v3 contract lives at `docs/design/DESIGN.md`, so any agent reading the root file first will build the wrong look.
+- **Mid-word break:** the overflow fix now splits "AccountKeychain.setAllowedCalls" in the middle of the word on phones.
+
+These findings come from one reviewer working from the existing captures, as the run constraints required. There was no live browser, detector scan or second opinion. I also skipped the skill's preamble and telemetry scripts, because they write state files and you asked for the report to be the only file written.

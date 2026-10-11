@@ -23,7 +23,7 @@ export function Metric({ label, value, hint, tone }: { label: string; value: Rea
   return (
     <div className="stat card-raised p-5">
       <p className="text-body-sm text-ink-muted">{label}</p>
-      <p className={cn('metric-value mt-2', tone === 'bad' && 'text-error-ink', tone === 'ok' && 'text-success-ink', tone === 'warn' && 'text-warning-ink', tone === 'info' && 'text-primary')}>{value}</p>
+      <p className={cn('metric-value mt-2', tone === 'bad' && 'text-error-ink', tone === 'ok' && 'text-success-ink', tone === 'warn' && 'text-warning-ink', tone === 'info' && 'text-accent-ink')}>{value}</p>
       {hint && <p className="mt-2 text-body-sm text-ink-subtle">{hint}</p>}
     </div>
   )
@@ -38,8 +38,8 @@ export function Hash({ value, a, b }: { value: string; a?: number; b?: number })
       <span className="hash text-body-sm text-ink" title={value}>{shortHash(value, a, b)}</span>
       <button
         type="button"
-        aria-label="Copy"
-        className="grid size-6 cursor-pointer place-items-center rounded-sm text-ink-subtle hover:bg-surface-3 hover:text-ink"
+        aria-label={`Copy ${value}`}
+        className="relative grid size-6 cursor-pointer place-items-center rounded-sm after:absolute after:-inset-2.5 after:content-[''] text-ink-subtle hover:bg-surface-3 hover:text-ink"
         onClick={() => { void navigator.clipboard?.writeText(value); setDone(true); setTimeout(() => setDone(false), 1200) }}
       >
         {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
