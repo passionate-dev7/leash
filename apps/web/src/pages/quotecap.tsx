@@ -141,25 +141,27 @@ function QuoteCheck() {
 }
 
 type StepTone = 'paid' | 'refused' | 'reverted' | 'neutral'
-const stepTone = (status: string): StepTone => (/success/i.test(status) ? 'paid' : /refus/i.test(status) ? 'refused' : /revert/i.test(status) ? 'reverted' : 'neutral')
-const STEP_LABEL: Record<StepTone, string> = { paid: 'Settled', refused: 'Refused', reverted: 'Reverted', neutral: 'Info' }
+const stepTone = (status: string, step?: string): StepTone =>
+  /refus/i.test(status) ? 'refused' : /revert/i.test(status) ? 'reverted' : step === 'cut' ? 'reverted' : /^(fund|authorize)$/.test(step ?? '') ? 'neutral' : /success/i.test(status) ? 'paid' : 'neutral'
+const stepLabel = (t: StepTone, step?: string) => (step === 'cut' ? 'Cut' : t === 'paid' ? 'Settled' : t === 'refused' ? 'Refused' : t === 'reverted' ? 'Reverted' : 'Confirmed')
 
 /* A vertical event feed: numbered nodes on a rail, colored by outcome, hash under each label. */
-export function StepFeed({ steps }: { steps: { label: string; tx: string | null; status: string }[] }) {
+export function StepFeed({ steps }: { steps: { label: string; tx: string | null; status: string; step?: string }[] }) {
   return (
     <ol className="relative">
       {steps.map((s, i) => {
-        const t = stepTone(s.status)
+        const t = stepTone(s.status, s.step)
+        const lbl = stepLabel(t, s.step)
         return (
           <li key={i} className="relative grid grid-cols-[32px_minmax(0,1fr)] items-start gap-x-3 sm:grid-cols-[32px_minmax(0,1fr)_auto] sm:gap-x-4 rounded-md px-3 py-3 transition-colors hover:bg-surface-1">
             {i < steps.length - 1 && <span aria-hidden className="absolute bottom-[-12px] left-[27px] top-[40px] w-px bg-hairline" />}
             <span className={cn('relative z-[1] grid size-8 place-items-center rounded-full text-caption font-bold num', `chip-${t}`)}>{i + 1}</span>
             <div className="min-w-0 pt-1">
               <p className="text-body [overflow-wrap:anywhere]">{s.label}</p>
-              <div className="mt-1.5 sm:hidden"><Chip tone={t}>{STEP_LABEL[t]}</Chip></div>
+              <div className="mt-1.5 sm:hidden"><Chip tone={t}>{lbl}</Chip></div>
               {s.tx ? <div className="mt-1.5"><Hash value={s.tx} a={8} b={6} /></div> : <p className="mt-1 text-body-sm text-ink-subtle">No transaction: nothing was signed</p>}
             </div>
-            <div className="hidden pt-1 sm:block"><Chip tone={t}>{STEP_LABEL[t]}</Chip></div>
+            <div className="hidden pt-1 sm:block"><Chip tone={t}>{lbl}</Chip></div>
           </li>
         )
       })}
@@ -170,7 +172,7 @@ export function StepFeed({ steps }: { steps: { label: string; tx: string | null;
 function ForkSteps() {
   const proof = useForkProof()
   if (!proof) return null
-  const count = (t: StepTone) => proof.steps.filter((s) => stepTone(s.status) === t).length
+  const count = (t: StepTone) => proof.steps.filter((s) => stepTone(s.status, s.step) === t).length
   return (
     <section aria-labelledby="fork-h" className="grid gap-6">
       <SectionHead id="fork-h" eyebrow="Fork run 1 · Quote-Cap" title="The same quotes on a fork of Tempo mainnet"
@@ -313,7 +315,7 @@ export function QuoteCapPage() {
         <header className="lg:pt-4">
           <h1 className="text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
           <p className="mt-5 text-body-lg text-ink-muted">
-            stablestudio lists one image call at <span className="num text-ink">$0.039</span>. Asked without a prompt, its 402 named <span className="num text-error-ink">$10.00</span>. A default MPP client signs whatever the 402 names. Leash checks every quote against the listing before the agent key signs.
+            stablestudio lists one image call at <span className="num text-ink">$0.039</span>. Asked without a prompt, its 402 named <span className="num text-refused">$10.00</span>. A default MPP client signs whatever the 402 names. Leash checks every quote against the listing before the agent key signs.
           </p>
         </header>
         <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">

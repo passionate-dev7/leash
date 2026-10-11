@@ -77,4 +77,12 @@ Independent review r10a (design-review): B-/B-, 7.4 min 6.0. Fixed: 422px overfl
 Review r10b: B/B, 7.9 min 7.5. Fixed: lime on non-buttons (info tone now violet), red on refusals that prove the product, pre-run chip leaking the result, phone order (card before explainers), mono status text, 24px copy buttons, stale root DESIGN.md.
 Review r10c: B+/B+, 8.3 min 7.5. Then fixed its quick ones: left-column gap at 1440 (grid-rows auto/1fr), neutral "Not run yet" chip, Evidence card stretch.
 Known, accepted: Quote-Cap below the fold is still card-heavy; the Quote-Cap refusal panel stays red (a refused overcharge is the alarm state).
-FINAL: 8.3 min=7.5 round=10 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r10.md
+r10 FINAL (superseded, line kept): 8.3 min=7.5 round=10 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r10.md
+
+## Round 11 (polish on approved v3: status system, data viz, AA)
+
+Added: paid/refused/reverted/failed/neutral status tokens + secondary accent pink (refusals, "Leash:" notes); Route price bars with legend; numbered event rail for both fork runs; all text token pairs >= 4.5:1 (docs/design/contrast-r11.txt); rivals in one 3-column panel; Quote-Cap refusal is pink "refused", not error red.
+Self-critique r11 shots: the 390 event rail squeezed labels next to the chip; moved the chip under the label on phones.
+Review r11 (design-review): B+ / A-, 8.5 min 8.0. Fixed after it: fund/authorize rows now neutral "Confirmed" and the cut violet "Cut" (only real payments are green); lead $10.00 uses the refused token; stale CSS comment. Left (polish): hero explainers still boxed, violet shared by links and "reverted", long rival copy.
+r10 FINAL (superseded): 8.3 min=7.5 round=10
+FINAL: 8.5 min=8.0 round=11 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r11.md

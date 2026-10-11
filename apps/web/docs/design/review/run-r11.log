@@ -1,0 +1,44 @@
+Round 11 scores 8.5 on average (r10 was 8.3) and the lowest axis rose from 7.5 to 8.0. Report: `docs/design/review/design-audit-leash-r11.md`. Evidence was the 9 captures I opened plus a read-only pass over the source, as you specified. No browser, no scripts, no edits to source.
+
+**Design Score: B+**
+**AI Slop Score: A-** (was B+)
+
+| Axis | r11 | r10 |
+|---|---|---|
+| hierarchy | 8.5 | 8.5 |
+| primary action | 9.0 | 9.0 |
+| typography | 8.5 | 8.5 |
+| density/whitespace | 8.0 | 7.5 |
+| color | 8.5 | 8.0 |
+| consistency across the two pages | 8.5 | 8.0 |
+| AI-slop absence | 8.5 | 8.0 |
+| mobile | 8.5 | 8.5 |
+| **average / min** | **8.5 / 8.0** | 8.3 / 7.5 |
+
+**r10 findings:**
+- **Fixed (5):** the desktop gap under the quote-cap lead; the red refusal (it is now pink in the panel, the rail and the header count); the violet "Not run yet"; the stretched Evidence card; the mid-word break in "setAllowedCalls" at 390.
+- **Partly or mostly fixed (3):**
+  - The block height is no longer the biggest number in Fork run 1, but it still has its own metric tile.
+  - The card mosaic is reduced: rivals are now one panel with three columns.
+  - `DESIGN.md` gained a correct Round 11 section, but the token block above it still lists the old values.
+- **Not fixed (2, both polish):** new rows still appear with no cue after signing; the copy button's label still makes screen readers read the full hash.
+
+All the Round 11 asks landed. The five status colours are applied to chips, verdict panels and rail nodes. Route has price bars with a legend, and both fork runs use the numbered rail. The contrast file lists 27 pairs, none below 4.5:1. Two pairs in use are missing from it; I checked them by hand and both pass.
+
+**Owner complaints:** all five are fixed. The one remaining dense spot is the rival "Leash:" paragraphs.
+
+**Top 5 findings**
+1. **MEDIUM, new: transactions that are not payments show green "Settled".** `stepTone` (`quotecap.tsx:144`) only looks at `status`. So "Fund", "Authorize agent key" and the cut itself show green "Settled". On delivery-cut the cut is violet "Cut signed" in the verdict panel but green "Settled" in the rail below. Fix: colour by `step` (fund and authorize neutral "Confirmed", cut violet "Cut") and count only real payments as settled.
+2. **MEDIUM, left over from r10:**
+   - The two hero explainers are still boxed, with numbered discs.
+   - Business model is still its own card holding one paragraph.
+3. **POLISH: violet means two things.** The "reverted" status (`#b9b0ff`) and the link/label violet (`#b4abff`) look the same. The violet "Signatures to cut 1" metric reads like a status.
+4. **POLISH: rivals copy is long.** Each column runs about 75 to 90 words of 14px text. Cut each "Leash:" line to one sentence.
+5. **POLISH: tokens drift.**
+   - There are five near-identical pinks. The lead's `$10.00` uses `error-ink` while the card's uses `refused`.
+   - `DESIGN.md`'s token block contradicts its own r11 section.
+   - The `index.css:63` comment "12 hashes only" is wrong: hashes ship at 14px.
+
+Not checked: no live DOM, so the green "Paid" verdict is judged from source only. The 390 full-page quote-cap captures display at about 1:3.5, so I judged the phone layout below the fold by structure. There was no detector scan and no second reviewer.
+
+I skipped the gstack preamble and telemetry because they write state files, which this run forbids.

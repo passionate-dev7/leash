@@ -1,0 +1,16 @@
+/design-review http://localhost:4179 (local vite preview of the v3 build)/#/quote-cap and http://localhost:4179 (local vite preview of the v3 build)/#/delivery-cut
+
+Audit-only run (report mode). Constraints for this run:
+- Do NOT start, restart or drive any browser or browser daemon (the deepsurge harness on this Mac is wedged). Instead use the Playwright screenshots already captured from that live preview at /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/shots-r11/ :
+  p-1440.png and p-390.png are viewport shots of #/quote-cap; p-qc-full-*.png full page; p-qc-pressed-*.png full page after pressing the primary button; p-dc-full-*.png full page of #/delivery-cut. Open each with the Read tool and look at it.
+- For DOM/CSS facts read the source (read-only): src/pages/quotecap.tsx, src/pages/deliverycut.tsx, src/index.css, src/App.tsx, src/components/shadcn/. Measured by the capture script: 0 text nodes under 12px on both pages at both widths; monospace (JetBrains Mono) is used only on shortened 0x hashes; body uses Rubik; amounts use JetBrains Mono with tabular figures.
+- Do NOT write any script or scratch file. Do NOT edit source, commit or deploy. The ONLY file you write is the report below.
+- The red "API unreachable" text in the top strip appears only because this preview origin is not in the API's CORS allowlist; production is allowed.
+
+Judge both pages as a product UI for hackathon judges. The owner's earlier complaints: too dense, no clear main action, gray text under 12px, walls of monospace text, unfinished left panel. Check each explicitly.
+
+Write the full report (must contain the lines "Design Score: <letter>" and "AI Slop Score: <letter>") to
+/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r11.md
+and end it with "## Critic scores (0-10)": one line per axis: hierarchy, primary action, typography, density/whitespace, color, consistency across the two pages, AI-slop absence, mobile; then "average: X.X" and "min: X.X". Then print the two grades, the axis scores and the top 5 findings.
+
+This is round 11, a polish round on the approved v3 "night console" system (contract: DESIGN.md, see "Round 11 additions"). The round-10 report is docs/design/review/design-audit-leash-r10.md (8.3, B+/B+); say for each of its top findings whether it is fixed. Round 11 asked for: (1) a deliberate status colour system with a secondary accent: paid green, refused (Leash stopped it before signing) pink = secondary accent, reverted (chain refused) violet, failed (vendor) amber, neutral grey-violet, applied to chips, verdict panels and fork-feed nodes; (2) data viz: Route is now horizontal price bars per API with a legend; the fork runs are a numbered event rail coloured by status; (3) type scale + WCAG AA: docs/design/contrast-r11.txt lists every token pair (all >= 4.5:1). Also the two r10 leftovers: rivals are now one panel with three columns (less card mosaic); the Quote-Cap refusal panel is now the pink "refused" status rather than error red. Note: in full-page captures the sticky site header can appear mid-page; that is a capture artifact. Grade on its own merits; honest caveats are not defects.

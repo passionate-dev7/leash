@@ -60,7 +60,7 @@
   --font-display: "Rubik Variable", "Rubik", sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
 
-  /* Sizes: 44 display, 28 section, 20 result, 18 lead, 16 body, 14 secondary, 12 hashes only. */
+  /* Sizes: 44 display, 28 section, 20 result, 18 lead, 16 body, 14 secondary, 12 captions and step numbers; hashes 14. */
   --text-display-md: 44px;
   --text-display-md--line-height: 1.08;
   --text-display-md--letter-spacing: -1.1px;

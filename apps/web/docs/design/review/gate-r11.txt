@@ -1,0 +1,11 @@
+ok   references: 3 captured
+ok   components logged
+ok   score 8.5 min 8.0
+ok   critic design-review
+ok   r11-1440.png fresh
+ok   r11-390.png fresh
+ok   design-review grades A/B
+ok   uicraft gate
+ok   cwf banned grep
+ok   slop-check
+---- 0 failure(s)
