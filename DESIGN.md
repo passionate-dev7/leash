@@ -28,3 +28,23 @@ Type scale: 12 / 14 / 16 / 20 / 28 / 40 / 56.
 ```
 
 Rules: mono only for addresses/hashes/amounts; status = chip with text (Paid, Refused, Cut, Routed); one lime button per page; no square-only corners.
+
+## Round 11 additions: status system, secondary accent, type scale, contrast
+
+Status colours (fg on its tint; chip = tint fill + 25% fg ring + dot; panel = tint + 30% fg border):
+
+| Status | Meaning | fg | tint |
+|---|---|---|---|
+| paid | payment settled / routed-to seller | `--color-paid` #6ee7a0 | #0f2e22 |
+| refused | Leash stopped it before the key signed | `--color-refused` #ff8fb8 | #3a1630 |
+| reverted | the chain refused it (scope, limit, cut) | `--color-reverted` #b9b0ff | #2a2350 |
+| failed | the vendor took money and did not deliver | `--color-failed` #fcd34d | #33260b |
+| neutral | not run yet, info, planned | `--color-neutral` #d6d0e2 | #30254d |
+
+Accents: primary lime #c2ef4e (the one button per page, the logo) and secondary pink `--color-accent-2` #ff8fb8 (Leash's "stop" signal: refusals and the "Leash:" notes against rivals). Violet `--color-accent-ink` #b4abff for links and section labels.
+
+Type scale (px): 12 caption (hashes, step numbers only) / 14 secondary / 16 body / 18 lead / 20 card title / 28 section / 34 display mobile / 44 display desktop; metric values clamp(28, 7vw, 40) mono.
+
+Contrast: every text token pair checked by `docs/design/contrast.py` (WCAG 2.x); all >= 4.5:1, output in `docs/design/contrast-r11.txt`. `--color-ink-subtle` raised to #a9a2b8 (7.0:1 on cards).
+
+Data viz: Route uses horizontal price bars per API (scaled to the most expensive listing, labelled seller + amount, paid colour for the routed seller). Fork runs use a numbered event rail coloured by status.

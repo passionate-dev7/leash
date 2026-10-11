@@ -9,11 +9,13 @@ export function Card({ className, children, ...rest }: React.ComponentProps<'sec
   return <section className={cn('card', className)} {...rest}>{children}</section>
 }
 
-export type Tone = 'ok' | 'bad' | 'warn' | 'info'
+export type Tone = 'paid' | 'refused' | 'reverted' | 'failed' | 'neutral' | 'accent'
+const DOT: Record<Tone, string> = { paid: 'bg-paid', refused: 'bg-refused', reverted: 'bg-reverted', failed: 'bg-failed', neutral: 'bg-neutral', accent: 'bg-accent-ink' }
+const FG: Record<Tone, string> = { paid: 'text-paid', refused: 'text-refused', reverted: 'text-reverted', failed: 'text-failed', neutral: 'text-ink', accent: 'text-accent-ink' }
 export function Chip({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return (
-    <span className={cn('chip', `chip-${tone}`)}>
-      <span aria-hidden className={cn('size-1.5 rounded-full', tone === 'ok' ? 'bg-success' : tone === 'bad' ? 'bg-error' : tone === 'warn' ? 'bg-warning' : 'bg-accent-ink')} />
+    <span className={cn('chip', `chip-${tone === 'accent' ? 'neutral' : tone}`)}>
+      <span aria-hidden className={cn('size-1.5 rounded-full', DOT[tone])} />
       {children}
     </span>
   )
@@ -23,7 +25,7 @@ export function Metric({ label, value, hint, tone }: { label: string; value: Rea
   return (
     <div className="stat card-raised p-5">
       <p className="text-body-sm text-ink-muted">{label}</p>
-      <p className={cn('metric-value mt-2', tone === 'bad' && 'text-error-ink', tone === 'ok' && 'text-success-ink', tone === 'warn' && 'text-warning-ink', tone === 'info' && 'text-accent-ink')}>{value}</p>
+      <p className={cn('metric-value mt-2', tone && FG[tone])}>{value}</p>
       {hint && <p className="mt-2 text-body-sm text-ink-subtle">{hint}</p>}
     </div>
   )

@@ -5,6 +5,7 @@ import type { PaidCallOutcome } from '@leash/policy/delivery-cut'
 import { formatUnits } from '@leash/policy/quote-cap'
 import { Button } from '@/components/shadcn/button'
 import { Card, Chip, Hash, Metric, SectionHead, TextLink } from '@/components/kit'
+import { StepFeed } from '@/pages/quotecap'
 import { cn } from '@/lib/utils'
 
 /**
@@ -35,7 +36,7 @@ function Row({ k, v, tone }: { k: string; v: React.ReactNode; tone?: 'warn' }) {
   return (
     <div className="flex items-baseline justify-between gap-6 py-3">
       <span className="text-body text-ink-muted">{k}</span>
-      <span className={cn('text-right text-body-lg', tone === 'warn' ? 'font-medium text-warning-ink' : 'num')}>{v}</span>
+      <span className={cn('text-right text-body-lg', tone === 'warn' ? 'font-medium text-failed' : 'num')}>{v}</span>
     </div>
   )
 }
@@ -70,8 +71,8 @@ export function DeliveryCutPage() {
             On MPP the charge settles before the service checks the request. Leash spots the paid-but-failed call; one signature removes that vendor from the agent key, and the chain refuses its next charge.
           </p>
           <div className="mt-8 grid grid-cols-2 gap-3">
-            <Metric label="Paid, then failed" value="47%" tone="warn" hint={<>42 of 89 calls, vet402 on Tempo, <TextLink href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">mpp#1034</TextLink></>} />
-            <Metric label="Signatures to cut" value="1" tone="info" hint="next charge reverts" />
+            <Metric label="Paid, then failed" value="47%" tone="failed" hint={<>42 of 89 calls, vet402 on Tempo, <TextLink href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">mpp#1034</TextLink></>} />
+            <Metric label="Signatures to cut" value="1" tone="accent" hint="next charge reverts" />
           </div>
         </header>
 
@@ -79,7 +80,7 @@ export function DeliveryCutPage() {
           <div className="p-6 sm:p-7">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-body-sm text-ink-muted">fal · FLUX schnell · {proof.vendor.origin.replace('https://', '')}</p>
-              <Chip tone={signed ? 'info' : 'warn'}>{signed ? 'Cut' : `HTTP ${proof.failure.status}`}</Chip>
+              <Chip tone={signed ? 'reverted' : 'failed'}>{signed ? 'Cut' : `HTTP ${proof.failure.status}`}</Chip>
             </div>
             <div className="mt-3 divide-y divide-hairline">
               <Row k="fal's 402 asked" v={usd(proof.vendor.quoted)} />
@@ -91,16 +92,16 @@ export function DeliveryCutPage() {
           <div className="border-t border-hairline bg-surface-1/60 p-6 sm:p-7">
             <div id="dc-verdict" aria-live="polite">
               {signed ? (
-                <div className="rounded-md border border-hairline-strong bg-surface-2 p-4">
-                  <Chip tone="info">Cut signed</Chip>
+                <div className="panel-reverted p-4">
+                  <Chip tone="reverted">Cut signed</Chip>
                   <p className="mt-2 text-subhead font-semibold text-ink">fal is cut from the agent key</p>
                   <p className="mt-1 text-body-sm text-ink-muted">Its next charge reverts on chain. stablestudio, which delivered, still gets paid. </p>
                   <a href="#/delivery-cut" onClick={(e) => { e.preventDefault(); document.getElementById('tx-h')?.scrollIntoView({ behavior: 'smooth' }) }} className="link mt-2 inline-block text-body-sm font-medium text-accent-ink hover:underline">See the three new transactions ↓</a>
                 </div>
               ) : (
-                <div className="rounded-md border border-warning/30 bg-warning-tint p-4">
-                  <Chip tone="warn">Paid, not delivered</Chip>
-                  <p className="mt-2 text-subhead font-semibold text-warning-ink"><span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span> lost</p>
+                <div className="panel-failed p-4">
+                  <Chip tone="failed">Paid, not delivered</Chip>
+                  <p className="mt-2 text-subhead font-semibold text-failed"><span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span> lost</p>
                   <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal's payout address <Hash value={proof.vendor.recipient} /> from what the agent key may pay.</p>
                 </div>
               )}
@@ -123,24 +124,11 @@ export function DeliveryCutPage() {
           intro={`Its own local anvil fork at block ${proof.block.toLocaleString()}, separate from the Quote-Cap run. Hashes resolve on that fork.`} />
         <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
           <Card className="min-w-0 p-2 sm:p-3">
-            <ol className="divide-y divide-hairline">
-              {steps.map((s) => {
-                const ok = s.status === 'success'
-                return (
-                  <li key={s.step} className="flex items-center justify-between gap-4 rounded-md px-4 py-3 transition-colors hover:bg-surface-1">
-                    <div className="min-w-0">
-                      <p className="text-body [overflow-wrap:anywhere]">{s.label}</p>
-                      {s.tx && <div className="mt-1"><Hash value={s.tx} a={10} b={6} /></div>}
-                    </div>
-                    <Chip tone={ok ? 'ok' : 'info'}>{ok ? 'Settled' : 'Reverted'}</Chip>
-                  </li>
-                )
-              })}
-              {!signed && <li className="px-4 py-4 text-body-sm text-ink-subtle">Sign the cut to replay the next three transactions.</li>}
-            </ol>
+            <StepFeed steps={steps} />
+            {!signed && <p className="px-3 py-3 text-body-sm text-ink-subtle">Sign the cut to replay the next three transactions.</p>}
           </Card>
           <Card className="min-w-0 p-6">
-            <Chip tone="info">Evidence</Chip>
+            <Chip tone="neutral">Evidence</Chip>
             <p className="mt-3 text-body font-semibold">A cut removes a payout address, not a brand.</p>
             <p className="mt-2 text-body-sm text-ink-muted">In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (saved at about Tempo mainnet block 42,298,273), <Hash value={proof.vendor.recipient} /> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
             <Button asChild variant="outline" className="mt-5"><a href="/evidence/probe-all402-2026-10-03.json" target="_blank" rel="noreferrer">Open the probe file</a></Button>
