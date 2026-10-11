@@ -11,12 +11,9 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r exec tsc --noEmit",
     "catalog:refresh": "pnpm --filter @leash/policy exec tsx scripts/refresh-catalog.ts",
-    "test": "pnpm --filter @leash/policy test",
+    "test": "pnpm -r --if-present test",
     "test:adversarial": "pnpm --filter @leash/sdk test:adversarial",
-    "console": "pnpm --filter @leash/console dev",
-    "server": "pnpm --filter @leash/console server",
-    "demo": "pnpm --filter @leash/demo dev",
-    "demo:headless": "pnpm --filter @leash/demo run:headless"
+    "test:policy": "pnpm --filter @leash/policy test"
   },
   "devDependencies": {
     "tsx": "4.23.13",

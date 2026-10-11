@@ -11,12 +11,12 @@ describe('judgeDelivery', () => {
   it('settled then 422 is a non-delivery', () => {
     expect(judgeDelivery({ vendor: 'fal', recipient: FAL, amount: 3000n, settlementTx: tx(1), status: 422 })).toEqual({ delivered: false, reason: 'paid_then_client_error', status: 422 })
   })
-  it('2xx is delivery', () => expect(judgeDelivery({ vendor: 'fal', recipient: FAL, amount: 1, settlementTx: tx(1), status: 200 }).delivered).toBe(true))
-  it('unsettled call is never a cut reason', () => expect(judgeDelivery({ vendor: 'fal', recipient: FAL, amount: 1, settlementTx: null, status: 422 })).toEqual({ delivered: false, reason: 'not_settled' }))
+  it('2xx is delivery', () => expect(judgeDelivery({ vendor: 'fal', recipient: FAL, amount: 1n, settlementTx: tx(1), status: 200 }).delivered).toBe(true))
+  it('unsettled call is never a cut reason', () => expect(judgeDelivery({ vendor: 'fal', recipient: FAL, amount: 1n, settlementTx: null, status: 422 })).toEqual({ delivered: false, reason: 'not_settled' }))
   it('5xx, 402-after-pay and no response are non-deliveries', () => {
-    expect(judgeDelivery({ vendor: 'v', recipient: FAL, amount: 1, settlementTx: tx(1), status: 503 }).reason).toBe('paid_then_server_error')
-    expect(judgeDelivery({ vendor: 'v', recipient: FAL, amount: 1, settlementTx: tx(1), status: 402 }).reason).toBe('paid_then_payment_required')
-    expect(judgeDelivery({ vendor: 'v', recipient: FAL, amount: 1, settlementTx: tx(1), status: null }).reason).toBe('paid_then_no_response')
+    expect(judgeDelivery({ vendor: 'v', recipient: FAL, amount: 1n, settlementTx: tx(1), status: 503 }).reason).toBe('paid_then_server_error')
+    expect(judgeDelivery({ vendor: 'v', recipient: FAL, amount: 1n, settlementTx: tx(1), status: 402 }).reason).toBe('paid_then_payment_required')
+    expect(judgeDelivery({ vendor: 'v', recipient: FAL, amount: 1n, settlementTx: tx(1), status: null }).reason).toBe('paid_then_no_response')
   })
 })
 
@@ -36,7 +36,7 @@ describe('decideCuts', () => {
     expect(decideCuts(two, { strikes: 2, window: 20 }).find((x) => x.vendor === 'fal')).toMatchObject({ cut: true, failures: 2, lost: 6000n })
   })
   it('ignores unsettled attempts and rejects strikes < 1', () => {
-    expect(decideCuts([{ vendor: 'fal', recipient: FAL, amount: 1, settlementTx: null, status: 422 }])).toEqual([])
+    expect(decideCuts([{ vendor: 'fal', recipient: FAL, amount: 1n, settlementTx: null, status: 422 }])).toEqual([])
     expect(() => decideCuts(log, { strikes: 0, window: 1 })).toThrow()
   })
 })

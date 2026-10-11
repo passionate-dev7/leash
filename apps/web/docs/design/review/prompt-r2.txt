@@ -1,7 +1,0 @@
-/design-review https://design-preview.leash-eiy.pages.dev/#/quote-cap and https://design-preview.leash-eiy.pages.dev/#/delivery-cut
-
-Audit-only run (report mode): do NOT edit any source file, do NOT commit, do NOT deploy. Use your headless browser for screenshots at 1440 and 390 wide. The red "API unreachable" text in the top strip appears only because this preview origin is not in the API's CORS allowlist; the production origin is allowed. Judge both pages as a product UI for hackathon judges. The owner's earlier complaints were: too dense, no clear main action, gray text under 12px, walls of monospace text, unfinished left panel; check each explicitly.
-
-When done, write the full report (it must contain the lines "Design Score: <letter>" and "AI Slop Score: <letter>") to
-/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r2.md
-and at the end of that file add a section "## Critic scores (0-10)" with one line per axis: hierarchy, primary action, typography, density/whitespace, color, consistency across the two pages, AI-slop absence, mobile; then "average: X.X" and "min: X.X". Then print the two grades, the axis scores and the top 5 findings.

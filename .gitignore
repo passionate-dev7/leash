@@ -24,3 +24,16 @@ scripts/fork/out/anvil.log
 .wrangler/
 scripts/fork/out/dc/anvil.log
 !apps/web/docs/
+
+# local-only: fork run outputs (published copies live in apps/web/public/*-proof.json)
+scripts/fork/out/
+# internal review artifacts and local paths (kept on disk for the design gate, not shipped)
+apps/web/docs/design/CRITIQUE.md
+apps/web/docs/design/review/prompt-r*.txt
+apps/web/docs/design/review/run-r*.log
+apps/web/docs/design/review/tests-r*.txt
+apps/web/docs/design/uicraft-read.json
+apps/web/design-research/PROGRESS.md
+packages/sdk/scratch/
+mitm_mcp_traffic.db
+**/mitm_mcp_traffic.db

@@ -32,3 +32,12 @@ Every feature or claim in the README and UI, exercised on 11 Oct 2026 (IST). Sta
 
 ## Final status
 (updated at the end of the round)
+
+## From dry run
+(added by the pitch worker; clean clone, 11 Oct 10:10 IST; full transcript `docs/pitch/outside-user-dry-run.md`)
+- **bug**: `pnpm typecheck` fails: `packages/policy/test/unit/delivery-cut.test.ts(39,57) TS2322 Type 'number' is not assignable to type 'string | bigint'`.
+- **bug**: root scripts `console`, `server`, `demo`, `demo:headless` point at `@leash/console` / `@leash/demo`, which do not exist ("No projects matched the filters").
+- friction: root `pnpm test` runs only policy; no single command runs all suites.
+- friction: fork demos rewrite committed files in `scripts/fork/out/` (dirty tree after a run).
+- hygiene: `mitm_mcp_traffic.db` (empty SQLite) committed at repo root in 129d8c5.
+- OK: install, policy 80, sdk 6, api 55, web/vendors 0 fail, web build, both fork demos, local quoteCap replay ($10.00 refused, 0 signed retries).

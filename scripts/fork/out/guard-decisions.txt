@@ -1,3 +1,0 @@
-nano_banana_valid_prompt_0.07|70000|PASS
-catalog_listed_0.039|39000|PASS
-nano_banana_missing_field_10.00|10000000|REFUSE (cap 78000)
