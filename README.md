@@ -1,197 +1,152 @@
-# Leash Quote-Cap
+# Leash
 
-**Your agent never pays more than the price on the menu.**
+**Your agent never pays more than the price on the menu, and one signature cuts off a vendor that took the money and failed to deliver.**
 
-Live: https://leash-eiy.pages.dev/#/quote-cap and https://leash-eiy.pages.dev/#/delivery-cut (Cloudflare Pages; API https://leash-api.fly.dev). Deploy: `pnpm --filter @leash/web run deploy`.
+Leash is spend control for AI agents that pay for APIs over MPP (Machine Payments Protocol) on Tempo.
 
-An MPP vendor names its price in the 402 challenge, and a default mppx client signs whatever it names
-(mppx 0.12 and 0.13.4 have no max-amount check). On Tempo mainnet on 2026-10-10, stablestudio listed
-`POST /api/generate/nano-banana/generate` at **$0.039** in the mpp.dev catalog and its 402 asked for
-**$10.00** when the prompt was missing (and $0.07 with a valid prompt). 13 of 273 parsed mainnet challenges
-did not match their listing. Leash checks every quote against the listing *before the agent key signs*.
+- Live: https://leash-eiy.pages.dev (`#/quote-cap`, `#/delivery-cut`), API https://leash-api.fly.dev
+- Track: Tempo, Colosseum World's Fair (Oct 2026)
+- Feature status: `docs/AUDIT.md`. A clean-checkout run of this README: `docs/pitch/outside-user-dry-run.md`
 
-- **Quote-Cap guard** (`packages/policy/src/quote-cap.ts`, wired into `createLeashFetch` in
-  `packages/sdk/src/mpp.ts`): refuses a quote above listing + tolerance, above a per-call cap, in the wrong
-  currency, or (optionally) for an unlisted endpoint. It throws in mppx `onChallenge`, so no credential is
-  created and no transaction signed. The record carries `refused: "QuoteCapExceeded"` with listed / quoted / ceiling.
-- **Route** (`packages/policy/src/route.ts`): the same upstream API sold by several MPP sellers, cheapest
-  listing first (Hunter email verifier $0.008 vs $0.03, Apollo people search $0.005 vs $0.02, Firecrawl
-  scrape $0.002 vs $0.0126). Output equivalence across sellers is not verified with paid calls.
-- **Chain lock behind the guard**: the agent's Tempo access key is scoped to the vendor payout with a spend
-  limit, so a bypassed guard still cannot overspend. Shown on an anvil fork of Tempo mainnet
-  (`scripts/fork/run-fork-demo.sh`, see `scripts/fork/FORK.md`): two paid calls, guard refusal of the $10.00
-  quote, chain reverts for the bypass ($10.00 > $0.20 limit) and for a different vendor. Fork hashes exist
-  only on the local fork; revert names are inferred. Tenderly does not support Tempo.
+## Why
 
-```ts
-import { createLeashFetch } from '@leash/sdk'
-import { loadPriceBook, DEFAULT_QUOTE_CAP } from '@leash/policy'
-const pay = createLeashFetch({ network, agent, quoteCap: { book: loadPriceBook(), policy: { ...DEFAULT_QUOTE_CAP, toleranceBps: 10_000 } } })
-const { response, record } = await pay('https://stablestudio.dev/api/generate/nano-banana/generate', { method: 'POST', body: '{}' })
-// record.refused === 'QuoteCapExceeded', record.quote = { listed: '39000', quoted: '10000000', ... }
-```
+An MPP vendor names its price in the 402 challenge, and a default mppx client signs whatever it names: mppx 0.12 and 0.13.4 have no max-amount check. The charge also settles before the vendor runs the request, so "paid" and "delivered" are separate facts.
 
-Demo UI: `pnpm --filter @leash/web dev`, open `#/quote-cap` (the landing page). Republish the fork run to the
-UI with `python3 scripts/fork/to-web.py`.
+- **Live overcharge, Tempo mainnet, 10 Oct 2026:** stablestudio lists `POST /api/generate/nano-banana/generate` at **$0.039** in the mpp.dev catalog. Its 402 asked **$10.00** when the prompt was missing, and $0.07 with a prompt. We captured the 402s and paid nothing. 13 of 273 parsed mainnet challenges did not match their listing.
+- [tempoxyz/mpp-specs#359](https://github.com/tempoxyz/mpp-specs/issues/359): $450 charged against $100 authorized.
+- [tempoxyz/mpp#1034](https://github.com/tempoxyz/mpp/issues/1034): vet402 paid 89 directory calls on Tempo. 42 settled and then answered 400 or 422.
+- [tempoxyz/mpp#840](https://github.com/tempoxyz/mpp/issues/840): the ROZO MPP Router delisted five merchants after customers paid and got a 502.
+- On X: [@casaisdev](https://x.com/casaisdev/status/2098126844255948839), [@prasanth_kuna](https://x.com/prasanth_kuna/status/2108615889423826986), [@jrcrypto_dev](https://x.com/jrcrypto_dev/status/2097698954573959189).
 
-Tests: `pnpm test` (policy, 80 incl. Quote-Cap, Route and Delivery Cut), `pnpm --filter @leash/sdk test` (6: real
-stablestudio 402s replayed through the payment path, fetch stubbed, nothing signed on refusal),
-`pnpm test:adversarial` (20, live Moderato), `apps/api` 55, `apps/web` 7, `apps/vendors` 9.
+## Features (all marked working in docs/AUDIT.md unless noted)
 
-- **Delivery Cut** (`packages/policy` `judgeDelivery` / `decideCuts`, demo `scripts/fork/run-delivery-cut.sh`):
-  a vendor that settled a charge and then failed (fal's real 402, with the 422 failure pattern from
-  [tempoxyz/mpp#1034](https://github.com/tempoxyz/mpp/issues/1034), where 42 of 89 paid calls failed) is removed
-  from the agent key with one signature; its next charge reverts on the fork and stablestudio still gets paid.
-  Caveat: a cut removes a payout address. In our unpaid 402 probes of mpp.tempo.xyz on 2026-10-03
-  (`research/platform/scripts/probe-all402.json` in the cwf workspace), fal's recipient was also the recipient for
-  openai, firecrawl and nine other gateways, so the cut would stop those too. The fork run only charged fal and stablestudio.
+- **Quote-Cap** (`packages/policy/src/quote-cap.ts`): refuses a quote above the listing plus your allowance, above a hard per-call cap, in the wrong currency, or for an unlisted endpoint (capped or refused, your choice).
+- **Guard in the payment path** (`createLeashFetch` in `packages/sdk/src/mpp.ts`): the check runs in mppx `onChallenge`, so a refused quote never produces a credential or a signature. The record carries `refused: "QuoteCapExceeded"` with listed, quoted and ceiling amounts.
+- **Price book** (`packages/policy/data/price-book.4217.json`): a snapshot of the mpp.dev catalog for Tempo mainnet, dated 10 Oct 2026.
+- **Route** (`packages/policy/src/route.ts`, `createLeashFetch({ route: true })`): ranks sellers of the same upstream API by listed price (Hunter email verifier $0.008 vs $0.03, Apollo people search $0.005 vs $0.02, Firecrawl scrape $0.002 vs $0.0126), sends the call to the cheapest one, records `routed`, and holds that seller to its own listing. Output equivalence across sellers is **not** verified.
+- **Delivery Cut** (`judgeDelivery`, `decideCuts` in policy; `planDeliveryCuts` in the SDK): a vendor that took payment and failed is removed from the agent's Tempo access key in one transaction signed by the team key. Its next charge reverts; other vendors keep getting paid.
+- **Chain lock behind the guard:** the agent key is scoped to vendor payout addresses with a periodic spend limit, so a bypassed guard still cannot overspend. Reverts are observed on the fork; the reasons there are inferred (*partial* in the audit). On Moderato the e2e decodes `CallNotAllowed` after a cut.
+- **Spend desk** (built before the Fair): per-agent access keys, delivery ledger, vendor roll-ups, one-transaction cuts, a read-only mainnet MPP view and vet402's outside ledger at `/api/outside/vet402`.
 
-## Check it in two minutes (judges)
+## 60-second judge path
 
-1. Open https://leash-eiy.pages.dev/#/quote-cap, keep "No prompt", press **Let the agent pay this quote**: the real
-   $10.00 stablestudio quote is refused against its $0.039 listing. "With prompt" ($0.07, 1.8x the listing) is refused
-   at "Exact" and "+50%" and passes at "2x"; "Listed" passes.
-2. Scroll to the fork run: the $10.00 bypass and the payment to another vendor revert on chain (local anvil fork
-   of Tempo mainnet; hashes exist only there, revert reasons inferred).
-3. Open https://leash-eiy.pages.dev/#/delivery-cut, press **Sign the cut**: fal's next charge reverts, stablestudio still settles.
-4. Reproduce: `scripts/fork/setup-foundry.sh`, then `scripts/fork/run-fork-demo.sh` and `scripts/fork/run-delivery-cut.sh`
-   (Foundry, public Tempo RPC, no funds), and `pnpm install && pnpm -r test`.
+1. Open https://leash-eiy.pages.dev/#/quote-cap. The quote **No prompt** is selected: listed $0.039, the 402 asks $10.00.
+2. Press **Let the agent pay this quote**. Result: *Refused before signing*.
+3. Pick **With prompt** ($0.07). At **Exact** it is refused; set *Allowed above the listing* to **2x** and press again: *Paid $0.07*.
+4. Scroll down: Route groups, then the same quotes run on a Tempo mainnet fork (paid, refused, bypass reverted, other vendor reverted).
+5. Open https://leash-eiy.pages.dev/#/delivery-cut. fal asked $0.003, was paid, answered HTTP 422. Press **Sign the cut**: fal is cut, its next charge reverts on the fork, stablestudio is still paid.
 
-## Business model (planned; no customers or revenue yet)
+## Quickstart
 
-The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents
-would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and
-one-signature cuts. Route could later take a small share of the saving it finds on each call.
-
-## How Leash differs from its closest rivals
-
-Summaries come from each project's own repo or Arena page, read on 2026-10-11.
-
-- **[vet402](https://github.com/kzmttkc/vet402-delivery)** buys x402 and MPP APIs with its own wallet on Solana,
-  Tempo and Base and publishes what each seller delivered next to the payment tx (its Tempo run is the source of
-  mpp#1034's 42 of 89 paid-then-failed calls). It grades sellers; it does not control an agent's key. Leash acts on
-  the agent's own payments: it refuses a wrong price before signing and cuts a failing vendor on chain. vet402's
-  grades could feed a Leash cut.
-- **[Fermata](https://github.com/bilgin-kocak/fermata)** holds each MPP call's payment in escrow on Tempo, records the
-  vendor's HTTPS answer with TLSNotary, and refunds the agent on a proven failure or timeout (Tempo testnet; vendors
-  are reached through Fermata's gateway). Fermata recovers a failed payment; Leash does not refund. Leash needs no
-  gateway, pays vendors directly, and checks the quoted price against the vendor's listing, which Fermata's README
-  does not describe. After a failure Leash stops all later charges with one signature.
-- **[Cursus](https://colosseum.com/arena/projects/cursus)** is an accountability layer: roles for humans and agents
-  with limits on authority and budget, evidence and human sign-off; its first agent payment was x402 on Solana
-  devnet. Cursus records who acted under whose authority. Leash limits payments only and enforces it on Tempo: the
-  agent key's vendor scope and daily limit are chain rules, and each quote is checked before the key signs.
-
-Also nearby: Setra402 ("trust layer for agent payments", mechanism not public) and Rolepay (Discord communities
-paying people on Tempo, a different job).
-
-### Built before vs during the World's Fair
-- Before (Sep 2026): the spend desk below: per-agent access keys, delivery ledger, vendor cut-off, API, console.
-- During (Oct 10-13): Quote-Cap guard, price book, Route, Delivery Cut, Quote-Cap and Delivery Cut UI, fork proofs, gateway-retry fix for the live suite.
-
----
-
-## The spend desk (built before)
-
-The spend desk for teams whose AI agents pay for APIs over MPP on Tempo.
-
-Every agent gets its own Tempo access key. The chain enforces its daily OUSD budget and the list of
-services it may pay. Every paid call is joined to its on-chain settlement and to what the vendor actually
-returned, so the team sees, per agent and per vendor, what was paid and what was delivered. When a vendor
-keeps taking money and failing, one signature removes it from every agent's key, and the chain refuses the
-next payment to it while healthy vendors keep getting paid.
-
-Live: https://leash-spend.vercel.app (Moderato testnet, chain 42431)
-
-## The problem, in the buyers' own numbers
-
-A charge settles before the vendor runs the request. "Paid" and "delivered" are separate facts.
-
-- vet402, an independent buyer of paid endpoints, measured 42 of 89 paid Tempo calls settling and then
-  answering 400 or 422 (tempoxyz/mpp#1034). Its daily cap lives in its own code.
-- The ROZO MPP Router delisted five merchants to stop customers paying and then receiving a 502
-  (tempoxyz/mpp#840).
-- vet402's public Tempo ledger, re-verified row by row against mainnet by Leash: 72 of 72 settled rows
-  check out, and 26 of them were paid without delivery.
-- On mainnet, 658 of the 684 access keys that spent in one day (96.2%) can call anything, and one is bound
-  to recipients (block 42,297,968).
-
-## How it works
-
-```
-team key (browser: passkey or non-extractable WebCrypto P-256)
-   │  authorizeKey: daily OUSD limit + transferWithMemo recipient scopes, one per service
-   ▼
-agent key ──pays──▶ MPP vendor (402 challenge, mppx 0.12, type 0x76 tx)
-   │                     │
-   │                     └─ HTTP outcome (200, 422, 502 ...)
-   ▼
-delivery ledger: settlement found by the mppx attribution memo inside our own signed tx
-   │             (works when the vendor returns an error and no receipt)
-   ▼
-vendor view: paid / delivered / paid-but-failed per service
-   │
-   └─ Cut: ONE 0x76 transaction, setAllowedCalls on every agent key without that recipient,
-           signed by the team key, read back from chain → next payment refused: CallNotAllowed
-```
-
-Three Tempo primitives carry the product, and none of them exists on a generic EVM chain:
-
-- **AccountKeychain access keys** (`0xaAAAaaAA00000000000000000000000000000000`): periodic spending limits and
-  `(target, selector, recipients)` call scopes, enforced by the protocol during execution.
-- **TIP-1022 virtual addresses**: a vendor gives each service its own address on one master wallet. Recipient
-  scopes match the literal address, so one service is cut without cutting its siblings. On a shared payout
-  (mainnet `0xca4e…79Fe` collects for 12 services) Leash shows, before you sign, everything the cut also takes.
-- **Batched 0x76 envelopes**: one signature rewrites the scope of every key on the team.
-
-## Measured on chain
-
-| What | Evidence |
-|---|---|
-| Agent pays an MPP vendor with a scoped access key, settlement joined by memo | Moderato tx `0x58bab500131d3fde059b8c1bdd024f3df9e62e77a47b281fc6ba4495ffcc4b0e` |
-| Paid-then-422 call joined to its settlement with no vendor receipt | `0x2a78d1963f9abb965950dc17efa4d3def495f8cd05b9d08910cfa738e103a04c` |
-| One tx cuts a service from 3 agent keys | `0x89b2d292821001537fb26426190b069d933d76c06c72867b2a3de4c0b70e1390`, 178,468 gas |
-| Same vendor's other service (sibling virtual address) still paid after the cut | `0x298877602d0018402960c55ad10c48808b5794f8ea54bcc4325ca5e4dd6c1e1f` |
-| Next payment to the cut service | refused by the chain with `CallNotAllowed`, nothing moves |
-| Escrow deposit above the key's cap (MPP session) | refused with `SpendingLimitExceeded` |
-
-Explorer: https://explore.testnet.tempo.xyz
-
-## What runs
-
-| Package | What it does |
-|---|---|
-| `packages/policy` | compiles a policy into the exact `KeyRestrictions` tuple; `removeRecipient` for cut-offs (an empty recipient list means "any recipient", so a rule is dropped, never emptied); revert decoding |
-| `packages/sdk` | `createLeashFetch`: pays MPP with an agent key and writes a delivery record per call; `planCutoff`: one envelope for a whole team; `loadVet402Feed`: imports an outside buyer's delivery records and verifies every row on mainnet |
-| `apps/vendors` | two MPP vendors on Moderato with real upstreams: Atlas Data (Hacker News search, page scrape, ECB exchange rates, one virtual address per service) and Relay Compute (summaries and keywords on one shared payout) |
-| `apps/api` | teams, agent keys, the research runner, the ledger, vendor roll-ups, cut-off plans with chain read-back, the mainnet MPP replay (read-only) |
-| `apps/web` | the spend desk: Team, Agents, Vendors, Ledger, Mainnet. Static build, IBM Carbon design system |
-
-The team key never leaves the browser. The API holds only agent keys, and every agent key is capped and
-scoped by the team key on chain.
-
-Delivery outcomes for agents that run outside Leash are reported by the agent's own key. The desk checks each
-payment in a record against its settlement on chain (payer, recipient, amount, memo, and the key's own spend),
-and the HTTP outcome, whether the vendor delivered, is the agent's report. Every failure rate is kept per team.
-
-## Run it
+Requires node 22 or newer and pnpm 11.
 
 ```bash
 pnpm install
-pnpm typecheck
-pnpm test                               # policy unit tests
-pnpm --filter @leash/vendors test       # vendor routes
-pnpm --filter @leash/api start          # API + vendors on http://127.0.0.1:4180
-pnpm --filter @leash/web dev            # spend desk on http://localhost:5173
-pnpm --filter @leash/api e2e            # full loop on Moderato: team, faucet, agents, paid calls,
-                                        # one-tx cut, chain refusal; prints every tx hash
+pnpm test                                  # policy: Quote-Cap, Route, Delivery Cut, compile (80)
+pnpm --filter @leash/sdk test              # payment path: real stablestudio 402s replayed, nothing signed (10)
+./scripts/fork/run-fork-demo.sh            # Quote-Cap on an anvil fork of Tempo mainnet (~25 s, installs foundry 1.8.5)
+./scripts/fork/run-delivery-cut.sh         # Delivery Cut on the fork (~20 s)
+pnpm --filter @leash/web dev               # UI on http://localhost:5173/#/quote-cap
 ```
 
-## Read-only mainnet views
+Running the fork demos rewrites the files in `scripts/fork/out/`.
 
-- `GET /api/mainnet/mpp?blocks=20000`: MPP charges to catalogued payout addresses on chain 4217, grouped by
-  payout and by the mppx server fingerprint in the memo, with the services behind each payout.
-- `GET /api/outside/vet402`: vet402's delivery records, each verified against its mainnet transaction.
+## SDK usage
+
+```ts
+import { createLeashFetch, NETWORKS } from '@leash/sdk'
+import { loadPriceBook, DEFAULT_QUOTE_CAP } from '@leash/policy'
+
+// agent: a viem Account for the agent's Tempo access key, plus its accessKeyAddress
+const pay = createLeashFetch({
+  network: NETWORKS.mainnet,
+  agent,
+  quoteCap: { book: loadPriceBook(), policy: { ...DEFAULT_QUOTE_CAP, toleranceBps: 10_000 } }, // allow up to 2x the listing
+  route: true,                                                                                // cheapest listed seller
+})
+const { response, record } = await pay('https://stablestudio.dev/api/generate/nano-banana/generate', { method: 'POST', body: '{}' })
+// record.refused === 'QuoteCapExceeded'
+// record.quote = { listed: 39000n, quoted: 10000000n, ceiling: 78000n, reason: 'above_listing', ... }
+```
+
+`DEFAULT_QUOTE_CAP` is `{ toleranceBps: 0, maxPerCall: 1_000_000n /* $1.00 */, unlisted: 'cap' }`. To replay the $10.00 quote with no network and no spend, see `docs/pitch/dryrun/stranger.ts`, which stubs `fetch` with the captured 402 (result: refused, 0 signed retries).
+
+## Architecture
+
+```
+team key (browser passkey or non-extractable WebCrypto P-256)
+   |  AccountKeychain authorize: periodic USDC limit + transfer scopes, one per vendor payout
+   v
+agent key --createLeashFetch--> MPP vendor 402 (price, currency, recipient)
+   |   onChallenge: Quote-Cap check against the price book -> refuse (nothing signed) or sign
+   |   Route: swap to the cheapest listed seller first
+   v
+delivery record: settlement found on chain by the mppx memo + HTTP outcome (200, 422, 502 ...)
+   v
+Delivery Cut: judgeDelivery -> decideCuts -> planDeliveryCuts
+   one 0x76 tx, setAllowedCalls without that payout, signed by the team key
+   -> the chain refuses the vendor's next charge
+```
+
+Tempo primitives used: AccountKeychain access keys (protocol-enforced spend limits and call scopes), TIP-1022 virtual addresses (one address per service on a master wallet, so a single service can be cut), and batched 0x76 transactions (one signature rewrites every key on a team).
+
+## Fork proof
+
+No mainnet money is spent. `scripts/fork/FORK.md` has the details.
+
+- `run-fork-demo.sh`: funds a throwaway root on an anvil `--network tempo` fork of Tempo mainnet, authorizes an agent key limited to $0.20 and scoped to stablestudio, then replays stablestudio's captured 402s. $0.07 and $0.039 are paid; $10.00 is refused by the guard; a forced $10.00 signature reverts on chain; a payment to another vendor reverts on chain.
+- `run-delivery-cut.sh`: the agent pays fal $0.003 and stablestudio $0.039. fal's post-payment 422 is replayed from vet402's mpp#1034 report. The root signs one cut, fal's next charge reverts, and stablestudio is still paid.
+- Outputs land in `scripts/fork/out/`. Publish them to the UI with `python3 scripts/fork/to-web.py` and `python3 scripts/fork/to-web-delivery.py`.
+
+## Business model (planned; no customers or revenue yet)
+
+The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.
+
+## Positioning
+
+- **vet402** pays sellers with its own wallet and publishes what came back next to the payment ([Arena](https://colosseum.com/arena/projects/vet402)). It grades sellers; it does not control your agent's key. Its mpp#1034 report is part of our evidence, and its grades could feed a Leash cut.
+- **Fermata** holds each MPP or x402 payment in escrow on Tempo and refunds when a TLSNotary record fails the delivery rule ([Arena](https://colosseum.com/arena/projects/fermata)). Leash does not refund. It needs nothing from the vendor, checks the quoted price against the listing before signing, and stops later charges with one signature.
+- **Cursus** registers humans and agents into roles with limits on authority and budget, plus human sign-off ([Arena](https://colosseum.com/arena/projects/cursus)). Leash is narrower: per-payment checks and chain-enforced limits on the agent's Tempo key.
+- Setra402 ("trust layer for agent payments") has no public mechanism we could compare.
+
+## Limitations
+
+- The on-chain proof runs on a local anvil fork of Tempo mainnet. Its hashes exist only there, and anvil does not surface revert selectors, so `SpendingLimitExceeded` and `CallNotAllowed` are inferred. Tenderly does not support Tempo.
+- fal's post-payment failure comes from vet402's public report, not a payment we made.
+- A cut removes a payout address. fal's address is shared with openai, firecrawl and nine other gateways (unpaid probe, 3 Oct 2026), so cutting fal stops those too.
+- Route compares listed prices only. It does not verify that sellers return the same output.
+- No refunds: Leash limits the loss to the failed call; it does not recover it.
+- The price book is a 10 Oct 2026 snapshot, not refreshed live.
+- `pnpm test:adversarial` (20 tests) needs live Moderato agents and was not re-run in this pass.
+
+## Repo layout
+
+| Path | What it is |
+|---|---|
+| `packages/policy` | Quote-Cap, price book, Route, Delivery Cut decisions, policy compile to `KeyRestrictions`, revert decoding |
+| `packages/sdk` | `createLeashFetch` (pays MPP with an agent key, guard + Route, delivery records), `planCutoff` and `planDeliveryCuts`, vet402 feed import |
+| `apps/api` | teams, agent keys, ledger, vendor roll-ups, cut plans with chain read-back, read-only mainnet views (deployed at leash-api.fly.dev) |
+| `apps/web` | the UI: Quote-Cap, Delivery Cut, team, agents, vendors, ledger, mainnet (Cloudflare Pages) |
+| `apps/vendors` | two MPP test vendors on Moderato with real upstreams |
+| `scripts/fork` | anvil fork demos, captured quotes, UI publishers |
+| `docs/AUDIT.md`, `docs/pitch/` | feature audit; pitch, submission and dry run |
+
+## Tests
+
+| Command | Suite | Result (11 Oct 2026) |
+|---|---|---|
+| `pnpm test` | policy | 80 pass |
+| `pnpm --filter @leash/sdk test` | SDK payment path, Route, Delivery Cut plan | 10 pass |
+| `pnpm --filter @leash/api test` | API | 55 pass |
+| `pnpm --filter @leash/web test` | web | pass |
+| `pnpm --filter @leash/vendors test` | vendors | pass |
+| `pnpm --filter @leash/api e2e` | full loop on Moderato (needs the API running) | E2E PASS |
+| `pnpm test:adversarial` | 20 live Moderato tests | not re-run this pass |
+
+## Built before vs during the World's Fair
+
+- **Before** (19 Sep to 5 Oct 2026, 53 of the first commits): the spend desk: per-agent access keys, delivery ledger, vendor cut-off, API, console.
+- **During** (10 to 13 Oct 2026): Quote-Cap guard, price book, Route in the payment path, Delivery Cut on an outside vendor, fork proofs, the new UI.
 
 ## License
 
