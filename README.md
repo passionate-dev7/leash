@@ -117,7 +117,7 @@ The guard and SDK stay open source, so any MPP client can refuse an overpriced q
 - Route compares listed prices only. It does not verify that sellers return the same output.
 - No refunds: Leash limits the loss to the failed call; it does not recover it.
 - The price book is a 10 Oct 2026 snapshot, not refreshed live.
-- `pnpm test:adversarial` (20 tests) needs live Moderato agents and was not re-run in this pass.
+- `pnpm test:adversarial` (20 tests) runs against live Moderato with throwaway testnet accounts (`testnet/keys.json`); last run 12 Oct 2026: 20/20 pass.
 
 ## Repo layout
 
@@ -141,7 +141,7 @@ The guard and SDK stay open source, so any MPP client can refuse an overpriced q
 | `pnpm --filter @leash/web test` | web | pass |
 | `pnpm --filter @leash/vendors test` | vendors | pass |
 | `pnpm --filter @leash/api e2e` | full loop on Moderato (needs the API running) | E2E PASS |
-| `pnpm test:adversarial` | 20 live Moderato tests | not re-run this pass |
+| `pnpm test:adversarial` | 20 live Moderato tests | 20/20 pass (12 Oct 2026) |
 
 ## Built before vs during the World's Fair
 

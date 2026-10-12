@@ -28,7 +28,7 @@ Every feature or claim in the README and UI, exercised on 11 Oct 2026 (IST). Sta
 | 22 | README SDK snippet (createLeashFetch + quoteCap) | working | same call shape as the SDK replay test; `network`/`agent` must be supplied by the reader |
 | 23 | Judge steps (No prompt refused; With prompt passes at 2x; Listed passes; Sign the cut) | working | matches `checkQuote` (70000 vs 39000 = 1.8x) and live UI |
 | 24 | Shared payout address (fal = openai = firecrawl + 9) | partial | backed by the 3 Oct unpaid probe, but the site has no link or block; fixing in r9 |
-| 25 | `pnpm test:adversarial` (20, live Moderato) | not re-run this pass | needs live Moderato agents; unit suites all green |
+| 25 | `pnpm test:adversarial` (20, live Moderato) | working: 20/20 pass (12 Oct 2026) | Runs 1 and 2: 19/20, each failing one different read on Moderato's JSON-RPC rate limit (-32005 "rate limited, try again in Nms"), not on an assertion. Fix: gatewayRetryFetch now also retries 429 and -32005 (packages/sdk/src/client.ts). Run 3: 20 passed, 0 failed. Logs: apps/web/docs/design/review/adversarial-2026-10-12.txt, apps/web/docs/design/review/adversarial-2026-10-12-run2.txt, apps/web/docs/design/review/adversarial-2026-10-12-run3.txt |
 
 ## Final status (11 Oct 2026, 11:30 IST; live deploy 88d48ffa)
 
@@ -53,7 +53,7 @@ Every feature or claim in the README and UI, exercised on 11 Oct 2026 (IST). Sta
 | Root `pnpm test` | fixed: runs every package (policy 80, sdk 10, api 55, vendors 9, web 7) |
 | Root scripts for gitignored apps/console, apps/demo | removed |
 | Internal review files, local paths, mitm dbs | untracked + gitignored; still in git history (rewrite before going public); `docs/pitch/positioning.md` still has a local path (pitch worker's file) |
-| `pnpm test:adversarial` (live Moderato) | not re-run |
+| `pnpm test:adversarial` (live Moderato) | 20/20 pass, 12 Oct 2026 (run 3, after rate-limit retry fix) |
 | Design gate r9 | exit 0; design-review B+ / A-, 8.4 avg, 7.5 min |
 
 ## From dry run

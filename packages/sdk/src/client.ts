@@ -83,6 +83,7 @@ export type CreateLeashClientOptions = {
  * how the node names a refused access key. A gateway 503 never reached the node, and resending
  * a signed transaction is idempotent (same hash), so this cannot double-pay. Added after the
  * live adversarial suite flaked on Moderato "upstream connect error" 503s (2026-10-10).
+ * 429 and JSON-RPC -32005 "rate limited" added 2026-10-12 after the live suite hit Moderato rate limits.
  */
 export const gatewayRetryFetch: typeof fetch = async (input, init) => {
   let last: unknown
@@ -90,8 +91,14 @@ export const gatewayRetryFetch: typeof fetch = async (input, init) => {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 400 * 2 ** (attempt - 1)))
     try {
       const res = await fetch(input, init)
-      if (res.status !== 502 && res.status !== 503 && res.status !== 504) return res
-      last = res
+      if (res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) { last = res; continue }
+      // Moderato answers rate limits as HTTP 200 with JSON-RPC error -32005 "rate limited, try again in Nms".
+      // That error is raised before the node executes anything, so resending is safe.
+      if (res.ok && attempt < 3) {
+        const text = await res.clone().text()
+        if (text.includes('-32005') && /rate limited/i.test(text)) { last = new Response(text, res); continue }
+      }
+      return res
     } catch (e) {
       if ((e as Error)?.name === 'AbortError') throw e
       last = e

@@ -1,0 +1,214 @@
+# pnpm test:adversarial run 2  2026-10-12 09:30 IST  commit cf71ab2
+$ pnpm --filter @leash/sdk test:adversarial
+$ vitest run --config vitest.adversarial.config.ts
+
+ RUN  v3.2.4 /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/packages/sdk
+
+stdout | test/adversarial/enforcement.test.ts
+OK      | preflight
+        OWNER 0x171062b563f575ac87c42D597c331b0D05a72605 holds 999879965183 PathUSD, above the 200,000,000 floor this suite needs
+
+stdout | test/adversarial/enforcement.test.ts
+PASS    | authorizeKey
+        0xfb74065b974c54d08f369f28f28a9670f18d0f9187db326efe40264aa9f6a717 gas 3302100, keyId 0xAA5EFDa5EB387a41da80FC4B62AD97a49f41E890, read back remaining 50000000 period end 1794369618
+
+stdout | test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reads back the exact scope the compiler produced
+PASS    | scope readback
+        getAllowedCalls -> scoped, target 0x20C0000000000000000000000000000000000000, selector 0x95777d59, 1 recipient, block 39221247
+
+ ✓ test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reads back the exact scope the compiler produced 519ms
+ ✓ test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reports the full budget before anything is spent 264ms
+stdout | test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reverts the short getRemainingLimit form for a period-based limit
+REVERT  | getRemainingLimit trap
+        short form reverted 0xaa4bc69a while getRemainingLimitWithPeriod succeeded in the same block
+
+ ✓ test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reverts the short getRemainingLimit form for a period-based limit 287ms
+stdout | test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C1 pays an allowed recipient with the allowed selector, sponsored by the public relay
+PASS    | C1 allowed payment, relay-sponsored
+        0x699014222dbacbda15fa89a1aaa0e4726c1fe441d47f82eebf1e44b41a07d560 gas 76714, feePayer 0x58aa7ce42e1d13b2919e2ac7e006c4fbc171442c, budget moved 1000000 for a 1000000 payment
+
+ ✓ test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C1 pays an allowed recipient with the allowed selector, sponsored by the public relay 3791ms
+stdout | test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C2 lets the ROOT key do the thing the access key will be refused
+PASS    | C2 root key pays the DISALLOWED merchant
+        0xca6112ad9c3900216998139963462a3fefe028b6627ec202c89a537ac3be5c1e gas 33515. The refusals below are enforcement, not a broken client.
+
+ ✓ test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C2 lets the ROOT key do the thing the access key will be refused 2273ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N1 refuses a recipient outside the allowlist
+REVERT  | N1 recipient outside the allowlist
+        CallNotAllowed (0x576b38b4)
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N1 refuses a recipient outside the allowlist 346ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N2 refuses plain transfer() to the ALLOWED merchant
+REVERT  | N2 plain transfer() to the ALLOWED merchant
+        CallNotAllowed. The allowlist is enforced per selector, so a key scoped to transferWithMemo cannot escape through transfer.
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N2 refuses plain transfer() to the ALLOWED merchant 305ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N3 refuses a payment past the cap
+REVERT  | N3 100 USDC against a 50 USDC cap
+        SpendingLimitExceeded (0x8a9e71ea)
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N3 refuses a payment past the cap 316ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N4 refuses a token the key has no scope for
+REVERT  | N4 AlphaUSD to the ALLOWED merchant
+        CallNotAllowed. The scope target is the token contract, so an unlisted token is an unlisted target. Restricting the token is free.
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N4 refuses a token the key has no scope for 308ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N5 refuses all four the same way with a self-hosted fee payer
+REVERT  | N5 all four, self-hosted fee payer
+        recipient=CallNotAllowed, selector=CallNotAllowed, budget=SpendingLimitExceeded, token=CallNotAllowed
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N5 refuses all four the same way with a self-hosted fee payer 1271ms
+ × test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > an unsponsored payment moves the budget by more than the payment 2576ms
+   → Request exceeds defined limit.
+Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+ 
+Request Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+
+Details: rate limited, try again in 96ms
+Version: viem@2.57.1
+rate limited, try again in 96ms
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+ 
+Request Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+
+Details: rate limited, try again in 96ms
+Version: viem@2.57.1
+RPC Request failed.
+RPC Request failed.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+
+Details: rate limited, try again in 96ms
+Version: viem@2.57.1: expected false to be true // Object.is equality
+stdout | test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > the last event remainingLimit disagrees with the precompile read
+STALE   | event vs precompile
+        last event remainingLimit 47999960, getRemainingLimitWithPeriod 47999968, gap 8 at block 39221269
+
+ ✓ test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > the last event remainingLimit disagrees with the precompile read 2030ms
+stdout | test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > a sponsored payment moves the budget by exactly the payment
+PASS    | sponsored budget arithmetic
+        budget moved exactly 1000000, one AccessKeySpend event, feePayer 0x58aa7ce42e1d13b2919e2ac7e006c4fbc171442c
+
+ ✓ test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > a sponsored payment moves the budget by exactly the payment 6504ms
+stdout | test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > resets the remaining budget rather than scaling it
+PASS    | updateSpendingLimit 50 -> 2
+        0x37e14337ad00e7bae542b6d96e964500fc260695b3a3355b8799c7380557a15f gas 36299; remaining went 46999968 -> 2000000 with periodEnd unchanged at 1794369618
+
+ ✓ test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > resets the remaining budget rather than scaling it 2736ms
+stdout | test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > makes a payment under the new cap succeed and one over it revert
+REVERT  | new cap bites
+        1 USDC passed, 5 USDC against the new 2 USDC cap -> SpendingLimitExceeded
+
+ ✓ test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > makes a payment under the new cap succeed and one over it revert 5549ms
+stdout | test/adversarial/enforcement.test.ts > the kill switch > revokes in one call and reads back as revoked
+PASS    | revokeKey
+        0x5776ef3fdc180bb76ca68db66940a575f9ac0bc7f6bab0b6f71064c9ad870095 gas 28192, 2434 ms submit to receipt; getKey now {isRevoked:true, keyId:0x0000000000000000000000000000000000000000}
+
+ ✓ test/adversarial/enforcement.test.ts > the kill switch > revokes in one call and reads back as revoked 3065ms
+stdout | test/adversarial/enforcement.test.ts > the kill switch > refuses the next payment from that key, and refuses it before execution
+REJECTED | post-revoke payment
+        unnamed | preExecution=false | An internal error was received.
+
+ ✓ test/adversarial/enforcement.test.ts > the kill switch > refuses the next payment from that key, and refuses it before execution 44417ms
+stdout | test/adversarial/enforcement.test.ts > the kill switch > leaves the root key working, which proves the account is not simply broken
+PASS    | post-revoke root control
+        0x188d4b9207ee4b74407135357200b23f33a2256a1a6d6e6700ec17593f9e1b06 gas 33551
+
+=== adversarial suite summary, chain 42431, 2026-10-12T04:01:39.402Z ===
+OK       preflight
+PASS     authorizeKey
+PASS     scope readback
+REVERT   getRemainingLimit trap
+PASS     C1 allowed payment, relay-sponsored
+PASS     C2 root key pays the DISALLOWED merchant
+REVERT   N1 recipient outside the allowlist
+REVERT   N2 plain transfer() to the ALLOWED merchant
+REVERT   N3 100 USDC against a 50 USDC cap
+REVERT   N4 AlphaUSD to the ALLOWED merchant
+REVERT   N5 all four, self-hosted fee payer
+STALE    event vs precompile
+PASS     sponsored budget arithmetic
+PASS     updateSpendingLimit 50 -> 2
+REVERT   new cap bites
+PASS     revokeKey
+REJECTED post-revoke payment
+PASS     post-revoke root control
+
+ ✓ test/adversarial/enforcement.test.ts > the kill switch > leaves the root key working, which proves the account is not simply broken 1987ms
+ ✓ test/adversarial/enforcement.test.ts > decodeRevert is wired to real chain output, not just to fixtures > classifies a revoked key and an enforcement revert differently 4ms
+ ✓ test/adversarial/enforcement.test.ts > decodeRevert is wired to real chain output, not just to fixtures > has a key state to check against 614ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > an unsponsored payment moves the budget by more than the payment
+AssertionError: Request exceeds defined limit.
+Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+ 
+Request Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+
+Details: rate limited, try again in 96ms
+Version: viem@2.57.1
+rate limited, try again in 96ms
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+ 
+Request Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+
+Details: rate limited, try again in 96ms
+Version: viem@2.57.1
+RPC Request failed.
+RPC Request failed.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_sendRawTransaction","params":["0x76f9010282a5bf01842aea54018301046af87ef87c9420c000000000000000000000000000000000000080b86495777d590000000000000000000000003ea86ae0b21c583772514e98dcd0943c19d4daf400000000000000000000000000000000000000000000000000000000000f42406c656173682d756e73706f6e736f726564000000000000000000000000000000c08081a980809420c000000000000000000000000000000000000080c0b85604171062b563f575ac87c42d597c331b0d05a72605990f5813b07f2a7d93ce3d489d182e70c9da35aeb7ad73426dc4fec915fb01a253e99c392253fb8a8e9d5572923f3395ddd5333ed3636c6b3b5c4b761b29067c1c"]}
+
+Details: rate limited, try again in 96ms
+Version: viem@2.57.1: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/adversarial/enforcement.test.ts:325:59
+    323|       data: chargeCalldata({ to: ctx.merchantA, amount, reference: 'le…
+    324|     })
+    325|     expect(result.ok, result.ok ? '' : result.revert.raw).toBe(true)
+       |                                                           ^
+    326|     if (!result.ok) return
+    327|     const after = await getRemainingLimit(ctx.rootClient, ctx.ownerAdd…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  09:30:09
+   Duration  90.21s (transform 1.11s, setup 0ms, collect 6.72s, tests 82.66s, environment 0ms, prepare 251ms)
+
+/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/packages/sdk:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @leash/sdk@0.1.0 test:adversarial: `vitest run --config vitest.adversarial.config.ts`
+Exit status 1
+[ELIFECYCLE] Command failed with exit code 1.
+EXIT=1

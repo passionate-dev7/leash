@@ -1,0 +1,229 @@
+# pnpm test:adversarial  2026-10-12 09:27 IST  commit cf71ab2
+$ pnpm --filter @leash/sdk test:adversarial
+$ vitest run --config vitest.adversarial.config.ts
+
+ RUN  v3.2.4 /Users/kamal/Desktop/solana/cwf/tempo/projects/leash/packages/sdk
+
+stdout | test/adversarial/enforcement.test.ts
+OK      | preflight
+        OWNER 0x171062b563f575ac87c42D597c331b0D05a72605 holds 999886967310 PathUSD, above the 200,000,000 floor this suite needs
+
+stdout | test/adversarial/enforcement.test.ts
+PASS    | authorizeKey
+        0xa2b62ac99c9c28dc780c332053b9598be7897a95a00d8f77b40132fa89bfd983 gas 3302100, keyId 0xB99f6DC7570e04CD0887e528B4b7cf5B8440d134, read back remaining 50000000 period end 1794369462
+
+ × test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reads back the exact scope the compiler produced 334ms
+   → Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}
+ 
+Raw Call Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+  to:    0xaAAAaaAA00000000000000000000000000000000
+  data:  0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134
+ 
+Contract Call:
+  address:   0xaAAAaaAA00000000000000000000000000000000
+  function:  getAllowedCalls(address account, address keyId)
+  args:                     (0x171062b563f575ac87c42D597c331b0D05a72605, 0xB99f6DC7570e04CD0887e528B4b7cf5B8440d134)
+
+Docs: https://viem.sh/docs/contract/readContract
+Details: rate limited, try again in 22ms
+Version: viem@2.57.1
+ ✓ test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reports the full budget before anything is spent 631ms
+stdout | test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reverts the short getRemainingLimit form for a period-based limit
+REVERT  | getRemainingLimit trap
+        short form reverted 0xaa4bc69a while getRemainingLimitWithPeriod succeeded in the same block
+
+ ✓ test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reverts the short getRemainingLimit form for a period-based limit 301ms
+stdout | test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C1 pays an allowed recipient with the allowed selector, sponsored by the public relay
+PASS    | C1 allowed payment, relay-sponsored
+        0x08c3c1764e3caced785ff42809fb32fcdfaf245fad283992ff248762c558a653 gas 76714, feePayer 0x58aa7ce42e1d13b2919e2ac7e006c4fbc171442c, budget moved 1000000 for a 1000000 payment
+
+ ✓ test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C1 pays an allowed recipient with the allowed selector, sponsored by the public relay 5402ms
+stdout | test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C2 lets the ROOT key do the thing the access key will be refused
+PASS    | C2 root key pays the DISALLOWED merchant
+        0xee518936d51fe2eb40703988be3b63cab1b6210138aabc60019665633353be86 gas 33515. The refusals below are enforcement, not a broken client.
+
+ ✓ test/adversarial/enforcement.test.ts > positive controls, which must pass or the negatives prove nothing > C2 lets the ROOT key do the thing the access key will be refused 1398ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N1 refuses a recipient outside the allowlist
+REVERT  | N1 recipient outside the allowlist
+        CallNotAllowed (0x576b38b4)
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N1 refuses a recipient outside the allowlist 310ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N2 refuses plain transfer() to the ALLOWED merchant
+REVERT  | N2 plain transfer() to the ALLOWED merchant
+        CallNotAllowed. The allowlist is enforced per selector, so a key scoped to transferWithMemo cannot escape through transfer.
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N2 refuses plain transfer() to the ALLOWED merchant 312ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N3 refuses a payment past the cap
+REVERT  | N3 100 USDC against a 50 USDC cap
+        SpendingLimitExceeded (0x8a9e71ea)
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N3 refuses a payment past the cap 323ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N4 refuses a token the key has no scope for
+REVERT  | N4 AlphaUSD to the ALLOWED merchant
+        CallNotAllowed. The scope target is the token contract, so an unlisted token is an unlisted target. Restricting the token is free.
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N4 refuses a token the key has no scope for 410ms
+stdout | test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N5 refuses all four the same way with a self-hosted fee payer
+REVERT  | N5 all four, self-hosted fee payer
+        recipient=CallNotAllowed, selector=CallNotAllowed, budget=SpendingLimitExceeded, token=CallNotAllowed
+
+ ✓ test/adversarial/enforcement.test.ts > negative controls, every one a real submitted transaction through the public relay > N5 refuses all four the same way with a self-hosted fee payer 1258ms
+stdout | test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > an unsponsored payment moves the budget by more than the payment
+PASS    | unsponsored budget arithmetic
+        budget moved 1000032 for a 1000000 payment, overhead 32; 2 AccessKeySpend events in one transaction, gasUsed 52222
+
+ ✓ test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > an unsponsored payment moves the budget by more than the payment 3202ms
+stdout | test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > the last event remainingLimit disagrees with the precompile read
+STALE   | event vs precompile
+        last event remainingLimit 46999928, getRemainingLimitWithPeriod 46999936, gap 8 at block 39221019
+
+ ✓ test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > the last event remainingLimit disagrees with the precompile read 2886ms
+stdout | test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > a sponsored payment moves the budget by exactly the payment
+PASS    | sponsored budget arithmetic
+        budget moved exactly 1000000, one AccessKeySpend event, feePayer 0x58aa7ce42e1d13b2919e2ac7e006c4fbc171442c
+
+ ✓ test/adversarial/enforcement.test.ts > the gas-debits-budget correction, measured rather than quoted > a sponsored payment moves the budget by exactly the payment 8783ms
+stdout | test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > resets the remaining budget rather than scaling it
+PASS    | updateSpendingLimit 50 -> 2
+        0x3d6f8e894c165bf449952d5af320066b9a3c7b3d30482b6b6483b2312f4ebe54 gas 36299; remaining went 45999936 -> 2000000 with periodEnd unchanged at 1794369462
+
+ ✓ test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > resets the remaining budget rather than scaling it 3768ms
+stdout | test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > makes a payment under the new cap succeed and one over it revert
+REVERT  | new cap bites
+        1 USDC passed, 5 USDC against the new 2 USDC cap -> SpendingLimitExceeded
+
+ ✓ test/adversarial/enforcement.test.ts > updateSpendingLimit, which mainnet has never called > makes a payment under the new cap succeed and one over it revert 2083ms
+stdout | test/adversarial/enforcement.test.ts > the kill switch > revokes in one call and reads back as revoked
+PASS    | revokeKey
+        0xb96a45a89f227987c5f073de474731d941a5224d7725a9909f7b2fdd3a01d64e gas 28192, 2419 ms submit to receipt; getKey now {isRevoked:true, keyId:0x0000000000000000000000000000000000000000}
+
+ ✓ test/adversarial/enforcement.test.ts > the kill switch > revokes in one call and reads back as revoked 3156ms
+stdout | test/adversarial/enforcement.test.ts > the kill switch > refuses the next payment from that key, and refuses it before execution
+REJECTED | post-revoke payment
+        unnamed | preExecution=false | An internal error was received.
+
+ ✓ test/adversarial/enforcement.test.ts > the kill switch > refuses the next payment from that key, and refuses it before execution 43842ms
+stdout | test/adversarial/enforcement.test.ts > the kill switch > leaves the root key working, which proves the account is not simply broken
+PASS    | post-revoke root control
+        0x65a45f94d06ecf321679b25d9725c51a5a5a32a4bc89f917836d34813b8daf0c gas 33551
+
+=== adversarial suite summary, chain 42431, 2026-10-12T03:59:05.441Z ===
+OK       preflight
+PASS     authorizeKey
+REVERT   getRemainingLimit trap
+PASS     C1 allowed payment, relay-sponsored
+PASS     C2 root key pays the DISALLOWED merchant
+REVERT   N1 recipient outside the allowlist
+REVERT   N2 plain transfer() to the ALLOWED merchant
+REVERT   N3 100 USDC against a 50 USDC cap
+REVERT   N4 AlphaUSD to the ALLOWED merchant
+REVERT   N5 all four, self-hosted fee payer
+PASS     unsponsored budget arithmetic
+STALE    event vs precompile
+PASS     sponsored budget arithmetic
+PASS     updateSpendingLimit 50 -> 2
+REVERT   new cap bites
+PASS     revokeKey
+REJECTED post-revoke payment
+PASS     post-revoke root control
+
+ ✓ test/adversarial/enforcement.test.ts > the kill switch > leaves the root key working, which proves the account is not simply broken 2139ms
+ ✓ test/adversarial/enforcement.test.ts > decodeRevert is wired to real chain output, not just to fixtures > classifies a revoked key and an enforcement revert differently 0ms
+ ✓ test/adversarial/enforcement.test.ts > decodeRevert is wired to real chain output, not just to fixtures > has a key state to check against 268ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/adversarial/enforcement.test.ts > the compiled policy is what actually landed on chain > reads back the exact scope the compiler produced
+ContractFunctionExecutionError: Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}
+ 
+Raw Call Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+  to:    0xaAAAaaAA00000000000000000000000000000000
+  data:  0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134
+ 
+Contract Call:
+  address:   0xaAAAaaAA00000000000000000000000000000000
+  function:  getAllowedCalls(address account, address keyId)
+  args:                     (0x171062b563f575ac87c42D597c331b0D05a72605, 0xB99f6DC7570e04CD0887e528B4b7cf5B8440d134)
+
+Docs: https://viem.sh/docs/contract/readContract
+Details: rate limited, try again in 22ms
+Version: viem@2.57.1
+ ❯ getContractError ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/utils/errors/getContractError.ts:82:10
+ ❯ readContract ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/actions/public/readContract.ts:140:11
+ ❯ getAllowedCalls src/reads.ts:129:31
+    127|   keyId: Address,
+    128| ): Promise<AllowedCalls> {
+    129|   const [isScoped, scopes] = (await client.readContract({
+       |                               ^
+    130|     address: Addresses.accountKeychain,
+    131|     abi: Abis.accountKeychain,
+ ❯ test/adversarial/enforcement.test.ts:142:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { details: 'rate limited, try again in 22ms', docsPath: '/docs/contract/readContract', metaMessages: [ 'URL: https://rpc.moderato.tempo.xyz', 'Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}', ' ', 'Raw Call Arguments:', '  from:  0x171062b563f575ac87c42D597c331b0D05a72605\n  to:    0xaAAAaaAA00000000000000000000000000000000\n  data:  0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134', ' ', 'Contract Call:', '  address:   0xaAAAaaAA00000000000000000000000000000000\n  function:  getAllowedCalls(address account, address keyId)\n  args:                     (0x171062b563f575ac87c42D597c331b0D05a72605, 0xB99f6DC7570e04CD0887e528B4b7cf5B8440d134)' ], shortMessage: 'Request exceeds defined limit.', version: '2.57.1', abi: [ { name: 'authorizeKey', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'uint8', name: 'signatureType' }, { type: 'uint64', name: 'expiry' }, { type: 'bool', name: 'enforceLimits' }, { type: 'tuple[]', name: 'limits', components: [ { type: 'address', name: 'token' }, { type: 'uint256', name: 'amount' } ] } ], outputs: [] }, { name: 'authorizeKey', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'uint8', name: 'signatureType' }, { type: 'tuple', name: 'config', components: [ { type: 'uint64', name: 'expiry' }, { type: 'bool', name: 'enforceLimits' }, { type: 'tuple[]', name: 'limits', components: [ { type: 'address', name: 'token' }, { type: 'uint256', name: 'amount' }, { type: 'uint64', name: 'period' } ] }, { type: 'bool', name: 'allowAnyCalls' }, { type: 'tuple[]', name: 'allowedCalls', components: [ { type: 'address', name: 'target' }, { type: 'tuple[]', name: 'selectorRules', components: [ { type: 'bytes4', name: 'selector' }, { type: 'address[]', name: 'recipients' } ] } ] } ] } ], outputs: [] }, { name: 'authorizeKey', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'uint8', name: 'signatureType' }, { type: 'tuple', name: 'config', components: [ { type: 'uint64', name: 'expiry' }, { type: 'bool', name: 'enforceLimits' }, { type: 'tuple[]', name: 'limits', components: [ { type: 'address', name: 'token' }, { type: 'uint256', name: 'amount' }, { type: 'uint64', name: 'period' } ] }, { type: 'bool', name: 'allowAnyCalls' }, { type: 'tuple[]', name: 'allowedCalls', components: [ { type: 'address', name: 'target' }, { type: 'tuple[]', name: 'selectorRules', components: [ { type: 'bytes4', name: 'selector' }, { type: 'address[]', name: 'recipients' } ] } ] } ] }, { type: 'bytes32', name: 'witness' } ], outputs: [] }, { name: 'authorizeAdminKey', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'uint8', name: 'signatureType' }, { type: 'bytes32', name: 'witness' } ], outputs: [] }, { name: 'burnKeyAuthorizationWitness', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'bytes32', name: 'witness' } ], outputs: [] }, { name: 'revokeKey', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' } ], outputs: [] }, { name: 'updateSpendingLimit', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'address', name: 'token' }, { type: 'uint256', name: 'newLimit' } ], outputs: [] }, { name: 'setAllowedCalls', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'tuple[]', name: 'scopes', components: [ { type: 'address', name: 'target' }, { type: 'tuple[]', name: 'selectorRules', components: [ { type: 'bytes4', name: 'selector' }, { type: 'address[]', name: 'recipients' } ] } ] } ], outputs: [] }, { name: 'removeAllowedCalls', type: 'function', stateMutability: 'nonpayable', inputs: [ { type: 'address', name: 'keyId' }, { type: 'address', name: 'target' } ], outputs: [] }, { name: 'getKey', type: 'function', stateMutability: 'view', inputs: [ { type: 'address', name: 'account' }, { type: 'address', name: 'keyId' } ], outputs: [ { type: 'tuple', components: [ { type: 'uint8', name: 'signatureType' }, { type: 'address', name: 'keyId' }, { type: 'uint64', name: 'expiry' }, { type: 'bool', name: 'enforceLimits' }, { type: 'bool', name: 'isRevoked' } ] } ] }, { name: 'getRemainingLimit', type: 'function', stateMutability: 'view', inputs: [ { type: 'address', name: 'account' }, { type: 'address', name: 'keyId' }, { type: 'address', name: 'token' } ], outputs: [ { type: 'uint256', name: 'remaining' } ] }, { name: 'getRemainingLimitWithPeriod', type: 'function', stateMutability: 'view', inputs: [ { type: 'address', name: 'account' }, { type: 'address', name: 'keyId' }, { type: 'address', name: 'token' } ], outputs: [ { type: 'uint256', name: 'remaining' }, { type: 'uint64', name: 'periodEnd' } ] }, { name: 'getAllowedCalls', type: 'function', stateMutability: 'view', inputs: [ { type: 'address', name: 'account' }, { type: 'address', name: 'keyId' } ], outputs: [ { type: 'bool', name: 'isScoped' }, { type: 'tuple[]', name: 'scopes', components: [ { type: 'address', name: 'target' }, { type: 'tuple[]', name: 'selectorRules', components: [ { type: 'bytes4', name: 'selector' }, { type: 'address[]', name: 'recipients' } ] } ] } ] }, { name: 'isKeyAuthorizationWitnessBurned', type: 'function', stateMutability: 'view', inputs: [ { type: 'address', name: 'account' }, { type: 'bytes32', name: 'witness' } ], outputs: [ { type: 'bool' } ] }, { name: 'isAdminKey', type: 'function', stateMutability: 'view', inputs: [ { type: 'address', name: 'account' }, { type: 'address', name: 'keyId' } ], outputs: [ { type: 'bool' } ] }, { name: 'getTransactionKey', type: 'function', stateMutability: 'view', inputs: [], outputs: [ { type: 'address' } ] }, { name: 'KeyAuthorized', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'address', name: 'publicKey', indexed: true }, { type: 'uint8', name: 'signatureType' }, { type: 'uint64', name: 'expiry' } ] }, { name: 'AdminKeyAuthorized', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'address', name: 'publicKey', indexed: true } ] }, { name: 'KeyRevoked', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'address', name: 'publicKey', indexed: true } ] }, { name: 'SpendingLimitUpdated', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'address', name: 'publicKey', indexed: true }, { type: 'address', name: 'token', indexed: true }, { type: 'uint256', name: 'newLimit' } ] }, { name: 'AccessKeySpend', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'address', name: 'publicKey', indexed: true }, { type: 'address', name: 'token', indexed: true }, { type: 'uint256', name: 'amount' }, { type: 'uint256', name: 'remainingLimit' } ] }, { name: 'KeyAuthorizationWitness', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'bytes32', name: 'witness', indexed: true } ] }, { name: 'KeyAuthorizationWitnessBurned', type: 'event', inputs: [ { type: 'address', name: 'account', indexed: true }, { type: 'bytes32', name: 'witness', indexed: true } ] }, { name: 'UnauthorizedCaller', type: 'error', inputs: [] }, { name: 'KeyAlreadyExists', type: 'error', inputs: [] }, { name: 'KeyNotFound', type: 'error', inputs: [] }, { name: 'KeyExpired', type: 'error', inputs: [] }, { name: 'SpendingLimitExceeded', type: 'error', inputs: [] }, { name: 'InvalidSpendingLimit', type: 'error', inputs: [] }, { name: 'InvalidSignatureType', type: 'error', inputs: [] }, { name: 'ZeroPublicKey', type: 'error', inputs: [] }, { name: 'ExpiryInPast', type: 'error', inputs: [] }, { name: 'KeyAlreadyRevoked', type: 'error', inputs: [] }, { name: 'SignatureTypeMismatch', type: 'error', inputs: [ { type: 'uint8', name: 'expected' }, { type: 'uint8', name: 'actual' } ] }, { name: 'CallNotAllowed', type: 'error', inputs: [] }, { name: 'InvalidCallScope', type: 'error', inputs: [] }, { name: 'InvalidKeyId', type: 'error', inputs: [] }, { name: 'InvalidKeyAuthorizationWitness', type: 'error', inputs: [] }, { name: 'KeyAuthorizationWitnessAlreadyBurned', type: 'error', inputs: [] }, { name: 'LegacyAuthorizeKeySelectorChanged', type: 'error', inputs: [ { type: 'bytes4', name: 'newSelector' } ] } ], args: [ '0x171062b563f575ac87c42D597c331b0D05a72605', '0xB99f6DC7570e04CD0887e528B4b7cf5B8440d134' ], contractAddress: '0xaAAAaaAA00000000000000000000000000000000', formattedArgs: undefined, functionName: 'getAllowedCalls', sender: undefined, walk: 'Function<walk>' }
+Caused by: CallExecutionError: Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}
+ 
+Raw Call Arguments:
+  from:  0x171062b563f575ac87c42D597c331b0D05a72605
+  to:    0xaAAAaaAA00000000000000000000000000000000
+  data:  0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134
+
+Details: rate limited, try again in 22ms
+Version: viem@2.57.1
+ ❯ getCallError ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/utils/errors/getCallError.ts:42:10
+ ❯ call ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/actions/public/call.ts:363:11
+ ❯ readContract ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/actions/public/readContract.ts:124:22
+ ❯ getAllowedCalls src/reads.ts:129:31
+ ❯ test/adversarial/enforcement.test.ts:142:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { details: 'rate limited, try again in 22ms', docsPath: undefined, metaMessages: [ 'URL: https://rpc.moderato.tempo.xyz', 'Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}', ' ', 'Raw Call Arguments:', '  from:  0x171062b563f575ac87c42D597c331b0D05a72605\n  to:    0xaAAAaaAA00000000000000000000000000000000\n  data:  0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134' ], shortMessage: 'Request exceeds defined limit.', version: '2.57.1', walk: 'Function<walk>' }
+Caused by: LimitExceededRpcError: Request exceeds defined limit.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}
+
+Details: rate limited, try again in 22ms
+Version: viem@2.57.1
+ ❯ withRetry.delay.count.count ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/utils/buildRequest.ts:206:25
+ ❯ attemptRetry ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/utils/promise/withRetry.ts:63:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { details: 'rate limited, try again in 22ms', docsPath: undefined, metaMessages: [ 'URL: https://rpc.moderato.tempo.xyz', 'Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}' ], shortMessage: 'Request exceeds defined limit.', version: '2.57.1', code: -32005, walk: 'Function<walk>' }
+Caused by: RpcRequestError: RPC Request failed.
+
+URL: https://rpc.moderato.tempo.xyz
+Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}
+
+Details: rate limited, try again in 22ms
+Version: viem@2.57.1
+ ❯ request ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/clients/transports/http.ts:177:19
+ ❯ withRetry.delay.count.count ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/utils/buildRequest.ts:163:22
+ ❯ attemptRetry ../../node_modules/.pnpm/viem@2.57.1_typescript@5.9.3_zod@4.6.5/node_modules/viem/utils/promise/withRetry.ts:63:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { details: 'rate limited, try again in 22ms', docsPath: undefined, metaMessages: [ 'URL: https://rpc.moderato.tempo.xyz', 'Request body: {"method":"eth_call","params":[{"data":"0x0163e7ec000000000000000000000000171062b563f575ac87c42d597c331b0d05a72605000000000000000000000000b99f6dc7570e04cd0887e528b4b7cf5b8440d134","from":"0x171062b563f575ac87c42D597c331b0D05a72605","to":"0xaAAAaaAA00000000000000000000000000000000"},"latest"]}' ], shortMessage: 'RPC Request failed.', version: '2.57.1', code: -32005, data: null, url: 'https://rpc.moderato.tempo.xyz', walk: 'Function<walk>' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  09:27:33
+   Duration  92.19s (transform 1.12s, setup 0ms, collect 6.11s, tests 85.14s, environment 0ms, prepare 211ms)
+
+/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/packages/sdk:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @leash/sdk@0.1.0 test:adversarial: `vitest run --config vitest.adversarial.config.ts`
+Exit status 1
+[ELIFECYCLE] Command failed with exit code 1.
+EXIT=1
