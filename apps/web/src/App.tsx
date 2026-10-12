@@ -49,7 +49,7 @@ function Shell() {
   return (
     <div className="flex min-h-dvh flex-col bg-canvas">
       {route.page !== 'quote-cap' && route.page !== 'delivery-cut' && <UtilityBar />}
-      <header className="sticky top-0 z-40 border-b border-hairline bg-canvas/95 shadow-sm">
+      <header className="sticky top-0 z-40 border-b border-hairline bg-canvas shadow-sm">
         <div className="mx-auto flex h-14 max-w-[1584px] items-stretch px-4 sm:px-8">
           <a href="#/" className="flex items-center gap-3 pr-8 text-body-sm font-semibold">
             <span aria-hidden className="grid size-7 place-items-center rounded-md bg-primary text-body-sm font-bold text-on-primary">L</span><span className="text-body font-semibold tracking-tight">Leash</span>

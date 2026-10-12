@@ -327,29 +327,28 @@ function ForJudges() {
 
 const DEFAULT_POLICY: QuoteCapPolicy = { toleranceBps: 0, maxPerCall: 1_000_000n, unlisted: 'cap' }
 
-/* The headline number, computed from the three recorded stablestudio 402s under the default policy. */
+/* The headline number: the two real stablestudio 402s (the catalog row is the listing, not a quote), checked under the default policy. */
 function PrimaryMetric() {
-  const runs = QUOTES.map((q) => ({ q, v: checkQuote(book, DEFAULT_POLICY, { method: 'POST', url: NB, amount: q.amount, currency: USDCE }) }))
+  const recorded = QUOTES.filter((q) => q.id !== 'catalog')
+  const runs = recorded.map((q) => ({ q, v: checkQuote(book, DEFAULT_POLICY, { method: 'POST', url: NB, amount: q.amount, currency: USDCE }) }))
   const refused = runs.filter((r) => !r.v.ok)
   const over = refused.reduce((a, r) => a + BigInt(r.q.amount) - BigInt(r.v.listed ?? 0), 0n)
   const asked = refused.reduce((a, r) => a + BigInt(r.q.amount), 0n)
   return (
-    <section aria-label="What Leash stopped" className="card grid gap-0 overflow-hidden md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="border-hairline p-5 max-md:border-b md:border-r sm:p-6">
-        <p className="text-body-sm text-ink-muted">Overcharge refused before signing</p>
-        <p className="metric-value mt-2 text-refused" style={{ fontSize: 'clamp(36px, 8vw, 56px)' }}>{usd(over)}</p>
-        <p className="mt-2 text-body-sm text-ink-subtle">above the listed price, across the refused quotes</p>
+    <section aria-label="What Leash stopped" className="card overflow-hidden">
+      <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] divide-x divide-hairline">
+        <div className="p-4 sm:p-5">
+          <p className="text-body-sm text-ink-muted">Overcharge refused before signing</p>
+          <p className="metric-value mt-1 text-refused">{usd(over)}</p>
+          <p className="mt-1 text-body-sm text-ink-subtle">above the <span className="num">$0.039</span> listing</p>
+        </div>
+        <div className="p-4 sm:p-5">
+          <p className="text-body-sm text-ink-muted">Real 402s refused</p>
+          <p className="metric-value mt-1"><span className="text-refused">{refused.length}</span><span className="text-ink-subtle"> of {runs.length}</span></p>
+          <p className="mt-1 text-body-sm text-ink-subtle"><span className="num">{usd(asked)}</span> asked, nothing signed</p>
+        </div>
       </div>
-      <div className="border-hairline p-5 max-md:border-b md:border-r sm:p-6">
-        <p className="text-body-sm text-ink-muted">Quotes refused</p>
-        <p className="metric-value mt-2"><span className="text-refused">{refused.length}</span><span className="text-ink-subtle"> of {runs.length}</span></p>
-        <p className="mt-2 text-body-sm text-ink-subtle"><span className="num">{usd(asked)}</span> asked, nothing signed</p>
-      </div>
-      <div className="p-5 sm:p-6">
-        <p className="text-body-sm text-ink-muted">Basis</p>
-        <p className="mt-2 text-body-sm text-ink">The 3 real stablestudio 402s recorded unpaid on Tempo mainnet, 10 Oct 2026 09:45 IST, checked against the <span className="num">$0.039</span> mpp.dev listing with the default policy (exact listing, <span className="num">$1.00</span> cap).</p>
-        <p className="mt-2 text-body-sm text-ink-subtle">Illustrative: a sample of recorded quotes, not live traffic.</p>
-      </div>
+      <p className="border-t border-hairline bg-surface-1/60 px-4 py-3 text-body-sm text-ink-muted sm:px-5"><span className="font-semibold text-ink">Basis:</span> the 2 stablestudio 402s recorded unpaid on Tempo mainnet (10 Oct 2026, 09:45 IST), checked against the mpp.dev listing with the default policy: exact listing, <span className="num">$1.00</span> cap. Illustrative sample, not live traffic. Fork run 1 used a 2x allowance, so there the <span className="num">$0.07</span> quote passes.</p>
     </section>
   )
 }
@@ -357,7 +356,6 @@ function PrimaryMetric() {
 export function QuoteCapPage() {
   return (
     <div className="mx-auto max-w-[1200px] max-md:pb-24">
-      <div className="pt-2"><PrimaryMetric /></div>
       <div className="grid gap-10 py-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-8 lg:py-12">
         <header className="lg:pt-4">
           <h1 className="text-display-sm font-semibold sm:text-display-md">Your agent pays only the price you allow.</h1>
@@ -368,7 +366,8 @@ export function QuoteCapPage() {
         <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <QuoteCheck />
         </div>
-        <div className="lg:col-start-1">
+        <div className="grid gap-6 lg:col-start-1">
+          <PrimaryMetric />
           <div className="grid gap-3">
             <div className="card-raised flex gap-4 p-4">
               <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-ink">1</span>

@@ -68,12 +68,18 @@ export function TextLink({ className, ...p }: React.ComponentProps<'a'>) {
   return <a className={cn('link font-medium text-link underline underline-offset-4 decoration-link/40 hover:text-link-hover-ink hover:decoration-link', className)} {...p} />
 }
 
-/** Over-the-listing consequence: "256x · +$9.96 (+25,541%)". */
+/** Over-the-listing consequence: "+$X over"; add (+N%) only when multiple is under 2x. */
 export function overBy(quoted: bigint, listed: bigint | null, fmt: (x: bigint) => string) {
   if (listed === null || listed === 0n) return null
   const diff = quoted - listed
   const pct = Number((diff * 10000n) / listed) / 100
-  return { diff, pct, mult: Number(quoted) / Number(listed), text: diff <= 0n ? 'at or under the listing' : `+${fmt(diff)} over (+${pct.toLocaleString('en-US', { maximumFractionDigits: 0 })}%)` }
+  const mult = Number(quoted) / Number(listed)
+  const text = diff <= 0n
+    ? 'at or under the listing'
+    : mult >= 2
+      ? `+${fmt(diff)} over`
+      : `+${fmt(diff)} over (+${pct.toLocaleString('en-US', { maximumFractionDigits: 0 })}%)`
+  return { diff, pct, mult, text }
 }
 
 export const utcTime = (iso?: string | null) => (iso ? `${new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'UTC' })} UTC` : null)
