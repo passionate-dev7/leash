@@ -1,0 +1,40 @@
+Report written to `docs/design/review/design-audit-leash-r12.md`. Up from the first pass (8.0, min 7.5).
+
+**Design Score: B+**
+**AI Slop Score: A-**
+
+**Fixes from the first pass:** all 3 serious findings are fixed.
+- **Metric basis (HIGH): fixed.** It now reads "2 of 2", and both the Basis line and the Fork run 1 intro name their policy.
+- **Button below the fold (HIGH): fixed.** At 1440 the lime button is on the first screen on both pages (y≈795 on quote-cap, y≈708 on delivery-cut). On phones the quote card comes before the metric.
+- **Empty left column on delivery-cut (MEDIUM): fixed.** A smaller empty band (about 140px) now sits inside the card instead.
+- **Discs and Business model card: fixed.**
+- **Pink Route premiums and the long % on the risk bar: fixed.**
+- **Block-time note: fixed.**
+
+**Round-11 findings:** 3 fixed, 1 partly fixed, the rest still open (lime ring on selected toggles, row hover with nothing to click, copy-button label, Route decimals, DESIGN.md tokens).
+
+**Owner complaints:** all five are fixed (density, main action, gray text under 12px, monospace walls, unfinished left panel). One small mono leak remains, the "of" in "2 of 2".
+
+**Critic scores:**
+
+| Axis | Score |
+|---|---|
+| Hierarchy | 8.5 |
+| Primary action | 9.0 |
+| Typography | 8.5 |
+| Density/whitespace | 8.0 |
+| Color | 8.5 |
+| Consistency across the two pages | 8.5 |
+| AI-slop absence | 8.5 |
+| Mobile | 8.5 |
+| **Average** | **8.5** |
+| **Min** | **8.0** |
+
+**Top 5 findings** (all polish now):
+1. **Empty band in the delivery-cut card.** The card runs about 140px past "Sign the cut" at 1440. After signing, "Before you sign" disappears, so the gap moves to the left column. Fix: make the card a flex column with the action half `flex-1`, and keep the list after signing as "What this cut did".
+2. **"of" is still monospace in "2 of 2".** `.metric-value` sets the mono font on the whole line. Fix: one `font-sans` class on that span.
+3. **Mixed timezones.** The metric's Basis says "09:45 IST" while every fork time on the page is UTC.
+4. **The two overcharge numbers don't visibly match.** The metric says "$9.99 above the $0.039 listing" (both quotes added together) while the card next to it says "+$9.961 over". Relabel the metric "Total overcharge refused".
+5. **Route decimals and the lime toggle ring.** Route prices mix 2, 3 and 4 decimals, and the lime ring on selected toggles is still there (both carried from round 11).
+
+Blind spots: I didn't run `overlap.test.ts`, drive a browser or run any scripts, as this run required. `p-qc-full-390`, the signed delivery-cut capture at 390 and the 768 width were not opened.

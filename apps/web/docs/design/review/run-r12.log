@@ -1,0 +1,44 @@
+The round 12 audit is written to `docs/design/review/design-audit-leash-r12.md`. Grades went down from round 11: B+ to B for design, and AI slop stays at A-.
+
+**Design Score: B**
+**AI Slop Score: A-**
+
+| Axis | Score |
+|---|---|
+| hierarchy | 8.0 |
+| primary action | 7.5 |
+| typography | 8.5 |
+| density/whitespace | 7.5 |
+| color | 8.5 |
+| consistency across the two pages | 8.0 |
+| AI-slop absence | 8.5 |
+| mobile | 7.5 |
+| **average** | **8.0** |
+| **min** | **7.5** |
+
+**Top 5 findings**
+
+1. **HIGH: the headline metric's basis claims more than was recorded.** The Basis says "The 3 real stablestudio 402s recorded unpaid". In `scripts/fork/quotes.json` only two are captured 402s ($10.00 and $0.07); the third is the $0.039 catalog listing (`catalog_listed_0.039`, `request_b64: null`), which passes by construction. Separately, fork step 3 says "Quote-Cap passes $0.07 quote" while the metric counts that quote as refused. The fork used a 2x cap and the metric uses exact listing, and the page names neither policy. The fix makes the number stronger: "2 of 2 recorded 402s refused", plus the fork's policy in its intro.
+2. **HIGH, regression: the main button is below the fold at 1440x900 on both pages.** The new metric zone pushes "Let the agent pay this quote" to about y=1010, and the "Before you sign" box pushes "Sign the cut" to about y=1024. On a 390 phone, quote-cap's first screen is all metric zone, so the lime bar asks the user to pay a quote they haven't seen yet.
+3. **MEDIUM, regression: the "unfinished left panel" is back on delivery-cut.** At 1440 there is a ~440px hole under the left metric tiles. Moving "Before you sign" into the left column at `lg` fixes this and finding 2 in one change.
+4. **MEDIUM, carried from round 11:** the five numbered discs, the two boxed hero explainers and the one-paragraph Business model card are still there.
+5. **POLISH: three small consistency issues.**
+   - English words are set in mono: "of 3" in the metric and "256.4x the listing" in the risk bar.
+   - Pink "+275%" on Route uses the "Leash refused" colour to mean "costs more".
+   - "+25,541%" is noise next to "256.4x".
+
+**Round 11 findings:** 2 fixed (non-payments no longer show green "Settled", and violet now has one job because links moved to sky blue). 2 partly fixed (the extra pink tokens, and `DESIGN.md:21` still lists the old `ink-subtle`). 6 not fixed: discs and card, rival paragraph length, Route price precision, lime ring on selected toggles, row hover, and the arrival cue plus copy-button label.
+
+**The five asks:** all were built, and only the metric zone (1) has a problem.
+- **(1) Metric zone:** the arithmetic is right; the basis is wrong (finding 1).
+- **(2) Consequence on every number:** met.
+- **(3) Semantic colours:** met.
+- **(4) "Before you sign":** met, and well written. Its placement causes findings 2 and 3.
+- **(5) Trust signals:** met. One gap: the successful cut transaction also has no block time, so the note saying only reverted calls lack one is incomplete.
+- **Contrast:** 0 pairs below 4.5:1. The file is at `projects/leash/docs/design/contrast-r12.txt`, not under `apps/web/docs/design/`.
+
+**Owner complaints:** the gray-text-under-12px complaint stays fixed, and there is still no wall of monospace. Density went up: quote-cap is 11% taller at 1440 and 17% taller at 390. The missing main action and the unfinished left panel have both come back, as findings 2 and 3.
+
+I didn't verify anything in a live page. Fold positions and the hole size are measured off the 1440 PNGs, and the full 390 quote-cap captures display at about 1:4, so the phone layout below the fold was judged by structure. Per the run constraints there was no detector scan, no outside reviewer and no gstack preamble or telemetry; the report is the only file written.
+SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/scripts/session-lifecycle-hook.mjs" SessionEnd] failed: Hook cancelled
+SessionEnd hook [node "${CLAUDE_PLUGIN_ROOT}/hooks/session-end-cleanup.mjs"] failed: Hook cancelled

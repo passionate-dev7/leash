@@ -1,0 +1,15 @@
+ok   webfont loaded
+ok   primary font: RubikVariable
+warn 3 <table> without class (global table CSS present)
+ok   no Markdown rendering
+ok   links styled
+ok   CSS variables defined (90 decls)
+ok   button styles present
+ok   status chips/badges styled (16)
+ok   surfaces/cards present
+ok   summary metrics present
+ok   radius ok
+ok   explorer/contract link present (2)
+ok   confirm/sign CTA has summary/simulation language nearby
+---
+slop-check: PASS
