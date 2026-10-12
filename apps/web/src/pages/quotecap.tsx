@@ -339,17 +339,17 @@ function PrimaryMetric() {
     <section aria-label="What Leash stopped" className="card overflow-hidden">
       <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] divide-x divide-hairline">
         <div className="p-4 sm:p-5">
-          <p className="text-body-sm text-ink-muted">Overcharge refused before signing</p>
+          <p className="text-body-sm text-ink-muted">Total overcharge refused before signing</p>
           <p className="metric-value mt-1 text-refused">{usd2(over)}</p>
-          <p className="mt-1 text-body-sm text-ink-subtle">above the <span className="num">$0.039</span> listing</p>
+          <p className="mt-1 text-body-sm text-ink-subtle">both quotes, above the <span className="num">$0.039</span> listing</p>
         </div>
         <div className="p-4 sm:p-5">
           <p className="text-body-sm text-ink-muted">Real 402s refused</p>
-          <p className="metric-value mt-1"><span className="num text-refused">{refused.length}</span><span className="text-ink-subtle"> of </span><span className="num text-ink-subtle">{runs.length}</span></p>
+          <p className="metric-value mt-1"><span className="num text-refused">{refused.length}</span><span className="font-sans text-ink-subtle"> of </span><span className="num text-ink-subtle">{runs.length}</span></p>
           <p className="mt-1 text-body-sm text-ink-subtle"><span className="num">{usd(asked)}</span> asked, nothing signed</p>
         </div>
       </div>
-      <p className="border-t border-hairline bg-surface-1/60 px-4 py-3 text-body-sm text-ink-muted sm:px-5"><span className="font-semibold text-ink">Basis:</span> the 2 stablestudio 402s recorded unpaid on Tempo mainnet (10 Oct 2026, 09:45 IST), checked against the mpp.dev listing with the default policy: exact listing, <span className="num">$1.00</span> cap. Illustrative sample, not live traffic. Fork run 1 used a 2x allowance, so there the <span className="num">$0.07</span> quote passes.</p>
+      <p className="border-t border-hairline bg-surface-1/60 px-4 py-3 text-body-sm text-ink-muted sm:px-5"><span className="font-semibold text-ink">Basis:</span> the 2 stablestudio 402s recorded unpaid on Tempo mainnet (10 Oct 2026, 04:15 UTC), checked against the mpp.dev listing with the default policy: exact listing, <span className="num">$1.00</span> cap. Illustrative sample, not live traffic. Fork run 1 used a 2x allowance, so there the <span className="num">$0.07</span> quote passes.</p>
     </section>
   )
 }
