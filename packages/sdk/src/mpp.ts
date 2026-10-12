@@ -104,6 +104,33 @@ export class QuoteCapExceeded extends Error {
   }
 }
 
+/**
+ * Quote-Cap for a plain mppx client: pass the result as `onChallenge` to `Mppx.create`. It throws
+ * QuoteCapExceeded, before any credential is signed, when the challenge asks more than the
+ * catalog price. mppx hands `onChallenge` the challenge but not the request URL, so pass `target`
+ * for an exact per-endpoint check. Without it the quote is held to the listings on the challenge
+ * realm's host: it must fit at least one of them. `createLeashFetch` knows the URL and always
+ * checks the exact endpoint.
+ */
+export function quoteCapOnChallenge(book: PriceBook, policy: QuoteCapPolicy, target?: { method: string; url: string }) {
+  return async (challenge: { realm: string; request: Record<string, unknown> }): Promise<string | undefined> => {
+    const req = challenge.request
+    const quote = { amount: String(req['amount'] ?? ''), currency: (req['currency'] as string | undefined) ?? null, recipient: String(req['recipient'] ?? '').toLowerCase() }
+    if (target) {
+      const v = checkQuote(book, policy, { ...quote, ...target })
+      if (!v.ok) throw new QuoteCapExceeded(v)
+      return undefined
+    }
+    const host = challenge.realm.toLowerCase()
+    const listed = book.entries.filter((e) => new URL(e.origin).host.toLowerCase() === host)
+    const candidates = listed.length ? listed.map((e) => ({ method: e.method, url: e.origin + e.path })) : [{ method: 'POST', url: `https://${host}/` }]
+    const verdicts = candidates.map((c) => checkQuote(book, policy, { ...quote, ...c }))
+    if (verdicts.some((v) => v.ok)) return undefined
+    const worst = verdicts.filter((v): v is Extract<QuoteVerdict, { ok: false }> => !v.ok).sort((a, b) => Number((b.listed ?? 0n) - (a.listed ?? 0n)))[0]!
+    throw new QuoteCapExceeded(worst)
+  }
+}
+
 export function requestHash(method: string, url: string, body: string | null): Hex {
   return keccak256(toHex(`${method.toUpperCase()} ${url}\n${body ?? ''}`))
 }

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { DEFAULT_QUOTE_CAP, loadPriceBook } from '@leash/policy'
-import { createLeashFetch, NETWORKS } from '../../src/index.js'
+import { createLeashFetch, NETWORKS, quoteCapOnChallenge, QuoteCapExceeded } from '../../src/index.js'
 
 /**
  * Replays stablestudio's real Tempo-mainnet 402 challenges (captured unpaid 2026-10-10,
@@ -93,5 +93,20 @@ describe('quote-cap guard in the mppx payment path', () => {
       quoteCap: { book, policy: { ...DEFAULT_QUOTE_CAP, toleranceBps: 10_000 } },
     })
     await expect(leashFetch(NB, post)).rejects.not.toThrow(/QuoteCapExceeded/)
+  })
+})
+
+describe('quoteCapOnChallenge: the hook for a plain mppx client', () => {
+  const challenge = (amount: string) => ({ realm: 'stablestudio.dev', request: { amount, currency: USDCE, recipient: RECIPIENT } })
+  const target = { method: 'POST', url: NB }
+
+  it('throws on the $10.00 quote for a $0.039 listing, with a target or by realm', async () => {
+    await expect(quoteCapOnChallenge(book, DEFAULT_QUOTE_CAP, target)(challenge('10000000'))).rejects.toThrow(/QuoteCapExceeded/)
+    await expect(quoteCapOnChallenge(book, DEFAULT_QUOTE_CAP)(challenge('10000000'))).rejects.toBeInstanceOf(QuoteCapExceeded)
+  })
+
+  it('returns undefined (mppx signs normally) for the listed $0.039 quote', async () => {
+    await expect(quoteCapOnChallenge(book, DEFAULT_QUOTE_CAP, target)(challenge('39000'))).resolves.toBeUndefined()
+    await expect(quoteCapOnChallenge(book, DEFAULT_QUOTE_CAP)(challenge('39000'))).resolves.toBeUndefined()
   })
 })

@@ -1,6 +1,6 @@
 # Leash
 
-**Your agent never pays more than the price on the menu, and one signature cuts off a vendor that took the money and failed to deliver.**
+**Every quote is checked against the catalog price before signing, so your agent never pays more than the menu, and a vendor that took the money and failed to deliver is cut off from the agent key.**
 
 Leash is spend control for AI agents that pay for APIs over MPP (Machine Payments Protocol) on Tempo.
 
@@ -10,7 +10,7 @@ Leash is spend control for AI agents that pay for APIs over MPP (Machine Payment
 
 ## Why
 
-An MPP vendor names its price in the 402 challenge, and a default mppx client signs whatever it names: mppx 0.12 and 0.13.4 have no max-amount check. The charge also settles before the vendor runs the request, so "paid" and "delivered" are separate facts.
+An MPP vendor names its price in the 402 challenge, and a default mppx Tempo client signs whatever it names: mppx 0.13.4 ships a flat `maxAmount` on its EVM charge, and its Tempo charge exposes `expectedRecipients`, `expectedChainId` and an `onChallenge` hook; none of them compares a quote with the catalog price of the endpoint being called. Leash checks each quote against that listing, not against one flat per-payment ceiling, and `quoteCapOnChallenge(book, policy)` plugs the same check into a plain mppx client. The charge also settles before the vendor runs the request, so "paid" and "delivered" are separate facts.
 
 - **Live overcharge, Tempo mainnet, 10 Oct 2026:** stablestudio lists `POST /api/generate/nano-banana/generate` at **$0.039** in the mpp.dev catalog. Its 402 asked **$10.00** when the prompt was missing, and $0.07 with a prompt. We captured the 402s and paid nothing. 13 of 273 parsed mainnet challenges did not match their listing.
 - [tempoxyz/mpp-specs#359](https://github.com/tempoxyz/mpp-specs/issues/359): $450 charged against $100 authorized.
