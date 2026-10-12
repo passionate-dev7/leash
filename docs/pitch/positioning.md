@@ -1,6 +1,6 @@
 # Positioning: LEASH vs vet402, Fermata, Cursus (and Setra402, Rolepay)
 
-Sources: each rival's Colosseum Arena page (fetched 11 Oct 2026), /Users/kamal/Desktop/solana/cwf/docs/ARENA-COMPETITORS.md and docs/COMPETITORS.md. Quotes are from the rivals' own materials. We have not run any rival's product.
+Sources: each rival's Colosseum Arena page (fetched 11 Oct 2026), the CWF team ARENA-COMPETITORS notes and docs/COMPETITORS.md. Quotes are from the rivals' own materials. We have not run any rival's product.
 
 ## The three real rivals
 
