@@ -75,17 +75,17 @@ export function DeliveryCutPage() {
             <Metric label="Paid, then failed" value="47%" tone="failed" hint={<>42 of 89 calls, vet402 on Tempo, <TextLink href="https://github.com/tempoxyz/mpp/issues/1034" target="_blank" rel="noreferrer">mpp#1034</TextLink></>} />
             <Metric label="Signatures to cut" value="1" tone="accent" hint="next charge reverts" />
           </div>
-          <div className="mt-6">
-              <div className="card p-5">
-                <p className="text-body font-semibold">{signed ? 'What the cut did' : 'Before you sign: what this cut does'}</p>
-                <ul className="mt-3 grid gap-2 text-body-sm text-ink-muted">
-                  <li><span className="font-semibold text-ink">Vendor:</span> fal ({proof.vendor.origin.replace('https://', '')}), paid <span className="num text-ink">{usd(proof.vendor.quoted)}</span> and answered HTTP {proof.failure.status}.</li>
-                  <li><span className="font-semibold text-ink">What changes:</span> the agent key may no longer pay the address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} />. fal's next charge reverts on chain. stablestudio and other vendors keep working.</li>
-                  <li><span className="font-semibold text-failed">Side effect:</span> in our 3 Oct 2026 probe this same address also received payments for openai, firecrawl and nine other mpp.tempo.xyz gateways, so their charges stop too.</li>
-                  <li><span className="font-semibold text-ink">Not a refund:</span> the <span className="num text-ink">{usd(proof.vendor.quoted)}</span> already paid stays with fal.</li>
-                </ul>
-              </div>
-          </div>
+          {!signed && (
+            <div className="mt-8 hidden lg:block">
+              <p className="text-body font-semibold">Before you sign: what this cut does</p>
+              <ul className="mt-3 grid gap-2 text-body-sm text-ink-muted">
+                <li><span className="font-semibold text-ink">Vendor:</span> fal ({proof.vendor.origin.replace('https://', '')}), paid <span className="num text-ink">{usd(proof.vendor.quoted)}</span> and answered HTTP {proof.failure.status}.</li>
+                <li><span className="font-semibold text-ink">What changes:</span> the agent key may no longer pay the address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} />. fal's next charge reverts on chain. stablestudio and other vendors keep working.</li>
+                <li><span className="font-semibold text-failed">Side effect:</span> in our 3 Oct 2026 probe this same address also received payments for openai, firecrawl and nine other mpp.tempo.xyz gateways, so their charges stop too.</li>
+                <li><span className="font-semibold text-ink">Not a refund:</span> the <span className="num text-ink">{usd(proof.vendor.quoted)}</span> already paid stays with fal.</li>
+              </ul>
+            </div>
+          )}
         </header>
 
         <Card aria-label="The failed call" className="min-w-0 overflow-hidden">
@@ -115,10 +115,21 @@ export function DeliveryCutPage() {
                 <div className="panel-failed p-4">
                   <Chip tone="failed">Paid, not delivered</Chip>
                   <p className="mt-2 text-subhead font-semibold text-failed"><span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span> lost</p>
-                  <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal's payout address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} /> from what the agent key may pay.</p>
+                  <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal from what the agent key may pay.</p>
                 </div>
               )}
             </div>
+            {!signed && (
+              <div className="mt-5 rounded-md border border-hairline bg-paper p-4 lg:hidden">
+                <p className="text-body font-semibold">Before you sign: what this cut does</p>
+                <ul className="mt-3 grid gap-2 text-body-sm text-ink-muted">
+                  <li><span className="font-semibold text-ink">Vendor:</span> fal ({proof.vendor.origin.replace('https://', '')}), paid <span className="num text-ink">{usd(proof.vendor.quoted)}</span> and answered HTTP {proof.failure.status}.</li>
+                  <li><span className="font-semibold text-ink">What changes:</span> the agent key may no longer pay the address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} />. fal's next charge reverts on chain. stablestudio and other vendors keep working.</li>
+                  <li><span className="font-semibold text-failed">Side effect:</span> in our 3 Oct 2026 probe this same address also received payments for openai, firecrawl and nine other mpp.tempo.xyz gateways, so their charges stop too.</li>
+                  <li><span className="font-semibold text-ink">Not a refund:</span> the <span className="num text-ink">{usd(proof.vendor.quoted)}</span> already paid stays with fal.</li>
+                </ul>
+              </div>
+            )}
             <Button size="lg" variant={signed ? 'outline' : 'default'} className="mt-6 w-full max-md:hidden" onClick={() => setSigned(true)} disabled={signed}>
               {signed ? 'Cut signed' : 'Sign the cut'}
             </Button>

@@ -90,7 +90,7 @@ function QuoteCheck() {
         </div>
         {(() => { const o = overBy(BigInt(q.amount), v.listed === null ? null : BigInt(v.listed), (x) => usd(x)); return o && (
           <div className={cn('mt-3 flex flex-wrap items-center gap-2 rounded-md px-3 py-2 text-body-sm', o.diff > 0n ? 'panel-refused' : 'panel-paid')}>
-            <span className={cn('num font-semibold', o.diff > 0n ? 'text-refused' : 'text-paid')}>{o.diff > 0n ? `${o.mult.toFixed(1)}x the listing` : 'Matches the listing'}</span>
+            <span className={cn('font-semibold', o.diff > 0n ? 'text-refused' : 'text-paid')}>{o.diff > 0n ? <><span className="num">{o.mult.toFixed(1)}x</span> the listing</> : 'Matches the listing'}</span>
             {o.diff > 0n && <span className="text-ink">{o.text}</span>}
           </div>) })()}
         <p className="mt-2 text-body-sm text-ink-subtle">{q.note}</p>
@@ -151,7 +151,7 @@ const stepTone = (status: string, step?: string): StepTone =>
 const stepLabel = (t: StepTone, step?: string) => (step === 'cut' ? 'Cut' : t === 'paid' ? 'Settled' : t === 'refused' ? 'Refused' : t === 'reverted' ? 'Reverted' : 'Confirmed')
 
 export function ForkNote() {
-  return <p className="mx-3 mb-1 rounded-md bg-surface-1 px-3 py-2 text-body-sm text-ink-muted"><span className="font-semibold text-ink">Local anvil fork, no explorer.</span> These hashes exist only on that fork, so no public explorer can show them. Blocks and times come from the saved receipts; reverted calls carry no block time.</p>
+  return <p className="mx-3 mb-1 rounded-md bg-surface-1 px-3 py-2 text-body-sm text-ink-muted"><span className="font-semibold text-ink">Local anvil fork, no explorer.</span> These hashes exist only on that fork, so no public explorer can show them. Blocks and times come from the saved receipts; some steps carry no block time.</p>
 }
 
 /* A vertical event feed: numbered nodes on a rail, colored by outcome, hash under each label. */
@@ -192,7 +192,7 @@ function ForkSteps() {
   return (
     <section aria-labelledby="fork-h" className="grid gap-6">
       <SectionHead id="fork-h" eyebrow="Fork run 1 · Quote-Cap" title="The same quotes on a fork of Tempo mainnet"
-        intro="Its own local anvil fork, separate from the Delivery Cut run. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork." />
+        intro="Its own local anvil fork, separate from the Delivery Cut run. Fork policy: up to 2× the listing, $0.20 daily key limit. The guard refuses before signing; when it is bypassed, the chain refuses. Hashes resolve on that fork." />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
         <div className="grid grid-cols-2 content-start gap-4 lg:grid-cols-1">
           <Metric label="Forked at block" value={<span className="text-[28px]">{proof.block?.toLocaleString() ?? '-'}</span>} />
@@ -248,7 +248,7 @@ function Routes() {
                         <div className="h-3 rounded-full bg-surface-1">
                           <div className={cn('h-3 rounded-full', i === 0 ? 'bg-paid' : 'bg-surface-3')} style={{ width: `${Math.max(4, (Number(o.amount) / max) * 100)}%` }} />
                         </div>
-                        <span className={cn('num text-right text-body-sm', i === 0 ? 'font-semibold text-paid' : 'text-ink-muted')}>{usd(o.amount)}{i > 0 && <span className="block text-caption text-refused">+{Math.round(((Number(o.amount) - Number(p.options[0]!.amount)) / Number(p.options[0]!.amount)) * 100)}%</span>}</span>
+                        <span className={cn('num text-right text-body-sm', i === 0 ? 'font-semibold text-paid' : 'text-ink-muted')}>{usd(o.amount)}{i > 0 && <span className="block text-caption text-ink-subtle">+{Math.round(((Number(o.amount) - Number(p.options[0]!.amount)) / Number(p.options[0]!.amount)) * 100)}%</span>}</span>
                       </div>
                     ))}
                   </div>
@@ -291,13 +291,13 @@ function Positioning() {
           diff="Cursus records who acted under whose authority. Leash limits one thing, payments, and enforces it on Tempo: the agent key's vendor scope and daily limit are chain rules, and each quote is checked before the key signs." />
       </Card>
       <p className="text-body-sm text-ink-subtle">Also nearby: Setra402 ("trust layer for agent payments", mechanism not public) and Rolepay (Discord communities paying people on Tempo, a different job).</p>
-      <Card className="grid gap-4 p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-center">
+      <div className="grid gap-4 border-t border-hairline pt-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-center">
         <div>
           <Eyebrow>Business model</Eyebrow>
           <div className="mt-2"><Chip tone="neutral">Planned, no revenue yet</Chip></div>
         </div>
         <p className="text-body text-ink-muted">The guard and SDK stay open source, so any MPP client can refuse an overpriced quote. Teams that run paying agents would pay a monthly fee per active agent key for the hosted spend desk: price book updates, delivery tracking and one-signature cuts. Route could later take a small share of the saving it finds on each call.</p>
-      </Card>
+      </div>
     </section>
   )
 }
@@ -334,17 +334,18 @@ function PrimaryMetric() {
   const refused = runs.filter((r) => !r.v.ok)
   const over = refused.reduce((a, r) => a + BigInt(r.q.amount) - BigInt(r.v.listed ?? 0), 0n)
   const asked = refused.reduce((a, r) => a + BigInt(r.q.amount), 0n)
+  const usd2 = (x: bigint) => `$${Number(formatUnits(x)).toFixed(2)}`
   return (
     <section aria-label="What Leash stopped" className="card overflow-hidden">
       <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] divide-x divide-hairline">
         <div className="p-4 sm:p-5">
           <p className="text-body-sm text-ink-muted">Overcharge refused before signing</p>
-          <p className="metric-value mt-1 text-refused">{usd(over)}</p>
+          <p className="metric-value mt-1 text-refused">{usd2(over)}</p>
           <p className="mt-1 text-body-sm text-ink-subtle">above the <span className="num">$0.039</span> listing</p>
         </div>
         <div className="p-4 sm:p-5">
           <p className="text-body-sm text-ink-muted">Real 402s refused</p>
-          <p className="metric-value mt-1"><span className="text-refused">{refused.length}</span><span className="text-ink-subtle"> of {runs.length}</span></p>
+          <p className="metric-value mt-1"><span className="num text-refused">{refused.length}</span><span className="text-ink-subtle"> of </span><span className="num text-ink-subtle">{runs.length}</span></p>
           <p className="mt-1 text-body-sm text-ink-subtle"><span className="num">{usd(asked)}</span> asked, nothing signed</p>
         </div>
       </div>
@@ -368,14 +369,14 @@ export function QuoteCapPage() {
         </div>
         <div className="grid gap-6 lg:col-start-1">
           <PrimaryMetric />
-          <div className="grid gap-3">
-            <div className="card-raised flex gap-4 p-4">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-ink">1</span>
-              <div><p className="text-body font-semibold">Before signing</p><p className="mt-1 text-body-sm text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing signed, nothing to refund.</p></div>
+          <div className="grid gap-4">
+            <div className="border-b border-hairline pb-4">
+              <p className="text-body font-semibold">Before signing</p>
+              <p className="mt-1 text-body-sm text-ink-muted">The check runs in the MPP client's challenge hook. A quote above the listing plus your allowance, or above the hard cap, is refused. Nothing signed, nothing to refund.</p>
             </div>
-            <div className="card-raised flex gap-4 p-4">
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-3 text-body-sm font-bold text-ink">2</span>
-              <div><p className="text-body font-semibold">If the check is bypassed</p><p className="mt-1 text-body-sm text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. Fork run 1 shows the chain refusing both.</p></div>
+            <div>
+              <p className="text-body font-semibold">If the check is bypassed</p>
+              <p className="mt-1 text-body-sm text-ink-muted">The agent's Tempo access key only pays the vendor's address, up to a daily limit the chain enforces. Fork run 1 shows the chain refusing both.</p>
             </div>
           </div>
         </div>

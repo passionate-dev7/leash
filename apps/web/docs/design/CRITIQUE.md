@@ -85,4 +85,10 @@ Added: paid/refused/reverted/failed/neutral status tokens + secondary accent pin
 Self-critique r11 shots: the 390 event rail squeezed labels next to the chip; moved the chip under the label on phones.
 Review r11 (design-review): B+ / A-, 8.5 min 8.0. Fixed after it: fund/authorize rows now neutral "Confirmed" and the cut violet "Cut" (only real payments are green); lead $10.00 uses the refused token; stale CSS comment. Left (polish): hero explainers still boxed, violet shared by links and "reverted", long rival copy.
 r10 FINAL (superseded): 8.3 min=7.5 round=10
-FINAL: 8.5 min=8.0 round=11 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r11.md
+r11 FINAL (superseded): 8.5 min=8.0 round=11 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r11.md
+
+## Round 12 (Web3-grade: primary metric, % over, link hue, cut summary, fork trust)
+
+Self-critique of r12 shots after audit fixes: metric is now 2 of 2 recorded 402s ($9.99) with an honest basis and fork 2x policy named; metric sits in the left column so the lime button returns to the first desktop screen; delivery-cut "Before you sign" is plain text in the left column at lg and stays in the card on phones; explainer discs/boxes and the Business model card are gone; Route premiums are ink-subtle; mono only wraps digits; ForkNote says some steps lack a block time; sticky header is opaque (overlap scan).
+Independent review r12 (design-review, before the fixes above): B / A-, 8.0 min 7.5. Top findings fixed: metric basis (HIGH), button below the fold (HIGH), unfinished left panel on delivery-cut (MEDIUM), numbered explainer discs + Business model card (MEDIUM), mono-on-English / Route pink / 25,541% noise (POLISH).
+FINAL: 8.0 min=7.5 round=12 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r12.md
