@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import { decideCuts } from '@leash/policy/delivery-cut'
 import type { PaidCallOutcome } from '@leash/policy/delivery-cut'
 import { formatUnits } from '@leash/policy/quote-cap'
+import { computeBlastRadius } from '@leash/policy/blast-radius'
+import type { RecipientIndex, ResolvedRecipient } from '@leash/policy'
+import { ModeratoReceipts } from '@/components/moderato-receipts'
 import { Button } from '@/components/shadcn/button'
 import { Card, Chip, Hash, Metric, SectionHead, TextLink } from '@/components/kit'
 import { StepFeed, ForkNote } from '@/pages/quotecap'
@@ -33,6 +36,43 @@ function useProof() {
   return p
 }
 
+/* The saved 3 Oct 2026 unpaid 402 probe of mpp.tempo.xyz, as a recipient index: one entry per service per Tempo payout address. */
+type ProbeEntry = { id: string; name: string; realm: string; url: string; httpMethod: string; challenges?: { method: string; request: { recipient?: string; amount?: string; currency?: string; methodDetails?: { chainId?: number } } }[] }
+
+function useProbeIndex() {
+  const [idx, setIdx] = useState<RecipientIndex | null>(null)
+  useEffect(() => {
+    fetch('./evidence/probe-all402-2026-10-03.json').then((r) => (r.ok ? r.json() : null)).then((rows: ProbeEntry[] | null) => {
+      if (!Array.isArray(rows)) return
+      const resolved: ResolvedRecipient[] = []
+      for (const row of rows) {
+        const seen = new Set<string>()
+        for (const c of row.challenges ?? []) {
+          const r = c.request.recipient
+          if (c.method !== 'tempo' || !r || c.request.methodDetails?.chainId !== 4217 || seen.has(r.toLowerCase())) continue
+          seen.add(r.toLowerCase())
+          resolved.push({ serviceId: row.id, name: row.name, realm: row.realm, recipient: r as ResolvedRecipient['recipient'], currency: (c.request.currency ?? '0x') as ResolvedRecipient['currency'], decimals: 6, amount: c.request.amount ?? '0', intent: 'charge', chainId: 4217, endpoint: { method: row.httpMethod, path: new URL(row.url).pathname, url: row.url }, source: 'live-402', resolvedAt: '2026-10-03T00:00:00Z' })
+        }
+      }
+      setIdx({ capturedAt: '2026-10-03T00:00:00Z', catalogBytes: 0, catalogServiceCount: rows.length, chainId: 4217, resolved, unresolved: [] })
+    }).catch(() => setIdx(null))
+  }, [])
+  return idx
+}
+
+function useOthers(recipient: string, vendorId: string): string[] | null {
+  const idx = useProbeIndex()
+  if (!idx) return null
+  return computeBlastRadius({ recipients: [recipient as `0x${string}`], index: idx, intendedServiceIds: [vendorId] }).collateral.map((s) => s.name)
+}
+
+function SideEffect({ names }: { names: string[] | null }) {
+  if (!names) return <li><span className="font-semibold text-failed">Side effect:</span> this cut removes a payout address, so every gateway paying that address stops too. Reading the probe…</li>
+  return (
+    <li><span className="font-semibold text-failed">Side effect:</span> this cut also stops these <span className="num font-semibold text-failed">{names.length}</span> other gateways: {names.join(', ')}. Their payout address is the same as fal's.</li>
+  )
+}
+
 function Row({ k, v, tone }: { k: string; v: React.ReactNode; tone?: 'warn' }) {
   return (
     <div className="flex items-baseline justify-between gap-6 py-3">
@@ -44,6 +84,7 @@ function Row({ k, v, tone }: { k: string; v: React.ReactNode; tone?: 'warn' }) {
 
 export function DeliveryCutPage() {
   const proof = useProof()
+  const others = useOthers(proof?.vendor.recipient ?? '', 'fal')
   const [signed, setSigned] = useState(false)
   const [btn, setBtn] = useState<HTMLButtonElement | null>(null)
   const [btnOut, setBtnOut] = useState(false)
@@ -81,7 +122,7 @@ export function DeliveryCutPage() {
               <ul className="mt-3 grid gap-2 text-body-sm text-ink-muted">
                 <li><span className="font-semibold text-ink">Vendor:</span> fal ({proof.vendor.origin.replace('https://', '')}), paid <span className="num text-ink">{usd(proof.vendor.quoted)}</span> and answered HTTP {proof.failure.status}.</li>
                 <li><span className="font-semibold text-ink">What changes:</span> the agent key may no longer pay the address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} />. fal's next charge reverts on chain. stablestudio and other vendors keep working.</li>
-                <li><span className="font-semibold text-failed">Side effect:</span> in our 3 Oct 2026 probe this same address also received payments for openai, firecrawl and nine other mpp.tempo.xyz gateways, so their charges stop too.</li>
+                <SideEffect names={others} />
                 <li><span className="font-semibold text-ink">Not a refund:</span> the <span className="num text-ink">{usd(proof.vendor.quoted)}</span> already paid stays with fal.</li>
               </ul>
             </div>
@@ -115,7 +156,7 @@ export function DeliveryCutPage() {
                 <div className="panel-failed p-4">
                   <Chip tone="failed">Paid, not delivered</Chip>
                   <p className="mt-2 text-subhead font-semibold text-failed"><span className="num">{decision ? usd(decision.lost) : usd(proof.vendor.quoted)}</span> lost</p>
-                  <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal from what the agent key may pay.</p>
+                  <p className="mt-1 text-body-sm text-ink-muted">Cutting removes fal from what the agent key may pay{others ? <>, and <span className="font-semibold text-failed">{others.length} other gateways</span> on the same payout address</> : null}.</p>
                 </div>
               )}
             </div>
@@ -125,7 +166,7 @@ export function DeliveryCutPage() {
                 <ul className="mt-3 grid gap-2 text-body-sm text-ink-muted">
                   <li><span className="font-semibold text-ink">Vendor:</span> fal ({proof.vendor.origin.replace('https://', '')}), paid <span className="num text-ink">{usd(proof.vendor.quoted)}</span> and answered HTTP {proof.failure.status}.</li>
                   <li><span className="font-semibold text-ink">What changes:</span> the agent key may no longer pay the address <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} />. fal's next charge reverts on chain. stablestudio and other vendors keep working.</li>
-                  <li><span className="font-semibold text-failed">Side effect:</span> in our 3 Oct 2026 probe this same address also received payments for openai, firecrawl and nine other mpp.tempo.xyz gateways, so their charges stop too.</li>
+                  <SideEffect names={others} />
                   <li><span className="font-semibold text-ink">Not a refund:</span> the <span className="num text-ink">{usd(proof.vendor.quoted)}</span> already paid stays with fal.</li>
                 </ul>
               </div>
@@ -143,6 +184,8 @@ export function DeliveryCutPage() {
         </Card>
       </div>
 
+      <div className="pb-12"><ModeratoReceipts /></div>
+
       <section aria-labelledby="tx-h" className="grid gap-6 py-12">
         <SectionHead id="tx-h" eyebrow="Fork run 2 · Delivery Cut" title="The cut, on a fork of Tempo mainnet"
           intro={`Its own local anvil fork at block ${proof.block.toLocaleString()}, separate from the Quote-Cap run. Hashes resolve on that fork.`} />
@@ -155,7 +198,7 @@ export function DeliveryCutPage() {
           <Card className="min-w-0 p-6">
             <Chip tone="neutral">Evidence</Chip>
             <p className="mt-3 text-body font-semibold">A cut removes a payout address, not a brand.</p>
-            <p className="mt-2 text-body-sm text-ink-muted">In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (saved at about Tempo mainnet block 42,298,273), <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} /> was also the recipient for openai, firecrawl and nine other gateways, so this cut would stop those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
+            <p className="mt-2 text-body-sm text-ink-muted">In our unpaid 402 probes of mpp.tempo.xyz on 3 Oct 2026 (saved at about Tempo mainnet block 42,298,273), <Hash value={proof.vendor.recipient} href={mainnetAddressUrl(proof.vendor.recipient)} /> was the recipient for fal and 11 other gateways, so this cut stops those charges too. The fork run only charged fal and stablestudio; it did not test the other gateways.</p>
             <Button asChild variant="outline" className="mt-5"><a href="/evidence/probe-all402-2026-10-03.json" target="_blank" rel="noreferrer">Open the probe file</a></Button>
           </Card>
         </div>

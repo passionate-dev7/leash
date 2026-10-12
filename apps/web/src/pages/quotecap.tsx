@@ -8,6 +8,7 @@ import { Button } from '@/components/shadcn/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/shadcn/toggle-group'
 import { Card, Chip, Hash, Metric, SectionHead, TextLink, Eyebrow, overBy, utcTime } from '@/components/kit'
 import { cn } from '@/lib/utils'
+import { ModeratoReceipts } from '@/components/moderato-receipts'
 
 const book = bookJson as PriceBook
 const NB = 'https://stablestudio.dev/api/generate/nano-banana/generate'
@@ -383,6 +384,7 @@ export function QuoteCapPage() {
       </div>
       <div className="space-y-20 py-12 lg:space-y-24">
         <ForJudges />
+        <ModeratoReceipts />
         <Routes />
         <ForkSteps />
         <Positioning />

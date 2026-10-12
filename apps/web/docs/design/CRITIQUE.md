@@ -100,3 +100,5 @@ Review r12a: B / A-, 8.0 min 7.5. Fixed: headline basis overstated (3 quotes; on
 Review r12b: B+ / A-, 8.5 min 8.0. Then fixed: "of" no longer mono; basis time in UTC like the fork; metric relabelled "Total overcharge"; toggle ring no longer lime. Left: delivery-cut card has ~140px under the button at 1440; Route decimals vary.
 r11 FINAL (superseded, line kept): 8.5 min=8.0 round=11
 FINAL: 8.5 min=8.0 round=12 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r12.md
+Review r13: demo-judge, B+ / B, 8.0 min 7. Blast-radius line computed from computeBlastRadius over the saved 3 Oct probe (11 other gateways); Moderato receipts block read back from RPC.
+FINAL: 8.0 min=7 round=13 critic=demo-judge review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r13.md

@@ -11,6 +11,7 @@
     "./constants": "./src/constants.ts",
     "./data/*": "./data/*",
     "./quote-cap": "./src/quote-cap.ts",
+    "./blast-radius": "./src/blast-radius.ts",
     "./route": "./src/route.ts",
     "./delivery-cut": "./src/delivery-cut.ts"
   },
