@@ -1,152 +1,138 @@
-# LEASH design audit, round 12 (v3 "night console", Web3-grade pass)
+# LEASH design audit, round 12, second pass (v3 "night console", Web3-grade pass)
 
-Targets: `http://localhost:4179/#/quote-cap` and `http://localhost:4179/#/delivery-cut` (local vite preview of the v3 build, HEAD `3f48963`).
-Mode: audit only, report mode. No browser driven. Evidence: the 12 Playwright captures in `docs/design/review/shots-r12/`, all opened and viewed (`p-1440`, `p-390`, `p-qc-full-1440`, `p-qc-pressed-1440`, `p-qc-pressed-390`, `p-dc-1440`, `p-dc-390`, `p-dc-full-1440`, `p-dc-full-390`, `p-dc-signed-1440`; `p-qc-full-390` and `p-dc-signed-390` were judged by structure, since they match their pressed and full twins). Read-only pass over `src/pages/quotecap.tsx`, `src/pages/deliverycut.tsx`, `src/components/kit.tsx`, `src/components/shadcn/toggle.tsx`, `src/index.css`, `src/lib/config.ts`, `public/fork-proof.json`, `public/delivery-cut-proof.json`, `projects/leash/scripts/fork/quotes.json`, `projects/leash/scripts/fork/FORK.md`, `projects/leash/README.md`, `projects/leash/docs/design/contrast-r12.txt`.
-Previous: `design-audit-leash-r11.md` (B+ / A-, average 8.5, min 8.0).
-Classifier: HYBRID. The first screen of each page is OPERATE: one decision on a real 402. Below the fold on quote-cap is PERSUADE / READ: the judge path, Route, fork proof, rivals and business model.
+Targets: `http://localhost:4179/#/quote-cap` and `http://localhost:4179/#/delivery-cut` (local vite preview of the v3 build, HEAD `f26edb6`).
+Mode: audit only, report mode. No browser driven. Evidence: the Playwright captures in `docs/design/review/shots-r12/`, opened and viewed: `p-1440`, `p-390`, `p-qc-full-1440`, `p-qc-pressed-1440`, `p-qc-pressed-390`, `p-dc-1440`, `p-dc-390`, `p-dc-full-1440`, `p-dc-full-390`, `p-dc-signed-1440`. Source read-only: `src/pages/quotecap.tsx`, `src/pages/deliverycut.tsx`, `src/components/kit.tsx`, `src/components/shadcn/toggle.tsx`, `src/index.css`, `DESIGN.md`.
+Previous: `design-audit-leash-r12a.md` (first pass: B / A-, average 8.0, min 7.5) and `design-audit-leash-r11.md` (B+ / A-, average 8.5, min 8.0).
+Classifier: HYBRID. Each page's first screen is OPERATE (one decision on a real 402). Below the fold on quote-cap is PERSUADE / READ.
 
-Design Score: B
+Design Score: B+
 AI Slop Score: A-
 
 ## Summary
 
-Round 12 delivered all five asks, and most of them work. Every number now shows what it means: "256.4x the listing +$9.961 over" sits under the quote, and Route shows "+275% / +300% / +530%" on the sellers it skipped. Links are sky blue, so violet means only a chain refusal or a cut. The fork rails show block numbers and UTC times, and they say plainly that they ran on a local anvil fork with no explorer. The real mainnet payout address links to the explorer. Delivery-cut has a clear "Before you sign" list covering vendor, what changes, the amber side effect, and "not a refund". Round 11's top finding is fixed: setup transactions are now neutral "Confirmed", the cut is violet "Cut", and "2 settled" counts only real payments.
+The second pass fixes what the first pass flagged. The headline metric now reads "2 of 2" over the two real recorded 402s. Its Basis names the policy and says why the fork run lets the $0.07 quote through, and the Fork run 1 intro also names its own policy ("up to 2× the listing, $0.20 daily key limit"). The metric sits in the left column under the lead, so at 1440x900 the lime "Let the agent pay this quote" button is at y≈795 and "Sign the cut" at y≈708, both on the first screen. On phones the quote card now comes before the metric, so the fixed lime bar acts on a quote the user can see. Delivery-cut's "Before you sign" list fills the left column at `lg`, and the 440px hole is gone. Quote-cap also got shorter: 4004px at 1440 (r12a 4217) and 7887px at 390 (r12a 8162).
 
-The grade drops from B+ to B for three reasons:
+The round's main job is now clear in the first two seconds: listed `$0.039`, asked `$10.00`, "256.4x the listing +$9.961 over", and a pink `$9.99` refused. On delivery-cut, `$0.003 lost` and "0% (lost 100%)" sit right above "Sign the cut".
 
-1. **HIGH, new: the headline metric's basis is not what it says.** The Basis column says "The 3 real stablestudio 402s recorded unpaid". Only two 402s were recorded ($10.00 and $0.07). The third "quote" is the $0.039 catalog listing (`quotes.json`: `catalog_listed_0.039`, `request_b64: null`), and it passes by construction. Further down, the fork rail says "Quote-Cap passes $0.07 quote", but the metric counts that same quote as refused. The fork used a 2x cap and the metric uses exact listing, and the page never says so. The round's main number is the first thing a careful judge will check.
-2. **HIGH, regression: at 1440x900 the primary button is below the fold on both pages.** The new metric zone (quote-cap) and the "Before you sign" box (delivery-cut) pushed the lime button out of the first desktop screen. On a 390 phone, the first quote-cap screen is entirely metric zone, so the fixed lime bar asks the user to pay a quote they have not seen yet.
-3. **MEDIUM, regression: delivery-cut's left column has a ~440px hole at 1440.** This is the owner's "unfinished left panel" complaint coming back.
+What keeps this at B+ instead of A-:
+1. **Delivery-cut's card has a ~140px empty band at 1440.** The hole moved from the left column into the bottom of the card, and it is smaller.
+2. **Mono still bleeds into English** in the "2 of 2" metric.
+3. **The r11 polish list is still mostly open:** lime toggle ring, row hover, copy-button label, Route precision, stale tokens.
+
+## Status of the first-pass (r12a) findings
+
+| r12a finding | Status | Evidence |
+|---|---|---|
+| 1 HIGH: metric basis says "3 real 402s", includes the listing; fork "$0.07 passes" contradicts it | **Fixed** | `PrimaryMetric` counts only the recorded quotes (`quotecap.tsx:330-352`): "Real 402s refused 2 of 2", "$10.07 asked, nothing signed". The Basis reads "the 2 stablestudio 402s recorded unpaid ... default policy: exact listing, $1.00 cap ... Fork run 1 used a 2x allowance, so there the $0.07 quote passes." The fork intro (`:195`) names "Fork policy: up to 2× the listing, $0.20 daily key limit" (`p-qc-full-1440.png`). Rail step 3 "Quote-Cap passes $0.07 quote" no longer reads as a contradiction. |
+| 2 HIGH: primary button below the 1440 fold on both pages; phone first screen lacks the quote | **Fixed** | `p-1440.png`: button at y≈768-824 of 900. `p-dc-1440.png`: "Sign the cut" at y≈681-737. `p-390.png`: h1, lead, then the quote card ($0.039 / $10.00 / $0.039) above the fixed bar. |
+| 3 MEDIUM: ~440px hole in delivery-cut's left column at 1440 | **Fixed, residue moved** | "Before you sign" renders in the left column at `lg` (`deliverycut.tsx:78-89`). The left column now ends at y≈905, level with the card. Residue: the card's action half ends at y≈765 and the card at y≈905, which leaves a ~140px empty band (new FINDING-1). |
+| 4 MEDIUM: numbered discs on hero explainers; Business model card | **Fixed** | The explainers are a title plus a paragraph split by a hairline, with no box and no disc (`quotecap.tsx:373-375`). Business model is plain text in a two-column row under a hairline (`:294-296`). The three judge-step discs stay, which is correct because their order matters. |
+| 5 POLISH: English set in mono ("of 3", "256.4x the listing"); $9.992 precision | **Partly fixed** | The risk bar wraps only `256.4x` in `num`; "the listing" is Rubik (`:93`). The metric shows `$9.99`. "of" is still mono: it sits in its own span, but inside `p.metric-value`, which sets `font-family: var(--font-mono)` (`index.css:136`). FINDING-2. |
+| 6 POLISH: pink Route premiums; 5-digit % on the risk bar | **Fixed** (precision open) | The skipped-seller "+275% / +300% / +530%" is `text-ink-subtle` (`:251`). The risk bar shows "+$9.961 over" with no percentage. Route amounts still mix 2, 3 and 4 decimals (FINDING-5). |
+| 7 POLISH: ForkNote implied only reverts lack a block time | **Fixed** | Both rails now say "some steps carry no block time" (`p-dc-full-1440.png`, `p-qc-full-1440.png`). |
+| 8 POLISH: payout address shown four times on delivery-cut | **Partly fixed** | The amber panel now reads "Cutting removes fal from what the agent key may pay." with no address. The address still appears three times before signing: Before you sign, Evidence, and the rail after signing. That is acceptable, since each shows it for a different job. |
+| 9 POLISH: carried r11 items | **Not fixed** | See the r11 table. |
 
 ## Status of the r11 findings
 
-| r11 finding | Status | Evidence this pass |
-|---|---|---|
-| 1 MEDIUM: green "Settled" on non-payments, including the cut | **Fixed** | `stepTone` now keys on step kind (`quotecap.tsx:149-151`). Quote-cap rail: steps 1-2 are neutral "Confirmed", and the header reads "2 settled · 1 refused by Leash · 2 reverted by the chain" (`p-qc-full-1440.png`). Delivery-cut rail step 3 is violet "Cut", matching the violet "Cut signed" verdict (`p-dc-signed-1440.png`). |
-| 2 MEDIUM: numbered discs and a one-paragraph Business model card | **Not fixed** | Two `card-raised` explainers with "1"/"2" discs (`quotecap.tsx:373-380`), three judge discs (`:308`), and Business model still a `Card` (`:294-300`). |
-| 3 POLISH: violet carries two jobs | **Fixed** | `--color-link #7dd3fc` (`index.css:18`). Links, "Source ↗", mpp#1034 and explorer hashes are sky blue. "Signatures to cut 1" now uses `tone="accent"`, which maps to `text-ink` (`kit.tsx:14`). The "Tempo mainnet 402" chip is neutral with a blue dot. |
-| 4 POLISH: long rival "Leash:" paragraphs | **Not fixed** | Copy is unchanged (`quotecap.tsx:283-291`). Fermata's "Leash:" is still 49 words. |
-| 5 POLISH: five near-pinks | **Partly fixed** | The lead's `$10.00` is now `text-refused` (`:365`). The tokens `--color-pink`, `--color-accent-2` (same hex as `refused` but not aliased), `--color-error` and `--color-error-ink` all remain (`index.css:15-16, 50-51`). |
-| 6 POLISH: DESIGN.md contradicts itself | **Partly fixed** | The `index.css:66` comment now says "hashes 14". `DESIGN.md:21` still lists `ink-subtle #9a93a8` above a line that says it was raised to `#a9a2b8`. |
-| 7 POLISH: Route amounts have mixed precision | **Not fixed** | `$0.008`, `$0.03`, `$0.005`, `$0.02`, `$0.002`, `$0.0126` (`p-qc-full-1440.png`). |
-| 8 POLISH: lime ring on selected toggles | **Not fixed** | `data-[state=on]:ring-primary/70` (`toggle.tsx:7`). Visible on "No prompt", "Exact" and "$1.00" in `p-1440.png`. |
-| 9 POLISH: rail rows hover with nothing to click | **Not fixed** | `hover:bg-surface-1` on each `<li>` (`quotecap.tsx:165`). |
-| 10 POLISH: no arrival cue; copy button reads the full hash | **Not fixed** | No arrival animation. `aria-label={\`Copy ${value}\`}` (`kit.tsx:41`). |
-
-Score: 2 fixed, 2 partly fixed, 6 not fixed. Round 12 spent its effort on the new asks, not the r11 polish list.
+| r11 finding | Status |
+|---|---|
+| 1 MEDIUM: green "Settled" on non-payments | **Fixed** (r12a): neutral "Confirmed" on fund/authorize, violet "Cut" on the cut (`p-dc-signed-1440.png`). |
+| 2 MEDIUM: discs and Business model card | **Fixed** this pass (judge discs kept on purpose). |
+| 3 POLISH: violet carries two jobs | **Fixed**: links `#7dd3fc`; "Signatures to cut 1" renders in ink. |
+| 4 POLISH: long rival "Leash:" paragraphs | **Not fixed**: Fermata's "Leash:" is still about 49 words. |
+| 5 POLISH: five near-pinks | **Partly fixed**: the lead uses `text-refused`. `--color-pink`, `--color-accent-2`, `--color-error` and `--color-error-ink` remain (`index.css:15-16, 50-51`). |
+| 6 POLISH: DESIGN.md contradicts itself | **Not fixed**: `DESIGN.md:21` lists `ink-subtle #9a93a8`; `:48` says it was raised to `#a9a2b8` and points to `contrast-r11.txt`, not r12. |
+| 7 POLISH: Route precision | **Not fixed**. |
+| 8 POLISH: lime ring on selected toggles | **Not fixed**: `ring-primary/70` (`toggle.tsx:8`); visible on "No prompt", "Exact" and "$1.00" in `p-1440.png`. |
+| 9 POLISH: rail rows hover with nothing to click | **Not fixed**: `hover:bg-surface-1` (`quotecap.tsx:165`). |
+| 10 POLISH: no arrival cue; copy button reads the full hash | **Not fixed**: `aria-label={\`Copy ${value}\`}` (`kit.tsx:43`). |
 
 ## Round 12 asks, checked
 
 | Ask | Met | Evidence |
 |---|---|---|
-| (1) Primary metric zone at the top of quote-cap, computed from the recorded quotes, basis labelled | **Built; basis wrong** | `PrimaryMetric` (`quotecap.tsx:331-355`) computes from `QUOTES` with `DEFAULT_POLICY`. The arithmetic is right: (10.00 − 0.039) + (0.07 − 0.039) = $9.992, and $10.07 asked. But the denominator "3" includes the catalog listing, which was never a 402, and the Basis sentence calls all three "real ... 402s recorded". FINDING-1. The "Illustrative: a sample of recorded quotes, not live traffic" caveat is good. |
-| (2) Every number shows its consequence | **Yes** | The risk bar reads "256.4x the listing +$9.961 over (+25,541%)" (`:91-95`), and the With-prompt quote gets the same treatment. Route shows "+275% / +300% / +530%" under each skipped seller (`:251`). "Daily limit left $0.091, was $0.20". "Delivered for the money 0% (lost 100%)". Polish: a 5-digit percentage adds nothing next to "256.4x", and pink on Route means "more expensive", not "refused" (FINDING-6). |
-| (3) Semantic colours only: sky-blue links, violet only "reverted" | **Yes, with one documented exception** | All links are `text-link #7dd3fc`, 10.32:1 on paper. Violet appears only on "Reverted", "Cut" and "Cut signed". Making the cut violet was round 11's own recommendation, so it is not counted. `--color-link-hover` is still lime (`index.css:11`); `TextLink` uses `link-hover-ink`, so that token appears dead. |
-| (4) Plain-language "Before you sign" on delivery-cut | **Yes** | `deliverycut.tsx:111-121`: Vendor, What changes, an amber "Side effect" covering the shared payout address and eleven other gateways, and "Not a refund". It reads in about 15 seconds and is honest. It is also the cause of FINDINGS 2 and 3, because of where it sits. |
-| (5) Trust signals | **Yes** | Block plus UTC time on every receipt-backed step ("Block 43,440,365 10 Oct, 05:01:39 UTC"). `ForkNote` reads "Local anvil fork, no explorer." on both rails. The mainnet payout address `0xca4e…79Fe ↗` links through `mainnetAddressUrl` (explorer.tempo.xyz) in all three places it appears. Polish: the note says "reverted calls carry no block time", but the successful cut transaction (delivery-cut step 3) also has no time (FINDING-7). |
-| Contrast | **Yes** | `projects/leash/docs/design/contrast-r12.txt`: 30 pairs, "0 below 4.5:1", lowest 6.40:1 (`ink-subtle` on `surface-1`). The file lives under `projects/leash/docs/design/`, not `apps/web/docs/design/`. One pair in use is not listed: `ink-muted` on `refused-tint` (the "Leash stopped it..." line). Computed by hand from hex: about 7.8:1, so it passes. |
+| (1) Primary metric zone, honest, basis labelled | **Yes** | It sits in the left column under the lead, which is a better slot than the full-width strip: the pitch comes first, then the proof, then the action on the right. The arithmetic checks out: (10.00 − 0.039) + (0.07 − 0.039) = 9.992, shown as $9.99. The denominator is 2 real 402s. "Illustrative sample, not live traffic" is labelled. |
+| (2) Every number shows its consequence | **Yes** | "256.4x the listing +$9.961 over"; With-prompt keeps its multiple; Route "+275%" under each skipped seller; "Daily limit left $0.091, was $0.20"; "0% (lost 100%)". |
+| (3) Semantic colours only | **Yes** | Sky-blue links throughout (mpp#1034, Source ↗, explorer hashes, "See the three new transactions ↓"). Violet appears only on Reverted, Cut and Cut signed. Pink appears only where Leash refused. Amber means vendor failure. Green means a payment. The one off-system colour is the lime toggle ring (r11 F8). |
+| (4) "Before you sign" on delivery-cut | **Yes** | Vendor, What changes (with the explorer-linked address), amber Side effect (eleven other gateways), and Not a refund. Left column on desktop; inside the card above the button on phones (`deliverycut.tsx:122-131`, `p-dc-full-390.png`). |
+| (5) Trust signals | **Yes** | Block plus UTC time on receipt-backed steps; "Local anvil fork, no explorer." on both rails; the mainnet payout address links to explorer.tempo.xyz. One timezone slip: the metric Basis says "09:45 IST" while every rail time is UTC (FINDING-3). |
+| Contrast | **Yes** | `contrast-r12.txt`: 0 pairs below 4.5:1. Captures: 0 text nodes under 12px. |
+| Overlap test | **Accepted as stated** | `test/overlap.test.ts` exists. Not run here (no scripts this pass). No collisions are visible in any capture at 1440 or 390. |
 
 ## Owner complaints, checked
 
 | Complaint | Verdict | Evidence |
 |---|---|---|
-| Too dense | **Worse below the fold, fine above it** | Quote-cap is now 4217px at 1440 (r11: 3789) and 8162px at 390 (r11: 6992): +11% and +17%. The growth comes from the metric zone, the Route percentages, block/time lines on 7 steps and the ForkNote. Each addition is justified on its own; together they add 1,170px on phones. The 7-line Basis paragraph on the first phone screen is the densest block on the page. |
-| No clear main action | **Regressed on desktop** | Still exactly one lime button per page, with outcome labels. At 1440x900, though, "Let the agent pay this quote" sits at about y=1010 and "Sign the cut" at about y=1024, both below the fold (`p-1440.png`, `p-dc-1440.png`). In r11 both were on the first screen. Phones keep the fixed bar. FINDING-2. |
-| Gray text under 12px | **Fixed** | Capture script: 0 text nodes under 12px. The smallest is the 12px Route "+%" caption (`text-caption`) in pink, 8.09:1. |
-| Walls of monospace | **Fixed, with leakage** | No sentence is in mono. Two places now set English words in mono: "2 `of 3`" in the metric (`:345`, the whole value is `metric-value` mono) and "`256.4x the listing`" in the risk bar (`:93`, `num` on the phrase). They are short, but they read as code. FINDING-5. |
-| Unfinished left panel | **Fixed on quote-cap, regressed on delivery-cut** | Quote-cap 1440: the explainers end close to the card's policy half. Delivery-cut 1440: the left column ends at y≈640 while the card runs to y≈1080, leaving a ~440px hole (`p-dc-full-1440.png`). FINDING-3. |
+| Too dense | **Fixed above the fold; acceptable below** | First screens: headline, lead, one proof block, one card, one button. Quote-cap lost about 210px at 1440 and 275px at 390 versus r12a. The densest remaining block is the 4-line Basis paragraph and the three rival columns (r11 F4). |
+| No clear main action | **Fixed** | One lime button per page, on the first screen at 1440 and as a fixed bar on phones, with outcome labels. |
+| Gray text under 12px | **Fixed** | 0 nodes under 12px. The smallest is the 12px Route "+%" caption in `ink-subtle`, documented at ≥ 6.4:1. |
+| Walls of monospace | **Fixed** | Mono only on amounts, hashes, block numbers and script paths. One leak: "of" in "2 of 2" (FINDING-2). |
+| Unfinished left panel | **Fixed** | Quote-cap: the left column (lead, metric, two explainers) ends at y≈930, level with the card at y≈950. Delivery-cut: the left column ends at y≈905, level with the card. The empty space is now inside the card (FINDING-1). |
 
 ## First impression
 
-**Quote-cap, 1440 (`p-1440.png`).** The page now opens like a risk desk. The first thing I see is a pink `$9.992` in 56px mono, then the pink "2" of "2 of 3", then the headline. That order is what was asked for: the loss Leash prevented outranks the pitch. The three-cell panel reads as Hyperliquid-style zoning: value, count, basis. Then I read the Basis: "The 3 real stablestudio 402s recorded unpaid". I count the toggles in the card (No prompt, With prompt, Listed) and wonder why "Listed" counts as a recorded 402. The button is not on this screen. One word: confident, but you have to scroll to act.
+**Quote-cap, 1440 (`p-1440.png`).** I read the headline, then the lead, which hands me two numbers: `$0.039` white and `$10.00` pink. The pink `$9.99` and "2 of 2" underneath confirm it in money and count. On the right, the card repeats the same story as a decision: listed, asked, most this agent will pay. A pink risk bar says "256.4x the listing", and the lime button sits under the policy. My eye goes headline → pink `$9.99` → `$10.00` in the card → lime button. That is the intended order. One word: decisive.
 
-**Quote-cap, pressed (`p-qc-pressed-1440.png`).** The pink "Refused before signing" panel lands under the button. That still works. Further down, the fork rail is the best it has been: neutral setup, two green payments, a pink refusal, two violet reverts, each with a block and a time. Then I reach step 3, "Quote-Cap passes $0.07 quote", and scroll back up to a metric that says the $0.07 quote was refused.
+**Quote-cap, pressed (`p-qc-pressed-1440.png`).** `$10.00` turns pink, and a pink "Refused before signing" panel lands under the button: "The quote asked for $10.00 against a $0.039 listing." Further down, the fork intro names its policy before the rail shows "$0.07 passes". No contradiction left to scroll back for.
 
-**Delivery-cut, 1440 (`p-dc-1440.png`).** Amber 47%, amber "HTTP 422, no image", amber "$0.003 lost", then "Before you sign: what this cut does". It is good writing, and it pushes "Sign the cut" off the first screen. On the left, under the two metric tiles, there is nothing from y≈640 down to the card's end.
+**Delivery-cut, 1440 (`p-dc-1440.png`).** Headline, amber 47%, then "Before you sign" on the left. On the right: amber "HTTP 422, no image", amber "$0.003 lost", lime "Sign the cut". I can read what I'm signing and sign it without scrolling. Below the button, the card runs on for ~140px of nothing.
 
-**Phones (`p-390.png`, `p-dc-390.png`).** Delivery-cut is fine: headline, lead, two tiles, the start of the card, and the lime bar. Quote-cap's first screen is the metric zone plus 7 lines of Basis, the start of the h1, and a lime bar saying "Let the agent pay this quote". The quote it acts on ($10.00) is about a screen and a half further down.
+**Delivery-cut, signed (`p-dc-signed-1440.png`).** Violet "Cut signed / fal is cut from the agent key", a blue link to the new rows, the disabled button. "Before you sign" leaves the left column, so the left now ends at y≈640 while the card ends at y≈795. The rail below adds steps 3-5: violet Cut, violet Reverted, green Settled.
+
+**Phones (`p-390.png`, `p-dc-390.png`).** Quote-cap: headline, lead, then the quote card with `$10.00` visible above the fixed bar. Delivery-cut: headline, lead, two tiles, card start, fixed bar. Both work.
 
 ## Findings, ranked
 
-**FINDING-1 (HIGH, content / trust, new). The headline metric's basis overstates what was recorded, and the fork rail contradicts it.**
-- `QUOTES` (`quotecap.tsx:17-21`) holds three entries. `projects/leash/scripts/fork/quotes.json` shows only two are captured 402s; `catalog_listed_0.039` has `request_b64: null`. The README agrees: "Its 402 asked $10.00 when the prompt was missing, and $0.07 with a prompt."
-- The Basis copy (`:350`) says "The 3 real stablestudio 402s recorded unpaid". That is false for one of the three, and "2 of 3" uses a denominator padded with a quote that cannot fail.
-- Fork run 1 step 3 reads "Quote-Cap passes $0.07 quote, agent pays stablestudio". The fork used `cap = catalog 0.039 x 2` (`FORK.md:7`); the metric uses exact listing. The page does not name either policy in the fork section.
+**FINDING-1 (POLISH, layout, residue of r12a F3). Delivery-cut's card has a ~140px empty band at 1440, and the signed state leaves a ~155px gap on the left.**
+The hero grid stretches the card to the taller left column. The tinted action half ends at y≈765 and the card at y≈905, which leaves a dark, empty strip under "Sign the cut" (`p-dc-full-1440.png`). After signing, "Before you sign" unmounts (`deliverycut.tsx:78`), so the imbalance flips to the left (`p-dc-signed-1440.png`).
+Fix: make the card `flex flex-col` and give the action half `flex-1`, so the tint fills the card. Or add `lg:items-start` to the hero grid, as the Evidence row already does. For the signed state, keep the list and switch its heading to "What this cut did". That keeps the side-effect disclosure visible after the action, which is when a reader wants it most.
 
-Why it matters: this is the round's main number, and judges check main numbers. The honest version is stronger anyway: **2 of 2 recorded 402s refused**.
+**FINDING-2 (POLISH, typography). "of" in the "2 of 2" metric is still mono.**
+The span is separate, but `.metric-value` sets the mono family on the whole `<p>` (`quotecap.tsx:348`, `index.css:136`). In `p-1440.png`, "of" reads as code at 40px. Fix: `font-sans` on the " of " span, one class.
 
-Fix (about 6 lines):
-- Compute `PrimaryMetric` over the two recorded quotes only (filter `id !== 'catalog'`).
-- Change the Basis to "The 2 stablestudio 402s recorded unpaid on Tempo mainnet ..., against the $0.039 mpp.dev listing".
-- Add "Fork policy: up to 2x the listing, $0.20 daily key limit" to the Fork run 1 intro (`:195`), so "$0.07 passes" there reads as a different policy, not a contradiction.
+**FINDING-3 (POLISH, trust copy). The metric Basis uses IST; every block time on the page uses UTC.**
+"recorded unpaid on Tempo mainnet (10 Oct 2026, 09:45 IST)" (`quotecap.tsx:352`) sits above a rail that reads "10 Oct, 05:01:39 UTC". A judge comparing times has to convert. Write "10 Oct 2026, 04:15 UTC".
 
-**FINDING-2 (HIGH, hierarchy / primary action, regression). The primary button left the first desktop screen on both pages, and the quote left the first phone screen.**
-- Quote-cap 1440: the metric zone (≈210px plus a 48px gap) pushes the card down; the button sits at y≈1010 of 900.
-- Delivery-cut 1440: the "Before you sign" box (≈270px) puts "Sign the cut" at y≈1024.
-- Quote-cap 390: the first screen is metric zone and Basis only; the fixed bar acts on an unseen quote. In r11 this was a +5 goodwill item.
+**FINDING-4 (POLISH, content). "$9.99 above the $0.039 listing" is a sum of two overcharges against a per-call listing.**
+The card right next to it says "+$9.961 over". A careful reader asks where the extra $0.03 comes from. The count cell's "$10.07 asked" explains it only if you add it up yourself. Fix: "$9.99 over listing, across both quotes", or label the cell "Total overcharge refused".
 
-Fix, quote-cap:
-- Make the metric zone one compact row. Keep the value and the count, and move Basis to a single line under the row ("Basis: 2 recorded stablestudio 402s vs the $0.039 listing, exact policy. Illustrative.") with the full sentence in a `<details>`. That saves about 90px on desktop and 250px on phones.
-- On phones, put the metric zone after the h1 and lead, or after the card.
+**FINDING-5 (POLISH, data viz, r11 F7). Route amounts mix precision.** `$0.008`, `$0.03`, `$0.005`, `$0.02`, `$0.002`, `$0.0126`. Format the chart to 4 decimals so the tabular column lines up.
 
-Fix, delivery-cut: see FINDING-3, which also fixes this.
+**FINDING-6 (POLISH, color, r11 F8). Lime ring on selected toggles.** `ring-primary/70` (`toggle.tsx:8`) puts lime on "No prompt", "Exact" and "$1.00", the only lime on the page besides the button. Use `ring-hairline-strong`.
 
-**FINDING-3 (MEDIUM, layout, regression). Delivery-cut's left column has a ~440px hole at 1440.**
-The header column ends after the metric tiles (y≈640). The card, made longer by "Before you sign", ends at y≈1080 (`p-dc-full-1440.png`).
-Fix: at `lg`, render the "Before you sign" list in the left column under the metric tiles, as plain text with no box, while keeping it in the card on phones, where it sits right above the button. That fills the hole and lifts "Sign the cut" to about y≈760 on the first desktop screen. Same content, different slot; one conditional.
+**FINDING-7 (POLISH, content / responsive). "0% (lost 100%)" wraps inside the parenthesis at 390.** `p-dc-full-390.png`: "0% (lost" / "100%)". Add `whitespace-nowrap` on the value, or let the label wrap ("Delivered for the / money" already wraps).
 
-**FINDING-4 (MEDIUM, AI slop / layout, r11 F2 carried). Five numbered discs and a one-paragraph Business model card remain.**
-Same as r11: two boxed hero explainers with "1"/"2" discs (`quotecap.tsx:373-380`) and Business model as its own `Card` (`:294-300`). Keep the judge-step discs, since that order matters.
-Fix: remove the box and the disc from each explainer and separate them with a hairline. Show Business model as plain text under the rivals panel.
-
-**FINDING-5 (POLISH, typography). English words are set in mono in two places.**
-- The "2 of 3" metric sets "of 3" in 40px JetBrains Mono (`:345`).
-- The risk bar sets "256.4x the listing" in mono (`:93`).
-
-Fix: wrap only the digits in `num`, so the word "of" and "the listing" are in Rubik. Also show the overcharge as "$9.99" in the metric. Three decimals ($9.992) read as engineering precision on a headline.
-
-**FINDING-6 (POLISH, color / data viz). Pink on Route means "costs more", and the percentage on the risk bar is noise.**
-- `text-refused` on the skipped-seller "+275%" (`:251`) reuses the Leash-said-no colour for a price premium. Use `text-ink-subtle`. The green bar and the "% less" chip already carry the outcome.
-- "(+25,541%)" next to "256.4x" says the same thing in a harder form. Show the % only when the multiple is under 2x (so the With-prompt quote keeps "+79%").
-- Route precision (r11 F7) is still open.
-
-**FINDING-7 (POLISH, trust copy). ForkNote's "reverted calls carry no block time" is incomplete on delivery-cut.**
-Step 3 (the successful cut, `time: null` in `delivery-cut-proof.json`) shows "Block 43,488,718" with no time, and the note implies only reverts lack one. Either read the time from the receipt in `run-delivery-cut.sh`, or change the note to "some steps carry no block time".
-
-**FINDING-8 (POLISH, content). Delivery-cut shows the payout address four times.**
-The address appears in the "Paid, not delivered" panel, in "Before you sign: What changes", in the Evidence card, and in the cut transaction's meaning. Drop the sentence from the amber panel (`deliverycut.tsx:107`); "Before you sign" now says the same thing better.
-
-**FINDING-9 (POLISH, carried from r11).** Lime ring on selected toggles (F8). Row hover with nothing to click (F9). No arrival cue for the three new rows, and the copy button announces the full 66-character hash (F10). Rival paragraph length (F4). The leftover pink tokens and the `DESIGN.md:21` mismatch (F5, F6).
+**FINDING-8 (POLISH, carried).** Rail row hover with nothing to click (`quotecap.tsx:165`). The copy button announces the full 66-character hash (`kit.tsx:43`). No arrival cue for the new rail rows. Rival "Leash:" paragraphs around 49 words. Leftover pink tokens. `DESIGN.md:21` still lists `#9a93a8`, and `:48` cites `contrast-r11.txt`.
 
 ## AI slop, judged
 
-Absent: gradients, glow and halo, glassmorphism, emoji, stock imagery, avatars, filler sparklines, testimonial rows, eyebrow chips, decorative left borders. The new metric zone is not the "three big numbers with tiny labels" template. One of its three cells is a paragraph naming its source and its policy, and the values are computed from the same `checkQuote` the card runs. That earns it. Block and time lines, the anvil note and the explorer links are the opposite of slop: they invite you to check the claim.
+Absent: gradients, glow and halo, glassmorphism, emoji, stock imagery, avatars, filler sparklines, testimonial rows, hero eyebrow chips, decorative left borders, and boxed explainers with numbered discs (removed this pass). The metric block is not the "three big numbers" template: two computed cells plus a paragraph that names its source, time, policy and its own exception. Block heights, UTC times, the anvil note and the explorer links invite verification.
 
-Present: the five discs and the boxed explainers, and the Business model card (FINDING-4). The metric zone sits above the h1, so the page opens with a stat strip. It works here because the stat is the product's main job, but it is a pattern to watch.
+Remaining patterns: `card-raised` metric tiles on the left of both pages (`kit.tsx:26`). They carry real computed values and they are consistent, so they are not counted. Section eyebrows ("Route · route: true", "Fork run 1 · Quote-Cap") each carry a fact.
 
 Litmus:
 - Brand in the first screen: YES.
-- One strong visual anchor: YES (pink $9.992 on quote-cap; the card on delivery-cut).
+- One strong visual anchor: YES (pink `$9.99` / `$10.00`; amber `$0.003 lost`).
 - Understandable from headings alone: YES.
 - Each section has one job: YES.
-- Cards necessary: MOSTLY. Not the hero explainers or Business model.
-- Motion improves hierarchy: NO. Only colour transitions.
+- Cards necessary: YES (decision card, rail, chart, rivals panel; Business model and explainers are now uncarded).
+- Motion improves hierarchy: NO (colour transitions only).
 - Premium with shadows removed: YES.
 
 ## Consistency across the two pages
 
 Shared:
-- header, nav pill and the `5fr / 6fr` hero
-- the decision card split by a hairline
-- one lime button, plus a fixed bar on phones
-- one `StepFeed` with `ForkNote`
-- one five-tone status system
-- sky-blue links, and explorer links on real mainnet addresses
+- header, opaque sticky bar and nav pill
+- `5fr / 6fr` hero with h1, lead, then proof tiles in the left column (now the same zoning on both pages)
+- a decision card split by a hairline into facts and a tinted action half
+- one lime button with a fixed phone bar
+- `StepFeed` with `ForkNote`, the five-tone status system, sky-blue links
 
 Divergent:
-- **Zoning:** quote-cap opens with a full-width metric zone above the hero; delivery-cut keeps its metrics (47%, 1) as tiles inside the left column. Same job, two layouts. If quote-cap's zone stays, delivery-cut should open the same way ("$0.003 lost on a paid-then-failed call · 47% of 89 calls · Basis: vet402 on Tempo, mpp#1034"), or quote-cap's zone should move into its left column.
-- **Fork facts:** quote-cap gives "Forked at block" its own tile; delivery-cut puts it in the intro sentence (r10 F6 remainder, still open).
-- **Policy disclosure:** quote-cap's metric names its policy, but neither fork section does (FINDING-1).
+- **Fork facts:** quote-cap gives "Forked at block" its own tile; delivery-cut puts the block in the intro sentence (r10 F6 remainder).
+- **After the action:** quote-cap keeps its left column after pressing; delivery-cut unmounts "Before you sign" after signing (FINDING-1).
+- **Times:** IST in the quote-cap Basis, UTC everywhere else (FINDING-3).
 
 ## Trunk test
 
@@ -154,7 +140,7 @@ Both pages PASS:
 - Site: logo plus "Leash".
 - Page: active nav pill plus h1.
 - Sections: eight-item nav, hamburger at 390.
-- Options at this level: one button, below the fold on desktop (FINDING-2).
+- Options: one lime button on the first screen.
 - Location: the nav pill.
 - Search: does not apply.
 
@@ -162,69 +148,67 @@ Both pages PASS:
 
 ```
 quote-cap   70 ████████████████████░░░░░░░░░░
-  loss Leash prevented stated first       70 → 80  (+10)
-  basis and "illustrative" labelled       80 → 85  (+5)
-  button below the fold at 1440           85 → 80  (-5)
-  "3 real 402s" includes the listing      80 → 72  (-8 trust, once noticed)
-  fork: "$0.07 passes" vs metric refused  72 → 67  (-5 ambiguous)
-  rail with blocks, times, anvil note     67 → 77  (+10)
-  FINAL 77/100
+  pitch, proof, action on one screen     70 → 80  (+10)
+  basis names policy and its exception   80 → 87  (+7 upfront)
+  phone: quote shown before button       87 → 92  (+5)
+  refusal panel says what and why        92 → 97  (+5)
+  "$9.99" vs "+$9.961" needs mental sum  97 → 94  (-3)
+  FINAL 94/100
 delivery-cut 70 ████████████████████░░░░░░░░░░
-  loss stated in money above the CTA      70 → 80  (+10)
-  "Before you sign" incl. side effect     80 → 90  (+10 upfront about costs)
-  button below the fold at 1440           90 → 85  (-5)
-  explorer link on real payout address    85 → 90  (+5)
-  cut is violet in verdict and rail       90 → 95  (+5 r11 fix)
-  FINAL 95/100
+  loss stated in money above the CTA     70 → 80  (+10)
+  "Before you sign" next to the button   80 → 90  (+10)
+  explorer link on real payout address   90 → 95  (+5)
+  empty band under the button            95 → 93  (-2 unfinished look)
+  side effect gone after signing         93 → 91  (-2)
+  FINAL 91/100
 ```
 
 ## Category grades
 
 | Category | Grade | Driver |
 |---|---|---|
-| Visual hierarchy | B | Strong risk-first anchor; FINDING-2 (HIGH) |
-| Typography | A- | Scale holds, mono confined; polish 5 |
-| Spacing and layout | B+ | FINDING-3 (MEDIUM); FINDING-4 remainder |
-| Color and contrast | A- | Semantic system now clean, 0 pairs below 4.5:1; polish 6, carried 5 and 8 |
-| Interaction states | B+ | Unchanged; carried polish 9 and 10 |
-| Responsive | B+ | Quote-cap phone first screen lacks the quote (part of FINDING-2); 8162px tall |
-| Content | B | FINDING-1 (HIGH); "Before you sign" is excellent |
-| AI slop | A- | FINDING-4 |
-| Motion | B | Nothing authored; reduced motion respected (`index.css:117`) |
+| Visual hierarchy | A- | Risk-first anchor, one button on the first screen |
+| Typography | A- | Mono confined; polish 2 |
+| Spacing and layout | A- | Holes closed; polish 1 |
+| Color and contrast | A- | Semantic system clean, 0 pairs below 4.5:1; polish 6, carried tokens |
+| Interaction states | B+ | Carried polish 8 |
+| Responsive | A- | Phone order fixed; polish 7 |
+| Content | A- | Honest metric and basis; polish 3, 4 |
+| AI slop | A- | Discs and Business model card gone |
+| Motion | B | Nothing authored; reduced motion respected |
 | Performance feel | not measured | No LCP/CLS this run |
 
 ## Quick wins (each under 30 minutes)
 
-1. Base the metric on the 2 recorded 402s ("2 of 2 refused"), correct the Basis sentence, and name the fork policy (2x listing, $0.20 key limit) in the Fork run 1 intro (FINDING-1).
-2. Move delivery-cut's "Before you sign" into the left column at `lg` (FINDINGS 2 and 3 in one change).
-3. Compress the quote-cap metric zone to one row with a one-line basis, and reorder it below the hero on phones (FINDING-2).
-4. Use `num` only on digits in "2 of 3" and "256.4x"; show $9.99; drop the % when the multiple is 2x or more; un-pink the Route premiums (FINDINGS 5 and 6).
-5. Remove the explainer discs and boxes; un-card Business model (FINDING-4).
+1. Make the delivery-cut card a flex column with the action half `flex-1`, or `lg:items-start` on the hero; keep the list after signing as "What this cut did" (FINDING-1).
+2. `font-sans` on the " of " span in the metric (FINDING-2).
+3. Basis time to UTC; relabel the overcharge cell "Total overcharge refused" (FINDINGS 3 and 4).
+4. Route amounts to 4 decimals; toggle ring to `hairline-strong`; remove rail-row hover (FINDINGS 5, 6, 8).
+5. `whitespace-nowrap` on "0% (lost 100%)"; fix `DESIGN.md:21` and `:48` (FINDINGS 7, 8).
 
 ## Owner caveats kept (not counted as defects)
 
-- "Illustrative: a sample of recorded quotes, not live traffic", "Planned, no revenue yet", "it did not test the other gateways", "Not a refund" and the anvil no-explorer note are honest statements, graded on design only. FINDING-1 is the opposite case: the copy claims more than the data holds.
+- "Illustrative sample, not live traffic", "Fork run 1 used a 2x allowance", "Planned, no revenue yet", "it did not test the other gateways", "Not a refund" and the anvil no-explorer note are honest statements, graded on design only.
 - The red "API unreachable" text is a CORS artifact of this preview origin and was not graded.
-- The sticky header mid-page in `p-dc-signed-1440.png` and `p-qc-pressed-1440.png`, and the fixed lime bar mid-page in `p-dc-full-390.png`, are full-page capture artifacts.
-- The disabled "Cut signed" button at 50% opacity is a deliberate done state.
+- The sticky header and fixed lime bar appearing mid-page in the full-page 390 captures are stitching artifacts.
+- The disabled "Cut signed" button is a deliberate done state.
 
 ## Blind spots
 
-- No live DOM. Fold positions (y≈1010, y≈1024) and the delivery-cut hole are read off the 1440 PNGs at 1:1. The 390 full-page quote-cap captures display at about 1:4, so below-the-fold phone layout was judged by structure.
-- The green "Paid / $X settled" verdict path was read from source, not seen.
-- The `ink-muted` on `refused-tint` contrast was computed by hand, not by `contrast.py`.
-- Hover, focus-visible and the 768 tablet width were not observed.
-- No impeccable detector scan, no outside voice, no gstack preamble or telemetry: this run's constraints forbid scripts, scratch files and browser work. One reviewer.
+- No live DOM. Fold positions and the card band are read off the 1440 PNGs at 1:1. The full-page 390 quote-cap captures display at about 1:4, so below-the-fold phone layout was judged by structure.
+- `overlap.test.ts` was not run (no scripts allowed this pass); I relied on the owner's report and the captures.
+- `p-qc-full-390.png`, `p-dc-signed-390.png` and the 768 width were not opened; hover and focus-visible were read from source.
+- No impeccable scan, no outside voice, no gstack preamble or telemetry: this run forbids scripts, scratch files and browser work. One reviewer.
 
 ## Critic scores (0-10)
 
-hierarchy: 8.0
-primary action: 7.5
+hierarchy: 8.5
+primary action: 9.0
 typography: 8.5
-density/whitespace: 7.5
+density/whitespace: 8.0
 color: 8.5
-consistency across the two pages: 8.0
+consistency across the two pages: 8.5
 AI-slop absence: 8.5
-mobile: 7.5
-average: 8.0
-min: 7.5
+mobile: 8.5
+average: 8.5
+min: 8.0

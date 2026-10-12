@@ -90,5 +90,13 @@ r11 FINAL (superseded): 8.5 min=8.0 round=11 critic=design-review review=/Users/
 ## Round 12 (Web3-grade: primary metric, % over, link hue, cut summary, fork trust)
 
 Self-critique of r12 shots after audit fixes: metric is now 2 of 2 recorded 402s ($9.99) with an honest basis and fork 2x policy named; metric sits in the left column so the lime button returns to the first desktop screen; delivery-cut "Before you sign" is plain text in the left column at lg and stays in the card on phones; explainer discs/boxes and the Business model card are gone; Route premiums are ink-subtle; mono only wraps digits; ForkNote says some steps lack a block time; sticky header is opaque (overlap scan).
-Independent review r12 (design-review, before the fixes above): B / A-, 8.0 min 7.5. Top findings fixed: metric basis (HIGH), button below the fold (HIGH), unfinished left panel on delivery-cut (MEDIUM), numbered explainer discs + Business model card (MEDIUM), mono-on-English / Route pink / 25,541% noise (POLISH).
-FINAL: 8.0 min=7.5 round=12 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r12.md
+Independent review r12 first pass (design-review): B / A-, 8.0 min 7.5 → report archived as design-audit-leash-r12a.md. Second pass after the fixes: B+ / A-, 8.5 min 8.0. Top findings fixed: metric basis (HIGH), button below the fold (HIGH), unfinished left panel on delivery-cut (MEDIUM), numbered explainer discs + Business model card (MEDIUM), Route pink / 25,541% noise (POLISH). Residue: ~140px empty band in the delivery-cut card, mono on "of" via metric-value inheritance.
+FINAL: 8.5 min=8.0 round=12 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r12.md
+
+## Round 12 (Web3-grade pass: primary metric, consequences, link hue, cut summary, trust; overlap fix)
+
+Overlap scan (test/overlap.mjs, 1440/768/390, scroll-through incl. pressed/signed): live r11 had 66 hits, all text bleeding through the 95%-opaque sticky header while scrolling; no text-on-text collisions. Header made opaque; scan now 0. Wired as apps/web/test/overlap.test.ts.
+Review r12a: B / A-, 8.0 min 7.5. Fixed: headline basis overstated (3 quotes; one was the listing) -> "2 of 2 real 402s" with the fork's 2x allowance noted; primary button below the 1440 fold on both pages; delivery-cut left-column hole (summary moved there).
+Review r12b: B+ / A-, 8.5 min 8.0. Then fixed: "of" no longer mono; basis time in UTC like the fork; metric relabelled "Total overcharge"; toggle ring no longer lime. Left: delivery-cut card has ~140px under the button at 1440; Route decimals vary.
+r11 FINAL (superseded, line kept): 8.5 min=8.0 round=11
+FINAL: 8.5 min=8.0 round=12 critic=design-review review=/Users/kamal/Desktop/solana/cwf/tempo/projects/leash/apps/web/docs/design/review/design-audit-leash-r12.md
